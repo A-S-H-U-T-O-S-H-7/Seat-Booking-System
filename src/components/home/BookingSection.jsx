@@ -1,0 +1,132 @@
+import Link from 'next/link';
+
+function BookingSection({ user }) {
+  return (
+    <>
+      {/* Booking Options */}
+      {user && (
+        <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-12 text-gray-800">
+              Choose Your Booking Type
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Havan Seat Booking */}
+              <Link
+                href="/booking/havan"
+                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <img 
+                      src="havanicon.png" 
+                      alt="Havan icon" 
+                      className="w-6 h-6 object-contain"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-orange-600 transition-colors duration-300">
+                      Book Havan Seat
+                    </h3>
+                    <p className="text-sm text-gray-600">Sacred ceremony</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Secure your seat for the sacred Havan ceremony. Choose from multiple sessions and seating arrangements.
+                </p>
+              </Link>
+
+              {/* Stall Booking */}
+              <Link
+                href="/booking/stall"
+                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <img 
+                      src="stall.png" 
+                      alt="Stall icon" 
+                      className="w-10 h-10 object-contain"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
+                      Book Your Stall
+                    </h3>
+                    <p className="text-sm text-gray-600">Vendor space</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Reserve a stall for your business. 5-day booking with prime locations available.
+                </p>
+              </Link>
+
+              {/* Show Seat Booking */}
+              <Link
+                href="/booking/show"
+                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <img 
+                      src="show.png" 
+                      alt="Show icon" 
+                      className="w-10 h-10 object-contain"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                      Book Show Seat
+                    </h3>
+                    <p className="text-sm text-gray-600">Entertainment</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Book seats for cultural shows and performances. VIP and regular seating available.
+                </p>
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+      
+      {/* Features */}
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-gray-50 to-orange-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-12 text-gray-800">
+            Why Book Online?
+          </h3>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💺</div>
+              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Choose Your Seat</h4>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Select exact seats with visual seat map</p>
+            </div>
+            
+            <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💳</div>
+              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Secure Payment</h4>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Safe online payment with instant confirmation</p>
+            </div>
+            
+            <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📧</div>
+              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Email Confirmation</h4>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Instant booking confirmation via email</p>
+            </div>
+            
+            <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
+              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💰</div>
+              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Flexible Refunds</h4>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Full refund if canceled 15+ days before</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+export default BookingSection;

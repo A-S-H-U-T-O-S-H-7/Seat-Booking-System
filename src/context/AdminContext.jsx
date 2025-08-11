@@ -18,68 +18,68 @@ export function AdminProvider({ children }) {
     let adminUnsubscribe = null;
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Clear any existing admin listener
-      if (adminUnsubscribe) {
-        adminUnsubscribe();
-        adminUnsubscribe = null;
-      }
+  // Clear any existing admin listener
+  if (adminUnsubscribe) {
+    adminUnsubscribe();
+    adminUnsubscribe = null;
+  }
 
-      if (user) {
-        try {
-          // Check if user is admin
-          const adminDoc = await getDoc(doc(db, 'admins', user.uid));
-          
-          if (adminDoc.exists()) {
-            const data = adminDoc.data();
-            const adminInfo = {
+  if (user) {
+    try {
+      // Check if user is admin
+      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      
+      if (adminDoc.exists()) {
+        const data = adminDoc.data();
+        const adminInfo = {
+          uid: user.uid,
+          email: user.email,
+          name: data.name,
+          role: data.role,
+          permissions: data.permissions || [],
+          createdAt: data.createdAt,
+          lastLogin: data.lastLogin
+        };
+        
+        setAdminUser(adminInfo);
+        setAdminData(data);
+        
+        // Set up real-time listener for admin data updates
+        const adminRef = doc(db, 'admins', user.uid);
+        adminUnsubscribe = onSnapshot(adminRef, (doc) => {
+          if (doc.exists()) {
+            const updatedData = doc.data();
+            setAdminData(updatedData);
+            const updatedAdminInfo = {
               uid: user.uid,
               email: user.email,
-              name: data.name,
-              role: data.role,
-              permissions: data.permissions || [],
-              createdAt: data.createdAt,
-              lastLogin: data.lastLogin
+              name: updatedData.name,
+              role: updatedData.role,
+              permissions: updatedData.permissions || [],
+              createdAt: updatedData.createdAt,
+              lastLogin: updatedData.lastLogin
             };
-            
-            setAdminUser(adminInfo);
-            setAdminData(data);
-            
-            // Set up real-time listener for admin data updates
-            const adminRef = doc(db, 'admins', user.uid);
-            adminUnsubscribe = onSnapshot(adminRef, (doc) => {
-              if (doc.exists()) {
-                const updatedData = doc.data();
-                setAdminData(updatedData);
-                const updatedAdminInfo = {
-                  uid: user.uid,
-                  email: user.email,
-                  name: updatedData.name,
-                  role: updatedData.role,
-                  permissions: updatedData.permissions || [],
-                  createdAt: updatedData.createdAt,
-                  lastLogin: updatedData.lastLogin
-                };
-                setAdminUser(updatedAdminInfo);
-              }
-            });
-          } else {
-            // User is not admin, sign out
-            await signOut(auth);
-            setAdminUser(null);
-            setAdminData(null);
+            setAdminUser(updatedAdminInfo);
           }
-        } catch (error) {
-          console.error('Error checking admin status:', error);
-          setAdminUser(null);
-          setAdminData(null);
-        }
+        });
       } else {
+        // User is not admin - just clear admin state, DON'T sign out
         setAdminUser(null);
         setAdminData(null);
+        // Remove this line: await signOut(auth);
       }
-      
-      setLoading(false);
-    });
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setAdminUser(null);
+      setAdminData(null);
+    }
+  } else {
+    setAdminUser(null);
+    setAdminData(null);
+  }
+  
+  setLoading(false);
+});
 
     return () => {
       unsubscribe();

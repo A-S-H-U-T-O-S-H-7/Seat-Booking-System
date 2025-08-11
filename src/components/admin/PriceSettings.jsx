@@ -50,6 +50,34 @@ export default function PriceSettings() {
     ]
   });
 
+  // Stall pricing settings
+  const [stallPriceSettings, setStallPriceSettings] = useState({
+    defaultStallPrice: 5000,
+    taxRate: 0,
+    discountPercent: 0,
+    earlyBirdDiscount: {
+      isActive: false,
+      discountPercent: 0,
+      daysBeforeEvent: 7
+    }
+  });
+
+  // Show seat pricing settings
+  const [showSeatPriceSettings, setShowSeatPriceSettings] = useState({
+    vipSeatPrice: 1000,
+    regularSeatPrice: 300,
+    taxRate: 0,
+    bulkDiscounts: [
+      { minSeats: 5, discountPercent: 5, isActive: true },
+      { minSeats: 10, discountPercent: 10, isActive: true }
+    ],
+    earlyBirdDiscount: {
+      isActive: false,
+      discountPercent: 0,
+      daysBeforeEvent: 7
+    }
+  });
+
   const [newBulkDiscount, setNewBulkDiscount] = useState({
     minSeats: '',
     discountPercent: '',
@@ -71,12 +99,31 @@ export default function PriceSettings() {
   const fetchPriceSettings = async () => {
     setLoading(true);
     try {
+      // Fetch havan seat pricing
       const settingsRef = doc(db, 'settings', 'pricing');
       const settingsSnap = await getDoc(settingsRef);
       
       if (settingsSnap.exists()) {
         const data = settingsSnap.data();
         setPriceSettings({ ...priceSettings, ...data });
+      }
+      
+      // Fetch stall pricing
+      const stallSettingsRef = doc(db, 'settings', 'stallPricing');
+      const stallSettingsSnap = await getDoc(stallSettingsRef);
+      
+      if (stallSettingsSnap.exists()) {
+        const stallData = stallSettingsSnap.data();
+        setStallPriceSettings({ ...stallPriceSettings, ...stallData });
+      }
+      
+      // Fetch show seat pricing
+      const showSeatSettingsRef = doc(db, 'settings', 'showSeatPricing');
+      const showSeatSettingsSnap = await getDoc(showSeatSettingsRef);
+      
+      if (showSeatSettingsSnap.exists()) {
+        const showSeatData = showSeatSettingsSnap.data();
+        setShowSeatPriceSettings({ ...showSeatPriceSettings, ...showSeatData });
       }
     } catch (error) {
       console.error('Error fetching price settings:', error);
@@ -112,6 +159,20 @@ export default function PriceSettings() {
         seatPrice: priceSettings.defaultSeatPrice,
         updatedAt: new Date()
       }, { merge: true });
+      
+      // Save stall pricing settings
+      const stallSettingsRef = doc(db, 'settings', 'stallPricing');
+      await setDoc(stallSettingsRef, {
+        ...stallPriceSettings,
+        updatedAt: new Date()
+      });
+      
+      // Save show seat pricing settings
+      const showSeatSettingsRef = doc(db, 'settings', 'showSeatPricing');
+      await setDoc(showSeatSettingsRef, {
+        ...showSeatPriceSettings,
+        updatedAt: new Date()
+      });
 
       // Log the activity with detailed changes
       if (adminUser) {
@@ -578,6 +639,426 @@ export default function PriceSettings() {
                 >
                   <PlusIcon className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stall Pricing */}
+        <div className={`rounded-lg border p-6 ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200 shadow-sm'
+        }`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
+            <div className="w-5 h-5 mr-2 text-blue-500">🏪</div>
+            Stall Pricing
+          </h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Default Stall Price (₹)
+              </label>
+              <input
+                type="number"
+                value={stallPriceSettings.defaultStallPrice}
+                onChange={(e) => setStallPriceSettings({
+                  ...stallPriceSettings,
+                  defaultStallPrice: parseFloat(e.target.value) || 0
+                })}
+                min="0"
+                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                General Discount (%)
+              </label>
+              <input
+                type="number"
+                value={stallPriceSettings.discountPercent}
+                onChange={(e) => setStallPriceSettings({
+                  ...stallPriceSettings,
+                  discountPercent: parseFloat(e.target.value) || 0
+                })}
+                min="0"
+                max="100"
+                step="0.1"
+                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
+              />
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Tax Rate (%)
+              </label>
+              <input
+                type="number"
+                value={stallPriceSettings.taxRate}
+                onChange={(e) => setStallPriceSettings({
+                  ...stallPriceSettings,
+                  taxRate: parseFloat(e.target.value) || 0
+                })}
+                min="0"
+                max="100"
+                step="0.1"
+                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
+              />
+            </div>
+
+            {/* Early Bird Discount for Stalls */}
+            <div className="border-t pt-4">
+              <div className="flex items-center mb-3">
+                <input
+                  id="stallEarlyBirdActive"
+                  type="checkbox"
+                  checked={stallPriceSettings.earlyBirdDiscount.isActive}
+                  onChange={(e) => setStallPriceSettings({
+                    ...stallPriceSettings,
+                    earlyBirdDiscount: {
+                      ...stallPriceSettings.earlyBirdDiscount,
+                      isActive: e.target.checked
+                    }
+                  })}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label htmlFor="stallEarlyBirdActive" className={`ml-2 block text-sm ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Enable Stall Early Bird Discount
+                </label>
+              </div>
+              
+              {stallPriceSettings.earlyBirdDiscount.isActive && (
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="number"
+                    placeholder="Discount %"
+                    value={stallPriceSettings.earlyBirdDiscount.discountPercent}
+                    onChange={(e) => setStallPriceSettings({
+                      ...stallPriceSettings,
+                      earlyBirdDiscount: {
+                        ...stallPriceSettings.earlyBirdDiscount,
+                        discountPercent: parseFloat(e.target.value) || 0
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Days before"
+                    value={stallPriceSettings.earlyBirdDiscount.daysBeforeEvent}
+                    onChange={(e) => setStallPriceSettings({
+                      ...stallPriceSettings,
+                      earlyBirdDiscount: {
+                        ...stallPriceSettings.earlyBirdDiscount,
+                        daysBeforeEvent: parseInt(e.target.value) || 0
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className={`p-4 rounded-md ${
+              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+            }`}>
+              <h4 className={`text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                Stall Price Preview
+              </h4>
+              <div className={`space-y-1 text-sm ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                <div className="flex justify-between">
+                  <span>Base Price (5 days):</span>
+                  <span>{formatCurrency(stallPriceSettings.defaultStallPrice)}</span>
+                </div>
+                {stallPriceSettings.discountPercent > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount ({stallPriceSettings.discountPercent}%):</span>
+                    <span>-{formatCurrency(stallPriceSettings.defaultStallPrice * (stallPriceSettings.discountPercent / 100))}</span>
+                  </div>
+                )}
+                {stallPriceSettings.taxRate > 0 && (
+                  <div className="flex justify-between">
+                    <span>Tax ({stallPriceSettings.taxRate}%):</span>
+                    <span>{formatCurrency((stallPriceSettings.defaultStallPrice * (1 - stallPriceSettings.discountPercent / 100)) * (stallPriceSettings.taxRate / 100))}</span>
+                  </div>
+                )}
+                <div className={`flex justify-between font-medium border-t pt-1 ${
+                  isDarkMode ? 'border-gray-600' : 'border-gray-200'
+                }`}>
+                  <span>Total:</span>
+                  <span>
+                    {formatCurrency(
+                      stallPriceSettings.defaultStallPrice * 
+                      (1 - stallPriceSettings.discountPercent / 100) * 
+                      (1 + stallPriceSettings.taxRate / 100)
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Show Seat Pricing */}
+        <div className={`rounded-lg border p-6 ${
+          isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200 shadow-sm'
+        }`}>
+          <h3 className={`text-lg font-semibold mb-4 flex items-center ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
+            <div className="w-5 h-5 mr-2 text-purple-500">🎭</div>
+            Show Seat Pricing
+          </h3>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  VIP Seat Price (₹)
+                </label>
+                <input
+                  type="number"
+                  value={showSeatPriceSettings.vipSeatPrice}
+                  onChange={(e) => setShowSeatPriceSettings({
+                    ...showSeatPriceSettings,
+                    vipSeatPrice: parseFloat(e.target.value) || 0
+                  })}
+                  min="0"
+                  className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+                <p className={`text-xs mt-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>2 people per sofa</p>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Regular Seat Price (₹)
+                </label>
+                <input
+                  type="number"
+                  value={showSeatPriceSettings.regularSeatPrice}
+                  onChange={(e) => setShowSeatPriceSettings({
+                    ...showSeatPriceSettings,
+                    regularSeatPrice: parseFloat(e.target.value) || 0
+                  })}
+                  min="0"
+                  className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+                <p className={`text-xs mt-1 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>1 person per seat</p>
+              </div>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                Tax Rate (%)
+              </label>
+              <input
+                type="number"
+                value={showSeatPriceSettings.taxRate}
+                onChange={(e) => setShowSeatPriceSettings({
+                  ...showSeatPriceSettings,
+                  taxRate: parseFloat(e.target.value) || 0
+                })}
+                min="0"
+                max="100"
+                step="0.1"
+                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                }`}
+              />
+            </div>
+
+            {/* Show Bulk Discounts */}
+            <div className="border-t pt-4">
+              <h4 className={`text-sm font-medium mb-3 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Show Bulk Discounts</h4>
+              <div className="space-y-2">
+                {showSeatPriceSettings.bulkDiscounts.map((discount, index) => (
+                  <div key={index} className={`flex items-center space-x-3 p-2 rounded-md ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={discount.isActive}
+                      onChange={(e) => {
+                        const updated = [...showSeatPriceSettings.bulkDiscounts];
+                        updated[index].isActive = e.target.checked;
+                        setShowSeatPriceSettings({...showSeatPriceSettings, bulkDiscounts: updated});
+                      }}
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <span className={`text-sm font-medium flex-1 ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {discount.minSeats}+ seats: {discount.discountPercent}% off
+                    </span>
+                    <button
+                      onClick={() => {
+                        const updated = showSeatPriceSettings.bulkDiscounts.filter((_, i) => i !== index);
+                        setShowSeatPriceSettings({...showSeatPriceSettings, bulkDiscounts: updated});
+                      }}
+                      className="text-red-600 hover:text-red-900 p-1"
+                      title="Remove discount"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Show Early Bird Discount */}
+            <div className="border-t pt-4">
+              <div className="flex items-center mb-3">
+                <input
+                  id="showEarlyBirdActive"
+                  type="checkbox"
+                  checked={showSeatPriceSettings.earlyBirdDiscount.isActive}
+                  onChange={(e) => setShowSeatPriceSettings({
+                    ...showSeatPriceSettings,
+                    earlyBirdDiscount: {
+                      ...showSeatPriceSettings.earlyBirdDiscount,
+                      isActive: e.target.checked
+                    }
+                  })}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label htmlFor="showEarlyBirdActive" className={`ml-2 block text-sm ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Enable Show Early Bird Discount
+                </label>
+              </div>
+              
+              {showSeatPriceSettings.earlyBirdDiscount.isActive && (
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="number"
+                    placeholder="Discount %"
+                    value={showSeatPriceSettings.earlyBirdDiscount.discountPercent}
+                    onChange={(e) => setShowSeatPriceSettings({
+                      ...showSeatPriceSettings,
+                      earlyBirdDiscount: {
+                        ...showSeatPriceSettings.earlyBirdDiscount,
+                        discountPercent: parseFloat(e.target.value) || 0
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Days before"
+                    value={showSeatPriceSettings.earlyBirdDiscount.daysBeforeEvent}
+                    onChange={(e) => setShowSeatPriceSettings({
+                      ...showSeatPriceSettings,
+                      earlyBirdDiscount: {
+                        ...showSeatPriceSettings.earlyBirdDiscount,
+                        daysBeforeEvent: parseInt(e.target.value) || 0
+                      }
+                    })}
+                    className={`px-3 py-2 text-sm rounded-md border ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className={`p-4 rounded-md ${
+              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+            }`}>
+              <h4 className={`text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                Show Seat Price Preview
+              </h4>
+              <div className={`space-y-1 text-sm ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                <div className="flex justify-between">
+                  <span>VIP Sofa (2 people):</span>
+                  <span>{formatCurrency(showSeatPriceSettings.vipSeatPrice)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Regular Seat (1 person):</span>
+                  <span>{formatCurrency(showSeatPriceSettings.regularSeatPrice)}</span>
+                </div>
+                {showSeatPriceSettings.taxRate > 0 && (
+                  <>
+                    <div className="flex justify-between text-xs border-t pt-1">
+                      <span>VIP + Tax ({showSeatPriceSettings.taxRate}%):</span>
+                      <span>{formatCurrency(showSeatPriceSettings.vipSeatPrice * (1 + showSeatPriceSettings.taxRate / 100))}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span>Regular + Tax ({showSeatPriceSettings.taxRate}%):</span>
+                      <span>{formatCurrency(showSeatPriceSettings.regularSeatPrice * (1 + showSeatPriceSettings.taxRate / 100))}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

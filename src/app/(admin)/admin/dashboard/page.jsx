@@ -25,6 +25,7 @@ import {
 import ProtectedAdminRoute from '@/components/admin/ProtectedAdminRoute';
 import EventSchedule from '@/components/admin/EventSchedule';
 import SeatManagement from '@/components/admin/SeatManagement';
+import ShowSeatManagement from '@/components/admin/ShowSeatManagement';
 import BookingManagement from '@/components/admin/BookingManagement';
 import UserManagement from '@/components/admin/UserManagement';
 import AdminManagement from '@/components/admin/AdminManagement';
@@ -84,13 +85,19 @@ export default function AdminDashboard() {
     },
     {
       id: 'seats',
-      name: 'Seat Management',
+      name: 'Havan Seats',
       icon: Cog6ToothIcon,
       permission: 'manage_seats'
     },
     {
+      id: 'show-seats',
+      name: 'Show Seats',
+      icon: CalendarDaysIcon,
+      permission: 'view_bookings'
+    },
+    {
       id: 'bookings',
-      name: 'Booking Management',
+      name: 'Havan Bookings',
       icon: UsersIcon,
       permission: 'view_bookings'
     },
@@ -128,6 +135,8 @@ export default function AdminDashboard() {
         return <EventSchedule />;
       case 'seats':
         return <SeatManagement />;
+      case 'show-seats':
+        return <ShowSeatManagement />;
       case 'bookings':
         return <BookingManagement />;
       case 'users':

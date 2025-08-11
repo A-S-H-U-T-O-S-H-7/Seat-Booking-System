@@ -6,22 +6,29 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, doc, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'react-hot-toast';
+import ShowBookingCard from '@/components/stall/ShowBookingCard';
+import StallBookingCard from '@/components/stall/StallBookingCard';
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [bookings, setBookings] = useState([]);
+  const [showBookings, setShowBookings] = useState([]);
+  const [stallBookings, setStallBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingBooking, setCancellingBooking] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState(null);
+  const [activeTab, setActiveTab] = useState('havan');
 
   useEffect(() => {
     if (user) {
       fetchUserBookings();
+      fetchUserShowBookings();
+      fetchUserStallBookings();
     }
   }, [user]);
 
@@ -104,13 +111,185 @@ const ProfilePage = () => {
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Failed to load booking history');
+    }
+  };
+
+  const fetchUserShowBookings = async () => {
+    try {
+      console.log('Fetching show bookings for user:', user.uid);
+      
+      const showBookingsQuery = query(
+        collection(db, 'showBookings'),
+        where('userId', '==', user.uid)
+      );
+      
+      const snapshot = await getDocs(showBookingsQuery);
+      console.log('Found', snapshot.size, 'show bookings');
+      
+      const showBookingsData = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log('Show booking data:', data);
+        
+        // Handle different date formats for show date
+        let showDate;
+        if (data.showDetails?.date) {
+          if (typeof data.showDetails.date === 'string') {
+            showDate = parseISO(data.showDetails.date);
+          } else if (data.showDetails.date.toDate && typeof data.showDetails.date.toDate === 'function') {
+            showDate = data.showDetails.date.toDate();
+          } else if (data.showDetails.date.seconds) {
+            showDate = new Date(data.showDetails.date.seconds * 1000);
+          } else {
+            showDate = new Date();
+          }
+        } else {
+          showDate = new Date();
+        }
+        
+        let createdDate;
+        if (data.createdAt) {
+          if (data.createdAt.toDate && typeof data.createdAt.toDate === 'function') {
+            createdDate = data.createdAt.toDate();
+          } else if (data.createdAt.seconds) {
+            createdDate = new Date(data.createdAt.seconds * 1000);
+          } else if (typeof data.createdAt === 'string') {
+            createdDate = parseISO(data.createdAt);
+          } else if (data.createdAt instanceof Date) {
+            createdDate = data.createdAt;
+          } else {
+            createdDate = new Date();
+          }
+        } else {
+          createdDate = new Date();
+        }
+        
+        showBookingsData.push({
+          id: doc.id,
+          ...data,
+          createdAt: createdDate,
+          showDetails: {
+            ...data.showDetails,
+            date: showDate
+          },
+          type: 'show' // Add type identifier
+        });
+      });
+      
+      // Sort by creation date (newest first)
+      showBookingsData.sort((a, b) => b.createdAt - a.createdAt);
+      
+      console.log('Processed show bookings:', showBookingsData);
+      setShowBookings(showBookingsData);
+    } catch (error) {
+      console.error('Error fetching show bookings:', error);
+      toast.error('Failed to load show booking history');
+    }
+  };
+
+  const fetchUserStallBookings = async () => {
+    try {
+      console.log('Fetching stall bookings for user:', user.uid);
+      
+      const stallBookingsQuery = query(
+        collection(db, 'stallBookings'),
+        where('userId', '==', user.uid)
+      );
+      
+      const snapshot = await getDocs(stallBookingsQuery);
+      console.log('Found', snapshot.size, 'stall bookings');
+      
+      const stallBookingsData = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log('Stall booking data:', data);
+        
+        // Handle different date formats for event dates
+        let startDate, endDate;
+        if (data.eventDetails?.startDate) {
+          if (data.eventDetails.startDate.toDate && typeof data.eventDetails.startDate.toDate === 'function') {
+            startDate = data.eventDetails.startDate.toDate();
+          } else if (data.eventDetails.startDate.seconds) {
+            startDate = new Date(data.eventDetails.startDate.seconds * 1000);
+          } else if (data.eventDetails.startDate instanceof Date) {
+            startDate = data.eventDetails.startDate;
+          } else {
+            startDate = new Date(data.eventDetails.startDate);
+          }
+        } else {
+          startDate = new Date('2024-12-15');
+        }
+        
+        if (data.eventDetails?.endDate) {
+          if (data.eventDetails.endDate.toDate && typeof data.eventDetails.endDate.toDate === 'function') {
+            endDate = data.eventDetails.endDate.toDate();
+          } else if (data.eventDetails.endDate.seconds) {
+            endDate = new Date(data.eventDetails.endDate.seconds * 1000);
+          } else if (data.eventDetails.endDate instanceof Date) {
+            endDate = data.eventDetails.endDate;
+          } else {
+            endDate = new Date(data.eventDetails.endDate);
+          }
+        } else {
+          endDate = new Date('2024-12-19');
+        }
+        
+        let createdDate;
+        if (data.createdAt) {
+          if (data.createdAt.toDate && typeof data.createdAt.toDate === 'function') {
+            createdDate = data.createdAt.toDate();
+          } else if (data.createdAt.seconds) {
+            createdDate = new Date(data.createdAt.seconds * 1000);
+          } else if (typeof data.createdAt === 'string') {
+            createdDate = parseISO(data.createdAt);
+          } else if (data.createdAt instanceof Date) {
+            createdDate = data.createdAt;
+          } else {
+            createdDate = new Date();
+          }
+        } else {
+          createdDate = new Date();
+        }
+        
+        stallBookingsData.push({
+          id: doc.id,
+          ...data,
+          createdAt: createdDate,
+          eventDetails: {
+            ...data.eventDetails,
+            startDate,
+            endDate
+          },
+          type: 'stall' // Add type identifier
+        });
+      });
+      
+      // Sort by creation date (newest first)
+      stallBookingsData.sort((a, b) => b.createdAt - a.createdAt);
+      
+      console.log('Processed stall bookings:', stallBookingsData);
+      setStallBookings(stallBookingsData);
+    } catch (error) {
+      console.error('Error fetching stall bookings:', error);
+      toast.error('Failed to load stall booking history');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancelBooking = async (booking) => {
-    const eventDate = booking.eventDetails.date;
+    // Determine event date based on booking type
+    let eventDate;
+    if (booking.type === 'show') {
+      eventDate = booking.showDetails.date;
+    } else if (booking.type === 'stall') {
+      eventDate = booking.eventDetails.startDate;
+    } else {
+      eventDate = booking.eventDetails.date;
+    }
+    
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
     
@@ -131,39 +310,66 @@ const ProfilePage = () => {
     setShowCancelModal(false);
     
     try {
-      await runTransaction(db, async (transaction) => {
-        // First, do all the reads
-        const dateKey = bookingToCancel.eventDetails.date.toISOString().split('T')[0];
-        const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${bookingToCancel.eventDetails.shift}`);
-        const availabilityDoc = await transaction.get(availabilityRef);
-        
-        // Then do all the writes
-        // Update booking status
-        const bookingRef = doc(db, 'bookings', bookingToCancel.id);
-        transaction.update(bookingRef, {
+      if (bookingToCancel.type === 'show') {
+        // Handle show booking cancellation
+        const bookingRef = doc(db, 'showBookings', bookingToCancel.id);
+        await updateDoc(bookingRef, {
           status: 'cancelled',
           cancelledAt: serverTimestamp(),
+          cancelledBy: 'user',
           updatedAt: serverTimestamp()
         });
-
-        // Release seats
-        if (availabilityDoc.exists()) {
-          const currentAvailability = availabilityDoc.data().seats || {};
-          const updatedAvailability = { ...currentAvailability };
+        
+        toast.success('Show booking cancelled successfully. Refund will be processed within 5-7 business days.');
+        fetchUserShowBookings(); // Refresh show bookings
+      } else if (bookingToCancel.type === 'stall') {
+        // Handle stall booking cancellation
+        const bookingRef = doc(db, 'stallBookings', bookingToCancel.id);
+        await updateDoc(bookingRef, {
+          status: 'cancelled',
+          cancelledAt: serverTimestamp(),
+          cancelledBy: 'user',
+          updatedAt: serverTimestamp()
+        });
+        
+        toast.success('Stall booking cancelled successfully. Refund will be processed within 5-7 business days.');
+        fetchUserStallBookings(); // Refresh stall bookings
+      } else {
+        // Handle regular havan booking cancellation
+        await runTransaction(db, async (transaction) => {
+          // First, do all the reads
+          const dateKey = bookingToCancel.eventDetails.date.toISOString().split('T')[0];
+          const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${bookingToCancel.eventDetails.shift}`);
+          const availabilityDoc = await transaction.get(availabilityRef);
           
-          bookingToCancel.eventDetails.seats.forEach(seatId => {
-            delete updatedAvailability[seatId];
-          });
-
-          transaction.update(availabilityRef, {
-            seats: updatedAvailability,
+          // Then do all the writes
+          // Update booking status
+          const bookingRef = doc(db, 'bookings', bookingToCancel.id);
+          transaction.update(bookingRef, {
+            status: 'cancelled',
+            cancelledAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
-        }
-      });
 
-      toast.success('Booking cancelled successfully. Refund will be processed within 5-7 business days.');
-      fetchUserBookings(); // Refresh bookings
+          // Release seats
+          if (availabilityDoc.exists()) {
+            const currentAvailability = availabilityDoc.data().seats || {};
+            const updatedAvailability = { ...currentAvailability };
+            
+            bookingToCancel.eventDetails.seats.forEach(seatId => {
+              delete updatedAvailability[seatId];
+            });
+
+            transaction.update(availabilityRef, {
+              seats: updatedAvailability,
+              updatedAt: serverTimestamp()
+            });
+          }
+        });
+
+        toast.success('Booking cancelled successfully. Refund will be processed within 5-7 business days.');
+        fetchUserBookings(); // Refresh bookings
+      }
       
     } catch (error) {
       console.error('Cancellation failed:', error);
@@ -178,6 +384,151 @@ const ProfilePage = () => {
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
     return daysUntilEvent >= 15;
+  };
+
+  const refreshBookings = () => {
+    if (activeTab === 'havan') {
+      fetchUserBookings();
+    } else if (activeTab === 'show') {
+      fetchUserShowBookings();
+    } else if (activeTab === 'stall') {
+      fetchUserStallBookings();
+    }
+  };
+
+  const renderBookingCard = (booking) => {
+    return (
+      <div 
+        key={booking.id} 
+        className={`border rounded-xl p-3 sm:p-6 transform hover:scale-[1.02] transition-all duration-200 ${
+          booking.status === 'cancelled' 
+            ? 'border-red-200 bg-red-50 shadow-md' 
+            : 'border-gray-200 bg-white shadow-lg hover:shadow-xl'
+        }`}
+      >
+        {/* Mobile-first layout */}
+        <div className="space-y-4">
+          {/* Status and ID Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
+                booking.status === 'confirmed' 
+                  ? 'bg-green-100 text-green-800 border border-green-200' 
+                  : booking.status === 'cancelled'
+                  ? 'bg-red-100 text-red-800 border border-red-200'
+                  : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+              }`}>
+                {booking.status === 'confirmed' ? '✓ Confirmed' : 
+                 booking.status === 'cancelled' ? '✗ Cancelled' : 
+                 booking.status}
+              </span>
+            </div>
+            <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+              ID: {booking.bookingId}
+            </span>
+          </div>
+          
+          {/* Main booking details */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+              <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-1">Event Date</p>
+              <p className="text-sm font-bold text-gray-900 leading-tight">
+                {format(booking.eventDetails.date, 'MMM dd, yyyy')}
+              </p>
+              <p className="text-xs text-gray-600">
+                {format(booking.eventDetails.date, 'EEEE')}
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Session</p>
+              <p className="text-sm font-bold text-gray-900">
+                {booking.eventDetails.shift === 'morning' ? 'Morning' : 'Afternoon'}
+              </p>
+              <p className="text-xs text-gray-600">
+                {booking.eventDetails.shift === 'morning' 
+                  ? '9:00 AM - 12:00 PM' 
+                  : '2:00 PM - 5:00 PM'}
+              </p>
+            </div>
+            
+            <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Seats</p>
+              <p className="text-sm font-bold text-gray-900">
+                {booking.eventDetails.seatCount} seat{booking.eventDetails.seatCount > 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-gray-600 truncate">
+                {(booking.eventDetails.seats || []).join(', ')}
+              </p>
+            </div>
+            
+            <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+              <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Amount Paid</p>
+              <p className="text-lg font-bold text-green-600">
+                ₹{booking.payment.amount}
+              </p>
+            </div>
+          </div>
+
+          {/* Footer with booking info and action */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>🕐 Booked: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
+              {booking.customerDetails && (
+                <p>📞 Contact: {booking.customerDetails.phone}</p>
+              )}
+            </div>
+
+            {booking.status === 'confirmed' && (
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                {canCancelBooking(booking.eventDetails.date) ? (
+                  <div className="text-center">
+                    <button
+                      onClick={() => handleCancelBooking(booking)}
+                      disabled={cancellingBooking === booking.id}
+                      className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md disabled:transform-none min-w-[100px]"
+                    >
+                      {cancellingBooking === booking.id ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Cancelling...
+                        </span>
+                      ) : 'Cancel Booking'}
+                    </button>
+                    <p className="text-xs text-green-600 mt-1 font-medium">
+                      ✓ Free cancellation
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <button
+                      disabled
+                      className="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm cursor-not-allowed min-w-[100px]"
+                    >
+                      Cannot Cancel
+                    </button>
+                    <p className="text-xs text-red-500 mt-1">
+                      Only {differenceInDays(booking.eventDetails.date, new Date())} days left
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderShowBookingCard = (booking) => {
+    return <ShowBookingCard key={booking.id} booking={booking} onCancel={handleCancelBooking} />;
+  };
+
+  const renderStallBookingCard = (booking) => {
+    return <StallBookingCard key={booking.id} booking={booking} onCancel={handleCancelBooking} />;
   };
 
   const handleLogout = async () => {
@@ -257,164 +608,111 @@ const ProfilePage = () => {
             {/* Booking History */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl shadow-lg p-4">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
                   <h3 className="text-xl font-bold text-gray-800">Your Bookings</h3>
-                  {bookings.length > 0 && (
-                    <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-                      {bookings.length} booking{bookings.length > 1 ? 's' : ''}
-                    </span>
-                  )}
+                  
+                  {/* Tab Navigation */}
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setActiveTab('havan')}
+                      className={`flex-1 px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        activeTab === 'havan'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-600 hover:text-orange-600'
+                      }`}
+                    >
+                      Havan ({bookings.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('show')}
+                      className={`flex-1 px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        activeTab === 'show'
+                          ? 'bg-white text-purple-600 shadow-sm'
+                          : 'text-gray-600 hover:text-purple-600'
+                      }`}
+                    >
+                      Shows ({showBookings.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('stall')}
+                      className={`flex-1 px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        activeTab === 'stall'
+                          ? 'bg-white text-green-600 shadow-sm'
+                          : 'text-gray-600 hover:text-green-600'
+                      }`}
+                    >
+                      Stalls ({stallBookings.length})
+                    </button>
+                  </div>
                 </div>
 
-                {bookings.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-3xl text-gray-400">🎫</span>
-                    </div>
-                    <h4 className="text-lg font-medium text-gray-500 mb-2">No bookings yet</h4>
-                    <p className="text-gray-400 mb-4">Book your first seat for the sacred Havan ceremony</p>
-                    <Link
-                      href="/booking"
-                      className="inline-block bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
-                    >
-                      Book Now
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {bookings.map((booking) => (
-                      <div 
-                        key={booking.id} 
-                        className={`border rounded-xl p-3 sm:p-6 transform hover:scale-[1.02] transition-all duration-200 ${
-                          booking.status === 'cancelled' 
-                            ? 'border-red-200 bg-red-50 shadow-md' 
-                            : 'border-gray-200 bg-white shadow-lg hover:shadow-xl'
-                        }`}
-                      >
-                        {/* Mobile-first layout */}
-                        <div className="space-y-4">
-                          {/* Status and ID Row */}
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
-                                booking.status === 'confirmed' 
-                                  ? 'bg-green-100 text-green-800 border border-green-200' 
-                                  : booking.status === 'cancelled'
-                                  ? 'bg-red-100 text-red-800 border border-red-200'
-                                  : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                              }`}>
-                                {booking.status === 'confirmed' ? '✓ Confirmed' : 
-                                 booking.status === 'cancelled' ? '✗ Cancelled' : 
-                                 booking.status}
-                              </span>
-                            </div>
-                            <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
-                              ID: {booking.bookingId}
-                            </span>
-                          </div>
-                          
-                          {/* Main booking details */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                              <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-1">Event Date</p>
-                              <p className="text-sm font-bold text-gray-900 leading-tight">
-                                {format(booking.eventDetails.date, 'MMM dd, yyyy')}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {format(booking.eventDetails.date, 'EEEE')}
-                              </p>
-                            </div>
-                            
-                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Session</p>
-                              <p className="text-sm font-bold text-gray-900">
-                                {booking.eventDetails.shift === 'morning' ? 'Morning' : 'Afternoon'}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {booking.eventDetails.shift === 'morning' 
-                                  ? '9:00 AM - 12:00 PM' 
-                                  : '2:00 PM - 5:00 PM'}
-                              </p>
-                            </div>
-                            
-                            <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                              <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Seats</p>
-                              <p className="text-sm font-bold text-gray-900">
-                                {booking.eventDetails.seatCount} seat{booking.eventDetails.seatCount > 1 ? 's' : ''}
-                              </p>
-                              <p className="text-xs text-gray-600 truncate">
-                                {(booking.eventDetails.seats || []).join(', ')}
-
-                              </p>
-                            </div>
-                            
-                            <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                              <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Amount Paid</p>
-                              <p className="text-lg font-bold text-green-600">
-                                ₹{booking.payment.amount}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Footer with booking info and action */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
-                            <div className="text-xs text-gray-500 space-y-1">
-                              <p>🕐 Booked: {format(booking.createdAt, 'MMM dd, yyyy \\at hh:mm a')}</p>
-                              {booking.customerDetails && (
-                                <p>📞 Contact: {booking.customerDetails.phone}</p>
-                              )}
-                            </div>
-
-                            {booking.status === 'confirmed' && (
-                              <div className="flex flex-col sm:flex-row items-center gap-2">
-                                {canCancelBooking(booking.eventDetails.date) ? (
-                                  <div className="text-center">
-                                    <button
-                                      onClick={() => handleCancelBooking(booking)}
-                                      disabled={cancellingBooking === booking.id}
-                                      className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md disabled:transform-none min-w-[100px]"
-                                    >
-                                      {cancellingBooking === booking.id ? (
-                                        <span className="flex items-center justify-center">
-                                          <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                          </svg>
-                                          Cancelling...
-                                        </span>
-                                      ) : 'Cancel Booking'}
-                                    </button>
-                                    <p className="text-xs text-green-600 mt-1 font-medium">
-                                      ✓ Free cancellation
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <div className="text-center">
-                                    <button
-                                      disabled
-                                      className="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm cursor-not-allowed min-w-[100px]"
-                                    >
-                                      Cannot Cancel
-                                    </button>
-                                    <p className="text-xs text-red-500 mt-1">
-                                      Only {differenceInDays(booking.eventDetails.date, new Date())} days left
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                {/* Render bookings based on active tab */}
+                {activeTab === 'havan' ? (
+                  bookings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl text-gray-400">🎫</span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Havan bookings yet</h4>
+                      <p className="text-gray-400 mb-4">Book your first seat for the sacred Havan ceremony</p>
+                      <Link
+                        href="/booking"
+                        className="inline-block bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+                      >
+                        Book Havan Seats
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {bookings.map((booking) => renderBookingCard(booking))}
+                    </div>
+                  )
+                ) : activeTab === 'show' ? (
+                  showBookings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl text-gray-400">🎭</span>
+                      </div>
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Show bookings yet</h4>
+                      <p className="text-gray-400 mb-4">Book your first seat for cultural shows and performances</p>
+                      <Link
+                        href="/booking/show"
+                        className="inline-block bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+                      >
+                        Book Show Seats
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {showBookings.map((booking) => renderShowBookingCard(booking))}
+                    </div>
+                  )
+                ) : activeTab === 'stall' ? (
+                  stallBookings.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl text-gray-400">🏪</span>
+                      </div>
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Stall bookings yet</h4>
+                      <p className="text-gray-400 mb-4">Book your first stall for business opportunities</p>
+                      <Link
+                        href="/booking/stall"
+                        className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+                      >
+                        Book Stalls
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {stallBookings.map((booking) => renderStallBookingCard(booking))}
+                    </div>
+                  )
+                ) : null}
               </div>
             </div>
 
-            {/* Contact Info & Quick Actions */}
+            {/* Quick Actions */}
             <div className="space-y-6">
-              {/* Quick Actions */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
                 <div className="space-y-3">
@@ -422,10 +720,22 @@ const ProfilePage = () => {
                     href="/booking"
                     className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🎫 Book More Seats
+                    🎫 Book Havan Seats
+                  </Link>
+                  <Link
+                    href="/booking/show"
+                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
+                  >
+                    🎭 Book Show Seats
+                  </Link>
+                  <Link
+                    href="/booking/stall"
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
+                  >
+                    🏪 Book Stalls
                   </Link>
                   <button
-                    onClick={fetchUserBookings}
+                    onClick={refreshBookings}
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200"
                   >
                     🔄 Refresh Bookings
@@ -481,7 +791,6 @@ const ProfilePage = () => {
               <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
                 <h4 className="font-medium text-yellow-800 mb-2">Important Notes</h4>
                 <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Free cancellation up to 15 days before event</li>
                   <li>• Confirmation email sent to registered address</li>
                   <li>• Arrive 30 minutes before ceremony time</li>
                   <li>• Refunds processed within 5-7 business days</li>
@@ -504,12 +813,16 @@ const ProfilePage = () => {
                 </div>
                 
                 <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
-                  Cancel Booking?
+                  Cancel {bookingToCancel.type === 'show' ? 'Show' : 'Havan'} Booking?
                 </h3>
                 
                 <p className="text-sm text-gray-600 text-center mb-6">
-                  Are you sure you want to cancel your booking for <strong>{format(bookingToCancel.eventDetails.date, 'MMMM dd, yyyy')}</strong>? 
-                  This action cannot be undone.
+                  Are you sure you want to cancel your booking for <strong>
+                    {bookingToCancel.type === 'show' 
+                      ? format(bookingToCancel.showDetails.date, 'MMMM dd, yyyy')
+                      : format(bookingToCancel.eventDetails.date, 'MMMM dd, yyyy')
+                    }
+                  </strong>? This action cannot be undone.
                 </p>
 
                 {/* Booking Details Summary */}
@@ -524,8 +837,15 @@ const ProfilePage = () => {
                       <p className="text-gray-900 font-semibold">₹{bookingToCancel.payment.amount}</p>
                     </div>
                     <div className="col-span-2">
-                      <span className="font-medium text-gray-700">Seats:</span>
-                      <p className="text-gray-900">{bookingToCancel.eventDetails.seats.join(', ')}</p>
+                      <span className="font-medium text-gray-700">
+                        {bookingToCancel.type === 'show' ? 'Seats' : 'Seats'}:
+                      </span>
+                      <p className="text-gray-900">
+                        {bookingToCancel.type === 'show' 
+                          ? `${bookingToCancel.showDetails?.selectedSeats?.length || 0} seats`
+                          : bookingToCancel.eventDetails.seats.join(', ')
+                        }
+                      </p>
                     </div>
                   </div>
                 </div>

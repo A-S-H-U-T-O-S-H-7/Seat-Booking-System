@@ -27,7 +27,14 @@ export default function OverviewStats() {
     totalUsers: 0,
     activeEvents: 0,
     pendingCancellations: 0,
-    occupancyRate: 0
+    occupancyRate: 0,
+    // Show booking stats
+    showBookings: {
+      total: 0,
+      confirmed: 0,
+      revenue: 0,
+      todayBookings: 0
+    }
   });
   
   const [recentBookings, setRecentBookings] = useState([]);
@@ -54,6 +61,7 @@ export default function OverviewStats() {
       try {
         await Promise.all([
           fetchOverviewData(),
+          fetchShowBookingStats(),
           fetchRecentBookings()
         ]);
       } catch (error) {
@@ -187,7 +195,8 @@ export default function OverviewStats() {
       const eventsSnap = await getDocs(eventsQuery);
       const activeEvents = eventsSnap.size;
 
-      setStats({
+      setStats(prevStats => ({
+        ...prevStats,
         totalRevenue: isNaN(totalRevenue) ? 0 : totalRevenue,
         todayRevenue: isNaN(todayRevenue) ? 0 : todayRevenue,
         totalBookings: totalBookings || 0,
@@ -196,12 +205,13 @@ export default function OverviewStats() {
         activeEvents: activeEvents || 0,
         pendingCancellations: pendingCancellations || 0,
         occupancyRate: isNaN(occupancyRate) ? 0 : occupancyRate
-      });
+      }));
 
     } catch (error) {
       console.error('Error fetching overview data:', error);
       // Set default values on error
-      setStats({
+      setStats(prevStats => ({
+        ...prevStats,
         totalRevenue: 0,
         todayRevenue: 0,
         totalBookings: 0,
@@ -210,7 +220,7 @@ export default function OverviewStats() {
         activeEvents: 0,
         pendingCancellations: 0,
         occupancyRate: 0
-      });
+      }));
     } finally {
       setLoading(false);
     }
@@ -236,6 +246,61 @@ export default function OverviewStats() {
     } catch (error) {
       console.error('Error calculating booked seats:', error);
       return 0;
+    }
+  };
+
+  const fetchShowBookingStats = async () => {
+    try {
+      const showBookingsRef = collection(db, 'showBookings');
+      const showBookingsSnap = await getDocs(showBookingsRef);
+      
+      let totalShowBookings = 0;
+      let confirmedShowBookings = 0;
+      let showRevenue = 0;
+      let todayShowBookings = 0;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      showBookingsSnap.forEach(doc => {
+        const booking = doc.data();
+        totalShowBookings++;
+        
+        if (booking.status === 'confirmed') {
+          confirmedShowBookings++;
+          if (booking.payment?.amount) {
+            showRevenue += parseFloat(booking.payment.amount);
+          }
+        }
+        
+        // Check if booking was made today
+        if (booking.createdAt) {
+          let createdDate;
+          if (booking.createdAt.toDate) {
+            createdDate = booking.createdAt.toDate();
+          } else {
+            createdDate = new Date(booking.createdAt);
+          }
+          
+          if (createdDate >= today && createdDate < tomorrow) {
+            todayShowBookings++;
+          }
+        }
+      });
+      
+      setStats(prevStats => ({
+        ...prevStats,
+        showBookings: {
+          total: totalShowBookings,
+          confirmed: confirmedShowBookings,
+          revenue: showRevenue,
+          todayBookings: todayShowBookings
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching show booking stats:', error);
     }
   };
 
@@ -292,14 +357,14 @@ export default function OverviewStats() {
   const statCards = [
     {
       title: 'Total Revenue',
-      value: formatCurrency(stats.totalRevenue),
+      value: formatCurrency(stats.totalRevenue + stats.showBookings.revenue),
       change: stats.todayRevenue > 0 ? `+${formatCurrency(stats.todayRevenue)} today` : 'No revenue today',
       changeType: stats.todayRevenue > 0 ? 'increase' : 'neutral',
       icon: CurrencyRupeeIcon,
       color: 'green'
     },
     {
-      title: 'Total Bookings',
+      title: 'Havan Bookings',
       value: stats.totalBookings.toString(),
       change: `+${stats.todayBookings} today`,
       changeType: stats.todayBookings > 0 ? 'increase' : 'neutral',
@@ -307,12 +372,20 @@ export default function OverviewStats() {
       color: 'blue'
     },
     {
+      title: 'Show Bookings',
+      value: stats.showBookings.total.toString(),
+      change: `${stats.showBookings.confirmed} confirmed`,
+      changeType: stats.showBookings.confirmed > 0 ? 'increase' : 'neutral',
+      icon: CalendarDaysIcon,
+      color: 'purple'
+    },
+    {
       title: 'Registered Users',
       value: stats.totalUsers.toString(),
       change: 'All time',
       changeType: 'neutral',
       icon: UsersIcon,
-      color: 'purple'
+      color: 'indigo'
     },
     {
       title: 'Occupancy Rate',
@@ -389,7 +462,7 @@ export default function OverviewStats() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {statCards.map((stat, index) => (
           <div key={index} className={`rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow ${
             isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
