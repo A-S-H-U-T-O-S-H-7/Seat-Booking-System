@@ -343,7 +343,8 @@ const ProfilePage = () => {
                                 {booking.eventDetails.seatCount} seat{booking.eventDetails.seatCount > 1 ? 's' : ''}
                               </p>
                               <p className="text-xs text-gray-600 truncate">
-                                {booking.eventDetails.seats.join(', ')}
+                                {(booking.eventDetails.seats || []).join(', ')}
+
                               </p>
                             </div>
                             
