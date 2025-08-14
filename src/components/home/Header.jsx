@@ -7,17 +7,15 @@ function Header({ user, handleLogout }) {
 
   return (
     <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-orange-100">
-      <div className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+      <div className="px-2 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center pr-2">
             <img 
-              src="/havan.jpg" 
+              src="/header-logo.png" 
               alt="Havan Logo" 
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-md"
+              
             />
-            <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-orange-600 via-red-500 to-yellow-600 bg-clip-text text-transparent">
-              Havan Ceremony
-            </h1>
+            
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4">

@@ -23,9 +23,8 @@ const StallBookingCard = ({ booking, onCancel }) => {
     return businessTypes[businessType] || businessType || 'General';
   };
 
-  const eventStartDate = booking.eventDate || new Date('2025-11-15');
-  const eventEndDate = new Date(eventStartDate);
-  eventEndDate.setDate(eventEndDate.getDate() + 4); // 5-day event
+  const eventStartDate = booking.eventDetails?.startDate || new Date('2025-11-15');
+  const eventEndDate = booking.eventDetails?.endDate || new Date('2025-11-20');
 
   return (
     <div 
@@ -53,7 +52,7 @@ const StallBookingCard = ({ booking, onCancel }) => {
                booking.status}
             </span>
             <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-              🏪 Stall Booking
+              🏪 {booking.stallIds && booking.stallIds.length > 1 ? 'Multi-Stall Booking' : 'Stall Booking'}
             </span>
           </div>
           <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
@@ -76,10 +75,18 @@ const StallBookingCard = ({ booking, onCancel }) => {
           <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
             <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">STALL DETAILS</p>
             <p className="text-sm font-bold text-gray-900">
-              Stall #{ booking.stallId || 'N/A'}
+              {booking.stallIds && booking.stallIds.length > 0 
+                ? `${booking.stallIds.length} Stall${booking.stallIds.length > 1 ? 's' : ''}`
+                : booking.stallId 
+                  ? `Stall ${booking.stallId}`
+                  : 'N/A'
+              }
             </p>
             <p className="text-xs text-gray-600 truncate">
-              {booking.stallDetails?.size || 'Standard size'}
+              {booking.stallIds && booking.stallIds.length > 0 
+                ? booking.stallIds.slice(0, 3).join(', ') + (booking.stallIds.length > 3 ? ` +${booking.stallIds.length - 3} more` : '')
+                : booking.stallDetails?.size || 'Standard size'
+              }
             </p>
           </div>
           
@@ -101,7 +108,22 @@ const StallBookingCard = ({ booking, onCancel }) => {
           </div>
         </div>
 
-        
+        {/* Stall IDs Details - Show when multiple stalls */}
+        {booking.stallIds && booking.stallIds.length > 1 && (
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">BOOKED STALLS</p>
+            <div className="flex flex-wrap gap-2">
+              {booking.stallIds.map((stallId, index) => (
+                <span 
+                  key={index}
+                  className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium border border-blue-300"
+                >
+                  {stallId}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Footer with booking info and action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">

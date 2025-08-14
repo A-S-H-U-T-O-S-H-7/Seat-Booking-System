@@ -26,7 +26,10 @@ import ProtectedAdminRoute from '@/components/admin/ProtectedAdminRoute';
 import EventSchedule from '@/components/admin/EventSchedule';
 import SeatManagement from '@/components/admin/SeatManagement';
 import ShowSeatManagement from '@/components/admin/ShowSeatManagement';
-import BookingManagement from '@/components/admin/BookingManagement';
+import StallManagement from '@/components/admin/StallManagement';
+import BookingManagement from '@/components/admin/havan-bookings/BookingManagement';
+import StallBookingManagement from '@/components/admin/stall-bookings/StallBookingManagement';
+import ShowBookingManagement from '@/components/admin/show-bookings/ShowBookingManagement';
 import UserManagement from '@/components/admin/UserManagement';
 import AdminManagement from '@/components/admin/AdminManagement';
 import PriceSettings from '@/components/admin/PriceSettings';
@@ -90,6 +93,12 @@ export default function AdminDashboard() {
       permission: 'manage_seats'
     },
     {
+      id: 'stalls',
+      name: 'Stall Seats',
+      icon: Cog6ToothIcon,
+      permission: 'manage_stalls'
+    },
+    {
       id: 'show-seats',
       name: 'Show Seats',
       icon: CalendarDaysIcon,
@@ -98,6 +107,18 @@ export default function AdminDashboard() {
     {
       id: 'bookings',
       name: 'Havan Bookings',
+      icon: UsersIcon,
+      permission: 'view_bookings'
+    },
+    {
+      id: 'stall-bookings',
+      name: 'Stall Bookings',
+      icon: UsersIcon,
+      permission: 'view_bookings'
+    },
+    {
+      id: 'show-bookings',
+      name: 'Show Bookings',
       icon: UsersIcon,
       permission: 'view_bookings'
     },
@@ -135,10 +156,16 @@ export default function AdminDashboard() {
         return <EventSchedule />;
       case 'seats':
         return <SeatManagement />;
+      case 'stalls':
+        return <StallManagement />;
       case 'show-seats':
         return <ShowSeatManagement />;
       case 'bookings':
         return <BookingManagement />;
+      case 'stall-bookings':
+        return <StallBookingManagement />;
+      case 'show-bookings':
+        return <ShowBookingManagement />;
       case 'users':
         return <UserManagement />;
       case 'pricing':

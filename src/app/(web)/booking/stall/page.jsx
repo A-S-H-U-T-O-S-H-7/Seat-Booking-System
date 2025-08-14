@@ -26,14 +26,7 @@ export default function StallBookingPage() {
                 </div>
               </Link>
               
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/profile"
-                  className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
-                >
-                  Profile
-                </Link> 
-              </div>
+              
             </div>
           </div>
         </header>

@@ -57,11 +57,8 @@ export default function BookingFilters({
           >
             <option value="all">🔍 All Status</option>
             <option value="confirmed">✅ Confirmed</option>
-            <option value="pending">⏳ Pending</option>
             <option value="cancelled">❌ Cancelled</option>
-            <option value="cancellation-requested">🔄 Cancellation Requested</option>
-            <option value="refunded">💸 Refunded</option>
-          </select>
+                      </select>
         </div>
 
         {/* Date Filter */}

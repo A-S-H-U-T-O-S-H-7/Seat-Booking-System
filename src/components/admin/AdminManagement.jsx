@@ -35,6 +35,7 @@ export default function AdminManagement() {
   const availablePermissions = [
     { id: 'view_events', name: 'View Events' },
     { id: 'manage_seats', name: 'Manage Seats' },
+    { id: 'manage_stalls', name: 'Manage Stalls' },
     { id: 'view_bookings', name: 'View Bookings' },
     { id: 'manage_bookings', name: 'Manage Bookings' },
     { id: 'view_users', name: 'View Users' },

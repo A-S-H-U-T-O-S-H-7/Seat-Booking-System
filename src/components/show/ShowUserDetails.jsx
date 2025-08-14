@@ -1,504 +1,235 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { useShowSeatBooking } from '@/context/ShowSeatBookingContext';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
-import { toast } from 'react-hot-toast';
-import { ArrowLeftIcon, ArrowRightIcon, UserIcon, PhoneIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { useShowSeatBooking } from '@/context/ShowSeatBookingContext';
+import { User, Mail, Phone, CreditCard, MapPin, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-export default function ShowUserDetails({ onNext, onBack }) {
-  const { setBookingData, selectedSeats, seats, totalPrice, totalCapacity } = useShowSeatBooking();
+const ShowUserDetails = () => {
   const { user } = useAuth();
-  const { isDarkMode } = useTheme();
-
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: user?.email || '',
+  const { setBookingData, bookingData } = useShowSeatBooking();
+  const [details, setDetails] = useState({
+    name: '',
+    email: '',
     phone: '',
-    alternatePhone: '',
+    aadhar: '',
     address: '',
-    city: '',
-    state: '',
-    pincode: '',
-    emergencyContact: {
-      name: '',
-      phone: '',
-      relation: ''
-    },
-    specialRequests: ''
+    emergencyContact: ''
   });
 
-  const [errors, setErrors] = useState({});
-
+  // Pre-fill email from user account
   useEffect(() => {
-    if (user?.email) {
-      setFormData(prev => ({
-        ...prev,
+    if (user?.email && !details.email) {
+      console.log('Pre-filling email from user account:', user.email);
+      const newDetails = {
+        ...details,
         email: user.email
+      };
+      setDetails(newDetails);
+      
+      if (typeof setBookingData === 'function') {
+        console.log('Saving user details to context:', newDetails);
+        setBookingData({ userDetails: newDetails });
+      } else {
+        console.error('setBookingData function is not available');
+      }
+    }
+  }, [user, details.email]);
+
+  // Sync local state with context when component mounts
+  useEffect(() => {
+    if (bookingData?.userDetails && Object.keys(bookingData.userDetails).length > 0) {
+      console.log('Syncing local state with context:', bookingData.userDetails);
+      setDetails(prev => ({
+        ...prev,
+        ...bookingData.userDetails
       }));
     }
-  }, [user]);
+  }, [bookingData]);
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Please enter a valid 10-digit phone number';
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-
-    if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
-    }
-
-    if (!formData.state.trim()) {
-      newErrors.state = 'State is required';
-    }
-
-    if (!formData.pincode.trim()) {
-      newErrors.pincode = 'Pincode is required';
-    } else if (!/^\d{6}$/.test(formData.pincode)) {
-      newErrors.pincode = 'Please enter a valid 6-digit pincode';
-    }
-
-    // Emergency contact validation
-    if (formData.emergencyContact.name.trim() && !formData.emergencyContact.phone.trim()) {
-      newErrors.emergencyPhone = 'Emergency contact phone is required if name is provided';
-    }
-
-    if (formData.emergencyContact.phone.trim() && !/^\d{10}$/.test(formData.emergencyContact.phone.replace(/\D/g, ''))) {
-      newErrors.emergencyPhone = 'Please enter a valid emergency contact phone number';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (field, value) => {
+    console.log('Field changed:', { field, value });
+    const newDetails = {
+      ...details,
+      [field]: value
+    };
+    setDetails(newDetails);
     
-    if (name.startsWith('emergencyContact.')) {
-      const field = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        emergencyContact: {
-          ...prev.emergencyContact,
-          [field]: value
-        }
-      }));
+    if (typeof setBookingData === 'function') {
+      console.log('Saving updated user details to context:', newDetails);
+      setBookingData({ userDetails: newDetails });
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      console.error('setBookingData function is not available');
     }
   };
 
-  const handleContinue = () => {
-    if (validateForm()) {
-      setBookingData({ userDetails: formData });
-      onNext();
-    } else {
-      toast.error('Please fill in all required fields correctly');
-    }
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateAadhar = (aadhar) => {
+    const aadharRegex = /^\d{12}$/;
+    return aadharRegex.test(aadhar);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className={`p-6 rounded-lg border ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
-        <div className="flex items-center gap-3 mb-4">
-          <UserIcon className={`w-6 h-6 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-          <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Contact Information
-          </h2>
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center">
+          <User className="w-5 h-5 text-white" />
         </div>
-        
-        <div className={`p-4 rounded-lg ${
-          isDarkMode ? 'bg-gray-700' : 'bg-blue-50'
-        }`}>
-          <div className="flex items-center justify-between text-sm">
-            <span className={isDarkMode ? 'text-gray-300' : 'text-blue-800'}>
-              Selected: {selectedSeats.length} seats for {totalCapacity} people
-            </span>
-            <span className={`font-semibold ${isDarkMode ? 'text-gray-300' : 'text-blue-800'}`}>
-              Total: ₹{totalPrice.toLocaleString('en-IN')}
-            </span>
-          </div>
+        <div>
+          <h3 className="text-xl font-bold text-gray-900">Your Details</h3>
+          <p className="text-gray-600 text-sm">Please provide your information</p>
         </div>
       </div>
-
-      {/* Personal Information */}
-      <div className={`p-6 rounded-lg border ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Personal Information
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Full Name *
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.fullName 
-                  ? 'border-red-500' 
-                  : isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter your full name"
-            />
-            {errors.fullName && (
-              <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>
-            )}
-          </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Email Address *
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              disabled={!!user?.email}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.email 
-                  ? 'border-red-500' 
-                  : isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              } ${user?.email ? 'opacity-75 cursor-not-allowed' : ''}`}
-              placeholder="Enter your email address"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.phone 
-                  ? 'border-red-500' 
-                  : isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter your phone number"
-            />
-            {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-            )}
-          </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Alternate Phone
-            </label>
-            <input
-              type="tel"
-              name="alternatePhone"
-              value={formData.alternatePhone}
-              onChange={handleInputChange}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter alternate phone number"
-            />
-          </div>
+      
+      <div className="space-y-4">
+        {/* Full Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <User className="w-4 h-4" />
+            Full Name *
+          </label>
+          <input
+            type="text"
+            value={details.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
+            placeholder="Enter your full name"
+            required
+          />
         </div>
-      </div>
 
-      {/* Address Information */}
-      <div className={`p-6 rounded-lg border ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Address Information
-        </h3>
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <Mail className="w-4 h-4" />
+            Email Address *
+          </label>
+          <input
+            type="email"
+            value={details.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
+            placeholder="Enter your email"
+            required
+          />
+          {details.email && !validateEmail(details.email) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Please enter a valid email address
+            </p>
+          )}
+        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Address *
-            </label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              rows="2"
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.address 
-                  ? 'border-red-500' 
-                  : isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter your complete address"
-            />
-            {errors.address && (
-              <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-            )}
-          </div>
+        {/* Phone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <Phone className="w-4 h-4" />
+            Phone Number *
+          </label>
+          <input
+            type="tel"
+            value={details.phone}
+            onChange={(e) => handleChange('phone', e.target.value.replace(/\D/g, ''))}
+            maxLength="10"
+            className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
+            placeholder="Enter 10-digit mobile number"
+            required
+          />
+          {details.phone && !validatePhone(details.phone) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Please enter a valid 10-digit mobile number
+            </p>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                City *
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.city 
-                    ? 'border-red-500' 
-                    : isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="Enter your city"
-              />
-              {errors.city && (
-                <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-              )}
-            </div>
+        {/* Aadhar Card */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <CreditCard className="w-4 h-4" />
+            Aadhar Number *
+          </label>
+          <input
+            type="text"
+            value={details.aadhar}
+            onChange={(e) => handleChange('aadhar', e.target.value.replace(/\D/g, ''))}
+            maxLength="12"
+            className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
+            placeholder="Enter 12-digit Aadhar number"
+            required
+          />
+          {details.aadhar && !validateAadhar(details.aadhar) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Please enter a valid 12-digit Aadhar number
+              </p>
+          )}
+        </div>
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                State *
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.state 
-                    ? 'border-red-500' 
-                    : isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="Enter your state"
-              />
-              {errors.state && (
-                <p className="text-red-500 text-xs mt-1">{errors.state}</p>
-              )}
-            </div>
+        {/* Address */}
+        <div>
+          <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            Complete Address *
+          </label>
+          <textarea
+            value={details.address}
+            onChange={(e) => handleChange('address', e.target.value)}
+            rows="3"
+            className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500 resize-none"
+            placeholder="Enter your complete address (street, city, state, pincode)"
+            required
+          />
+        </div>
 
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
-                Pincode *
-              </label>
-              <input
-                type="text"
-                name="pincode"
-                value={formData.pincode}
-                onChange={handleInputChange}
-                className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.pincode 
-                    ? 'border-red-500' 
-                    : isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="Enter your pincode"
-              />
-              {errors.pincode && (
-                <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>
-              )}
-            </div>
-          </div>
+        {/* Emergency Contact */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Emergency Contact Number *
+          </label>
+          <input
+            type="tel"
+            value={details.emergencyContact}
+            onChange={(e) => handleChange('emergencyContact', e.target.value.replace(/\D/g, ''))}
+            maxLength="10"
+            className="w-full px-3 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
+            placeholder="Enter emergency contact number"
+            required
+          />
+          {details.emergencyContact && !validatePhone(details.emergencyContact) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Please enter a valid 10-digit mobile number
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Emergency Contact */}
-      <div className={`p-6 rounded-lg border ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Emergency Contact (Optional)
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Contact Name
-            </label>
-            <input
-              type="text"
-              name="emergencyContact.name"
-              value={formData.emergencyContact.name}
-              onChange={handleInputChange}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Emergency contact name"
-            />
+      {/* Information Note */}
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-start gap-3">
+          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span className="text-white text-xs font-bold">i</span>
           </div>
-
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Contact Phone
-            </label>
-            <input
-              type="tel"
-              name="emergencyContact.phone"
-              value={formData.emergencyContact.phone}
-              onChange={handleInputChange}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                errors.emergencyPhone 
-                  ? 'border-red-500' 
-                  : isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Emergency contact phone"
-            />
-            {errors.emergencyPhone && (
-              <p className="text-red-500 text-xs mt-1">{errors.emergencyPhone}</p>
-            )}
-          </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
-              Relation
-            </label>
-            <select
-              name="emergencyContact.relation"
-              value={formData.emergencyContact.relation}
-              onChange={handleInputChange}
-              className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
-              }`}
-            >
-              <option value="">Select relation</option>
-              <option value="parent">Parent</option>
-              <option value="spouse">Spouse</option>
-              <option value="sibling">Sibling</option>
-              <option value="child">Child</option>
-              <option value="friend">Friend</option>
-              <option value="other">Other</option>
-            </select>
+            <h4 className="text-blue-700 font-medium mb-1">Important</h4>
+            <p className="text-blue-600 text-sm">
+              All information provided will be used for booking confirmation and emergency contact purposes only.
+            </p>
           </div>
         </div>
-      </div>
-
-      {/* Special Requests */}
-      <div className={`p-6 rounded-lg border ${
-        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-      }`}>
-        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Special Requests (Optional)
-        </h3>
-
-        <textarea
-          name="specialRequests"
-          value={formData.specialRequests}
-          onChange={handleInputChange}
-          rows="3"
-          className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-            isDarkMode 
-              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-          }`}
-          placeholder="Any special requirements, accessibility needs, or requests..."
-        />
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between">
-        <button
-          onClick={onBack}
-          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-            isDarkMode 
-              ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-              : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-          }`}
-        >
-          <ArrowLeftIcon className="w-5 h-5" />
-          Back to Seat Selection
-        </button>
-
-        <button
-          onClick={handleContinue}
-          className="flex items-center gap-2 px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all duration-200 shadow-lg hover:scale-105"
-        >
-          Continue to Review
-          <ArrowRightIcon className="w-5 h-5" />
-        </button>
       </div>
     </div>
   );
-}
+};
+
+export default ShowUserDetails;

@@ -154,7 +154,7 @@ const BookingFlow = () => {
       <div className="container mx-auto px-1 py-8">
         <div className={`${getContainerMaxWidth()} mx-auto`}>
           {/* Progress Steps */}
-          <div className="mb-8">
+          <div className="mb-8"> 
             {/* Mobile Progress */}
             <div className="block md:hidden">
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">

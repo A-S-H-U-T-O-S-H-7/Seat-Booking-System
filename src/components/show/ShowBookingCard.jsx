@@ -1,11 +1,38 @@
 "use client";
 import { format, differenceInDays } from 'date-fns';
+import { useState } from 'react';
 
 const ShowBookingCard = ({ booking, onCancel }) => {
   const canCancelBooking = (eventDate) => {
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
     return daysUntilEvent >= 15;
+  };
+
+  const getSeatCategory = (seat) => {
+    const seatString = typeof seat === 'string' ? seat : 
+                      typeof seat === 'object' ? (seat.seatId || seat.id || seat.number || '') : 
+                      String(seat || '');
+    
+    if (!seatString) return 'Standard';
+    
+    const upperSeat = seatString.toUpperCase();
+    if (upperSeat.startsWith('A') || upperSeat.startsWith('B')) return 'VIP';
+    if (upperSeat.startsWith('C')) return 'Premium';
+    return 'Standard';
+  };
+
+  const getSeatPrice = (seat) => {
+    const seatString = typeof seat === 'string' ? seat : 
+                      typeof seat === 'object' ? (seat.seatId || seat.id || seat.number || '') : 
+                      String(seat || '');
+    
+    return booking.showDetails?.seats?.find(s => 
+             (s.seatId === seat || s.seatId === seatString || s.id === seat || s.number === seat)
+           )?.price || 
+           booking.showDetails?.seatPrices?.[seatString] || 
+           booking.showDetails?.seatPrices?.[seat] ||
+           (getSeatCategory(seat) === 'VIP' ? 1500 : getSeatCategory(seat) === 'Premium' ? 1000 : 750);
   };
 
   return (
@@ -33,41 +60,79 @@ const ShowBookingCard = ({ booking, onCancel }) => {
                booking.status === 'cancelled' ? '✗ Cancelled' : 
                booking.status}
             </span>
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+              🎭 Show Booking
+            </span>
           </div>
           <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
-            ID: {booking.bookingId}
+            ID: {booking.id || booking.bookingId || 'N/A'}
           </span>
         </div>
         
         {/* Main booking details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Show Date</p>
+            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">SHOW DATE</p>
             <p className="text-sm font-bold text-gray-900 leading-tight">
               {booking.showDetails?.date ? format(booking.showDetails.date, 'MMM dd, yyyy') : 'TBD'}
             </p>
             <p className="text-xs text-gray-600">
-              {booking.showDetails?.time || 'TBD'}
+              {booking.showDetails?.time || 'Time TBD'}
             </p>
           </div>
           
           <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-            <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">Seats</p>
+            <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">SEAT DETAILS</p>
             <p className="text-sm font-bold text-gray-900">
-              {booking.showDetails.selectedSeats?.length || 0} seat{booking.showDetails.selectedSeats?.length > 1 ? 's' : ''}
+              {booking.showDetails?.selectedSeats?.length || 0} seat{booking.showDetails?.selectedSeats?.length !== 1 ? 's' : ''}
             </p>
             <p className="text-xs text-gray-600 truncate">
-              {booking.showDetails?.selectedSeats?.map(s => s.id).join(', ') || 'N/A'}
+              {booking.showDetails?.selectedSeats?.length > 0 
+                ? booking.showDetails.selectedSeats.slice(0, 3).map(seat => {
+                    const displaySeat = typeof seat === 'string' ? seat : 
+                                      typeof seat === 'object' ? (seat.seatId || seat.id || seat.number || '') : 
+                                      String(seat || '');
+                    return displaySeat;
+                  }).join(', ') + (booking.showDetails.selectedSeats.length > 3 ? ` +${booking.showDetails.selectedSeats.length - 3} more` : '')
+                : 'No seats selected'
+              }
             </p>
           </div>
           
           <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Amount Paid</p>
+            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">TOTAL AMOUNT</p>
             <p className="text-lg font-bold text-green-600">
-              ₹{booking.payment?.amount || 0}
+              ₹{(booking.showDetails?.totalPrice || 0).toLocaleString('en-IN')}
             </p>
           </div>
         </div>
+
+        {/* Seat IDs Details - Show when multiple seats */}
+        {booking.showDetails?.selectedSeats?.length > 3 && (
+          <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
+            <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">SELECTED SEATS</p>
+            <div className="flex flex-wrap gap-1">
+              {booking.showDetails.selectedSeats.slice(0, 8).map((seat, index) => {
+                const displaySeat = typeof seat === 'string' ? seat : 
+                                  typeof seat === 'object' ? (seat.seatId || seat.id || seat.number || `S${index + 1}`) : 
+                                  String(seat || `S${index + 1}`);
+                return (
+                  <span 
+                    key={index}
+                    className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-medium border border-indigo-300"
+                  >
+                    {displaySeat}
+                  </span>
+                );
+              })}
+              {booking.showDetails.selectedSeats.length > 8 && (
+                <span className="px-2 py-1 bg-indigo-200 text-indigo-900 rounded text-xs font-medium">
+                  +{booking.showDetails.selectedSeats.length - 8} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Footer with booking info and action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">

@@ -85,7 +85,7 @@ export const StallBookingProvider = ({ children }) => {
     if (!priceSettings.earlyBirdDiscount.isActive) return 0;
     
     const today = new Date();
-    const eventStart = new Date('2024-12-15'); // Adjust event start date as needed
+    const eventStart = new Date('2025-11-15'); // Adjust event start date as needed
     const daysUntilEvent = Math.ceil((eventStart - today) / (1000 * 60 * 60 * 24));
     
     if (daysUntilEvent >= priceSettings.earlyBirdDiscount.daysBeforeEvent) {

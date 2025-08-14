@@ -63,6 +63,10 @@ const StallPaymentProcess = ({ vendorDetails }) => {
   const processStallBooking = async (paymentData) => {
     const generatedBookingId = generateBookingId();
     
+    console.log('Processing stall booking for stalls:', selectedStalls);
+    console.log('Total amount:', getTotalAmount());
+    console.log('Number of stalls:', selectedStalls.length);
+    
     try {
       await runTransaction(db, async (transaction) => {
         // Check stall availability one more time
@@ -73,37 +77,43 @@ const StallPaymentProcess = ({ vendorDetails }) => {
           ? availabilityDoc.data().stalls || {}
           : {};
 
-        // Verify stall is still available
-        if (currentAvailability[selectedStalls[0]]?.booked) {
-          throw new Error(`Stall ${selectedStalls[0]} is no longer available`);
+        // Verify all selected stalls are still available
+        for (const stallId of selectedStalls) {
+          if (currentAvailability[stallId]?.booked) {
+            throw new Error(`Stall ${stallId} is no longer available`);
+          }
         }
 
-        // Update stall availability
+        // Update stall availability for all selected stalls
         const updatedAvailability = { ...currentAvailability };
-        updatedAvailability[selectedStalls[0]] = {
-          booked: true,
-          userId: user.uid,
-          vendorName: vendorDetails.ownerName,
-          businessName: vendorDetails.businessType,
-          bookingId: generatedBookingId,
-          bookedAt: serverTimestamp()
-        };
+        selectedStalls.forEach(stallId => {
+          updatedAvailability[stallId] = {
+            booked: true,
+            userId: user.uid,
+            vendorName: vendorDetails.ownerName,
+            businessName: vendorDetails.businessType,
+            bookingId: generatedBookingId,
+            bookedAt: serverTimestamp()
+          };
+        });
 
         transaction.set(availabilityRef, {
           stalls: updatedAvailability,
           updatedAt: serverTimestamp()
         }, { merge: true });
 
-        // Create booking record
+        // Create a single booking record for all stalls
+        console.log('Creating single booking record for stalls:', selectedStalls);
         const bookingRef = doc(db, 'stallBookings', generatedBookingId);
         transaction.set(bookingRef, {
           id: generatedBookingId,
           bookingId: generatedBookingId,
           userId: user.uid,
           vendorDetails,
-          stallId: selectedStalls[0],
+          stallIds: selectedStalls, // Array of all selected stall IDs
+          numberOfStalls: selectedStalls.length,
           duration: '5 days',
-          totalAmount: getTotalAmount(),
+          totalAmount: getTotalAmount(), // Total amount for all stalls
           payment: {
             ...paymentData,
             amount: getTotalAmount()
@@ -113,17 +123,18 @@ const StallPaymentProcess = ({ vendorDetails }) => {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           eventDetails: {
-            startDate: new Date('2024-12-15'),
-            endDate: new Date('2024-12-19'),
+            startDate: new Date('2025-11-15'),
+            endDate: new Date('2025-11-20'),
             type: 'vendor_stall'
           }
         });
       });
 
+      console.log('Transaction completed successfully for booking ID:', generatedBookingId);
       setBookingId(generatedBookingId);
       
       // In real implementation, trigger email confirmation here
-      toast.success('Stall booking confirmed! Confirmation email sent.');
+      toast.success(`Stall booking confirmed! ${selectedStalls.length} stall(s) booked successfully. Confirmation email sent.`);
       
     } catch (error) {
       console.error('Booking failed:', error);
@@ -181,11 +192,11 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             </div>
             
             <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">
-              🎉 Stall Booking Confirmed!
+              🎉 {selectedStalls.length > 1 ? 'Multi-Stall Booking Confirmed!' : 'Stall Booking Confirmed!'}
             </h3>
             
             <p className="text-green-100 text-sm sm:text-base">
-              Your vendor stall has been successfully reserved
+              Your {selectedStalls.length > 1 ? `${selectedStalls.length} vendor stalls have` : 'vendor stall has'} been successfully reserved
             </p>
           </div>
 
@@ -206,8 +217,13 @@ const StallPaymentProcess = ({ vendorDetails }) => {
                 </div>
                 
                 <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200">
-                  <p className="text-xs text-gray-600 mb-1">Stall ID</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm">{selectedStalls?.[0] || 'N/A'}</p>
+                  <p className="text-xs text-gray-600 mb-1">Stall IDs</p>
+                  <p className="font-bold text-green-800 text-xs sm:text-sm">
+                    {selectedStalls && selectedStalls.length > 0 
+                      ? selectedStalls.slice(0, 3).join(', ') + (selectedStalls.length > 3 ? ` +${selectedStalls.length - 3} more` : '')
+                      : 'N/A'
+                    }
+                  </p>
                 </div>
                 
                 <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200 col-span-2 sm:col-span-1">
@@ -338,8 +354,8 @@ const StallPaymentProcess = ({ vendorDetails }) => {
                   Stall Details
                 </h4>
                 <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
-                  <p><span className="font-medium text-gray-900">Stall ID:</span> {selectedStalls?.[0] || 'N/A'}</p>
-                  <p><span className="font-medium text-gray-900">Event Duration:</span> 5 Days (Dec 15-19, 2024)</p>
+                  <p><span className="font-medium text-gray-900">Stall IDs:</span> {selectedStalls && selectedStalls.length > 0 ? selectedStalls.join(', ') : 'N/A'}</p>
+                  <p><span className="font-medium text-gray-900">Event Duration:</span> 5 Days (Nov 15-20, 2025)</p>
                   <p><span className="font-medium text-gray-900">Location:</span> Main Exhibition Area</p>
                   <p><span className="font-medium text-gray-900">Facilities:</span> Electricity, Water, Loading Access</p>
                 </div>
@@ -425,11 +441,11 @@ const StallPaymentProcess = ({ vendorDetails }) => {
               </li>
               <li className="flex items-start">
                 <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Full refund available if canceled 20+ days before the event</span>
+                <span>Full refund available if canceled 15 days before the event</span>
               </li>
               <li className="flex items-start">
                 <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Bring valid business registration documents during setup</span>
+                <span>Bring valid ID during setup</span>
               </li>
             </ul>
           </div>

@@ -2,7 +2,12 @@ import {
   EyeIcon,
   CheckCircleIcon,
   XCircleIcon,
-  PencilIcon
+  PencilIcon,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 export default function BookingTable({
@@ -105,44 +110,45 @@ export default function BookingTable({
   const getStatusBadge = (status) => {
     const statusConfig = {
       confirmed: {
-        bg: isDarkMode ? 'bg-green-900 text-green-300 border-green-700' : 'bg-green-100 text-green-800 border-green-200',
-        icon: '✅',
+        bg: isDarkMode ? 'bg-green-900/30 text-green-300 border-green-600' : 'bg-green-50 text-green-700 border-green-200',
+        icon: CheckCircle,
         label: 'Confirmed'
       },
       pending: {
-        bg: isDarkMode ? 'bg-yellow-900 text-yellow-300 border-yellow-700' : 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        icon: '⏳',
+        bg: isDarkMode ? 'bg-yellow-900/30 text-yellow-300 border-yellow-600' : 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        icon: Clock,
         label: 'Pending'
       },
       cancelled: {
-        bg: isDarkMode ? 'bg-red-900 text-red-300 border-red-700' : 'bg-red-100 text-red-800 border-red-200',
-        icon: '❌',
+        bg: isDarkMode ? 'bg-red-900/30 text-red-300 border-red-600' : 'bg-red-50 text-red-700 border-red-200',
+        icon: XCircle,
         label: 'Cancelled'
       },
       'cancellation-requested': {
-        bg: isDarkMode ? 'bg-orange-900 text-orange-300 border-orange-700' : 'bg-orange-100 text-orange-800 border-orange-200',
-        icon: '🔄',
+        bg: isDarkMode ? 'bg-orange-900/30 text-orange-300 border-orange-600' : 'bg-orange-50 text-orange-700 border-orange-200',
+        icon: RefreshCw,
         label: 'Cancellation Requested'
       },
       refunded: {
-        bg: isDarkMode ? 'bg-purple-900 text-purple-300 border-purple-700' : 'bg-purple-100 text-purple-800 border-purple-200',
-        icon: '💸',
+        bg: isDarkMode ? 'bg-purple-900/30 text-purple-300 border-purple-600' : 'bg-purple-50 text-purple-700 border-purple-200',
+        icon: AlertCircle,
         label: 'Refunded'
       }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
+    const IconComponent = config.icon;
     
     return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${config.bg}`}>
-        <span className="mr-1">{config.icon}</span>
+      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium border ${config.bg}`}>
+        <IconComponent className="w-3 h-3 mr-1.5" />
         {config.label}
       </span>
     );
   };
 
   const renderActionButtons = (booking) => {
-    const baseButtonClass = `p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`;
+    const baseButtonClass = `p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105`;
     
     return (
       <div className="flex items-center space-x-2">
@@ -151,8 +157,8 @@ export default function BookingTable({
           onClick={() => onViewDetails(booking)}
           className={`${baseButtonClass} ${
             isDarkMode 
-              ? 'bg-blue-700 hover:bg-blue-600 text-blue-200' 
-              : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+              ? 'bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600' 
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
           }`}
           title="View Details"
         >
@@ -167,8 +173,8 @@ export default function BookingTable({
               disabled={isUpdating}
               className={`${baseButtonClass} ${
                 isDarkMode 
-                  ? 'bg-green-700 hover:bg-green-600 text-green-200' 
-                  : 'bg-green-100 hover:bg-green-200 text-green-700'
+                  ? 'bg-green-700 hover:bg-green-600 text-green-100 border border-green-600' 
+                  : 'bg-green-600 hover:bg-green-700 text-white border border-green-600'
               }`}
               title="Confirm Booking"
             >
@@ -179,8 +185,8 @@ export default function BookingTable({
               disabled={isUpdating}
               className={`${baseButtonClass} ${
                 isDarkMode 
-                  ? 'bg-red-700 hover:bg-red-600 text-red-200' 
-                  : 'bg-red-100 hover:bg-red-200 text-red-700'
+                  ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
+                  : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
               }`}
               title="Cancel Booking"
             >
@@ -196,8 +202,8 @@ export default function BookingTable({
               disabled={isUpdating}
               className={`${baseButtonClass} ${
                 isDarkMode 
-                  ? 'bg-purple-700 hover:bg-purple-600 text-purple-200' 
-                  : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
+                  ? 'bg-blue-700 hover:bg-blue-600 text-blue-100 border border-blue-600' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600'
               }`}
               title="Adjust Price"
             >
@@ -208,8 +214,8 @@ export default function BookingTable({
               disabled={isUpdating}
               className={`${baseButtonClass} ${
                 isDarkMode 
-                  ? 'bg-red-700 hover:bg-red-600 text-red-200' 
-                  : 'bg-red-100 hover:bg-red-200 text-red-700'
+                  ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
+                  : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
               }`}
               title="Cancel Booking"
             >
@@ -225,8 +231,8 @@ export default function BookingTable({
               disabled={isUpdating}
               className={`${baseButtonClass} ${
                 isDarkMode 
-                  ? 'bg-green-700 hover:bg-green-600 text-green-200' 
-                  : 'bg-green-100 hover:bg-green-200 text-green-700'
+                  ? 'bg-green-700 hover:bg-green-600 text-green-100 border border-green-600' 
+                  : 'bg-green-600 hover:bg-green-700 text-white border border-green-600'
               }`}
               title="Approve Cancellation"
             >
@@ -237,8 +243,8 @@ export default function BookingTable({
               disabled={isUpdating}
               className={`${baseButtonClass} ${
                 isDarkMode 
-                  ? 'bg-red-700 hover:bg-red-600 text-red-200' 
-                  : 'bg-red-100 hover:bg-red-200 text-red-700'
+                  ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
+                  : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
               }`}
               title="Reject Cancellation"
             >
@@ -252,8 +258,14 @@ export default function BookingTable({
 
   if (!bookings || bookings.length === 0) {
     return (
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-12 text-center`}>
-        <div className="text-6xl mb-4">📋</div>
+      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-12 text-center`}>
+        <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
+          isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+        }`}>
+          <svg className={`w-8 h-8 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
         <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
           No Bookings Found
         </h3>
@@ -265,142 +277,166 @@ export default function BookingTable({
   }
 
   return (
-    <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border overflow-hidden`}>
+    <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border overflow-hidden`}>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className={isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className={isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/50'}>
             <tr>
               <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                📋 Booking Details
+                S.No
               </th>
               <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                👤 Customer
+                Booking Details
               </th>
               <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                🎫 Event & Seats
+                Customer Information
               </th>
               <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                💰 Amount
+                Event & Seating
               </th>
               <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                📊 Status
+                Amount
               </th>
               <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
                 isDarkMode ? 'text-gray-300' : 'text-gray-500'
               }`}>
-                ⚡ Actions
+                Status
+              </th>
+              <th className={`px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-500'
+              }`}>
+                Actions
               </th>
             </tr>
           </thead>
           <tbody className={`${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-            {bookings.map((booking) => (
+            {bookings.map((booking, index) => (
               <tr key={booking.id} className={`transition-colors duration-150 ${
-                isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50'
               }`}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
+                  <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {(index + 1).toString().padStart(2, '0')}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="space-y-1">
                     <div className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {booking.id}
+                      #{booking.id}
                     </div>
-                    <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      📅 {formatDateTime(booking.createdAt)}
+                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Created: {formatDateTime(booking.createdAt)}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white font-bold ${
-                        booking.status === 'confirmed' ? 'bg-green-500' : 
-                        booking.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}>
-                        {booking.customerDetails?.name?.charAt(0) || '?'}
-                      </div>
+                  <div className="space-y-1">
+                    <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {booking.customerDetails?.name || 'N/A'}
                     </div>
-                    <div className="ml-4">
-                      <div className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {booking.customerDetails?.name || 'N/A'}
-                      </div>
-                      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        📧 {booking.customerDetails?.email || 'N/A'}
-                      </div>
-                      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        📱 {booking.customerDetails?.phone || 'N/A'}
-                      </div>
+                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {booking.customerDetails?.email || 'N/A'}
+                    </div>
+                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {booking.customerDetails?.phone || 'N/A'}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      🗓️ {formatDate(booking.eventDate)}
+                  <div className="space-y-2">
+                    <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {formatDate(booking.eventDate)}
                     </div>
-                    <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      🌅 {booking.shift || 'N/A'} • 🪑 {booking.seatCount || booking.seats?.length || 0} seats
+                    <div className="flex items-center space-x-2 text-xs">
+                      {booking.shift && (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          booking.shift?.toLowerCase() === 'morning' 
+                            ? (isDarkMode ? 'bg-amber-900/40 text-amber-300 border border-amber-700' : 'bg-amber-100 text-amber-800 border border-amber-300')
+                            : booking.shift?.toLowerCase() === 'evening'
+                            ? (isDarkMode ? 'bg-indigo-900/40 text-indigo-300 border border-indigo-700' : 'bg-indigo-100 text-indigo-800 border border-indigo-300')
+                            : (isDarkMode ? 'bg-gray-700 text-gray-300 border border-gray-600' : 'bg-gray-100 text-gray-700 border border-gray-300')
+                        }`}>
+                          {booking.shift?.toLowerCase() === 'morning' && '☀️'}
+                          {booking.shift?.toLowerCase() === 'evening' && '🌙'}
+                          {booking.shift || 'N/A'}
+                        </span>
+                      )}
+                      <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {booking.seatCount || booking.seats?.length || 0} seats
+                      </span>
                     </div>
-                    <div className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} max-w-xs`}>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {booking.seats?.slice(0, 3).map((seat, index) => (
-                          <span key={index} className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                            isDarkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
+                    {booking.seats && booking.seats.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2 max-w-xs">
+                        {booking.seats.slice(0, 3).map((seat, idx) => (
+                          <span key={idx} className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
+                            isDarkMode ? 'bg-blue-900/50 text-blue-300 border border-blue-700' : 'bg-blue-50 text-blue-700 border border-blue-200'
                           }`}>
                             {seat}
                           </span>
-                        )) || []}
-                        {(booking.seats?.length || 0) > 3 && (
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        ))}
+                        {booking.seats.length > 3 && (
+                          <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
                             isDarkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
                           }`}>
-                            +{(booking.seats?.length || 0) - 3}
+                            +{booking.seats.length - 3}
                           </span>
                         )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
+                  <div className="space-y-1">
                     <div className={`text-sm font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
                       {formatCurrency(booking.totalAmount)}
                     </div>
                     {booking.priceAdjusted && (
-                      <div className="text-xs text-blue-600">
-                        📝 Original: {formatCurrency(booking.originalAmount)}
+                      <div className={`text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                        Original: {formatCurrency(booking.originalAmount)}
                       </div>
                     )}
                     {booking.discountApplied > 0 && (
-                      <div className="text-xs text-green-600">
-                        🎯 Discount: {booking.discountApplied}%
+                      <div className={`text-xs ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                        Discount: {booking.discountApplied}%
                       </div>
                     )}
                     <button
                       onClick={() => onViewPayment(booking)}
-                      className="text-xs text-purple-600 hover:text-purple-800 underline mt-1 block"
+                      className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                        isDarkMode 
+                          ? 'bg-purple-900/30 text-purple-300 border border-purple-700/50 hover:bg-purple-800/40' 
+                          : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                      }`}
                       title="View Payment Details"
                     >
-                      💳 Payment Details
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      Payment Details
                     </button>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {getStatusBadge(booking.status)}
-                  {booking.cancellationReason && (
-                    <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Reason: {booking.cancellationReason}
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    {getStatusBadge(booking.status)}
+                    {booking.cancellationReason && (
+                      <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} max-w-32`}>
+                        <span className="font-medium">Reason:</span> {booking.cancellationReason}
+                      </div>
+                    )}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap text-center">
                   {renderActionButtons(booking)}
                 </td>
               </tr>
@@ -411,9 +447,9 @@ export default function BookingTable({
       
       {/* Loading overlay */}
       {isUpdating && (
-        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+        <div className="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex items-center justify-center">
+          <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
             <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Updating...
             </span>

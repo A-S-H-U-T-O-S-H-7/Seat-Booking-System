@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, doc, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'react-hot-toast';
-import ShowBookingCard from '@/components/stall/ShowBookingCard';
+import ShowBookingCard from '@/components/show/ShowBookingCard';
 import StallBookingCard from '@/components/stall/StallBookingCard';
 
 const ProfilePage = () => {
@@ -49,7 +49,14 @@ const ProfilePage = () => {
       
       snapshot.forEach((doc) => {
         const data = doc.data();
-        console.log('Booking data:', data);
+        console.log('Raw booking data:', data);
+        console.log('Event details from data:', data.eventDetails);
+        console.log('Root level fields:', {
+          eventDate: data.eventDate,
+          shift: data.shift,
+          seats: data.seats,
+          seatCount: data.seatCount
+        });
         
         // Handle different date formats
         let eventDate;
@@ -67,7 +74,21 @@ const ProfilePage = () => {
             // Already a Date object
             eventDate = data.eventDetails.date;
           } else {
-            console.warn('Unknown date format:', data.eventDetails.date);
+            console.warn('Unknown date format in eventDetails.date:', data.eventDetails.date);
+            eventDate = new Date();
+          }
+        } else if (data.eventDate) {
+          // Fallback to root-level eventDate (older Havan bookings)
+          if (data.eventDate.toDate && typeof data.eventDate.toDate === 'function') {
+            eventDate = data.eventDate.toDate();
+          } else if (data.eventDate.seconds) {
+            eventDate = new Date(data.eventDate.seconds * 1000);
+          } else if (typeof data.eventDate === 'string') {
+            eventDate = parseISO(data.eventDate);
+          } else if (data.eventDate instanceof Date) {
+            eventDate = data.eventDate;
+          } else {
+            console.warn('Unknown date format in root eventDate:', data.eventDate);
             eventDate = new Date();
           }
         } else {
@@ -92,15 +113,27 @@ const ProfilePage = () => {
           createdDate = new Date();
         }
         
-        bookingsData.push({
+        // Structure the data properly for Havan bookings
+        const structuredData = {
           id: doc.id,
           ...data,
           createdAt: createdDate,
           eventDetails: {
-            ...data.eventDetails,
-            date: eventDate
+            // If eventDetails already exists, use it, otherwise create from root level fields
+            ...(data.eventDetails || {}),
+            date: eventDate,
+            // For Havan bookings, the data might be at root level
+            shift: data.eventDetails?.shift || data.shift,
+            seats: data.eventDetails?.seats || data.seats,
+            seatCount: data.eventDetails?.seatCount || data.seatCount
           }
-        });
+        };
+        
+        console.log('Structured booking data:', structuredData);
+        console.log('Shift value in structured data:', structuredData.eventDetails?.shift);
+        console.log('Seat count in structured data:', structuredData.eventDetails?.seatCount);
+        console.log('Seats array in structured data:', structuredData.eventDetails?.seats);
+        bookingsData.push(structuredData);
       });
       
       // Sort by creation date (newest first)
@@ -219,7 +252,7 @@ const ProfilePage = () => {
             startDate = new Date(data.eventDetails.startDate);
           }
         } else {
-          startDate = new Date('2024-12-15');
+          startDate = new Date('2025-11-15');
         }
         
         if (data.eventDetails?.endDate) {
@@ -233,7 +266,7 @@ const ProfilePage = () => {
             endDate = new Date(data.eventDetails.endDate);
           }
         } else {
-          endDate = new Date('2024-12-19');
+          endDate = new Date('2025-11-20');
         }
         
         let createdDate;
@@ -323,13 +356,38 @@ const ProfilePage = () => {
         toast.success('Show booking cancelled successfully. Refund will be processed within 5-7 business days.');
         fetchUserShowBookings(); // Refresh show bookings
       } else if (bookingToCancel.type === 'stall') {
-        // Handle stall booking cancellation
-        const bookingRef = doc(db, 'stallBookings', bookingToCancel.id);
-        await updateDoc(bookingRef, {
-          status: 'cancelled',
-          cancelledAt: serverTimestamp(),
-          cancelledBy: 'user',
-          updatedAt: serverTimestamp()
+        // Handle stall booking cancellation with stall release
+        await runTransaction(db, async (transaction) => {
+          // Update booking status
+          const bookingRef = doc(db, 'stallBookings', bookingToCancel.id);
+          transaction.update(bookingRef, {
+            status: 'cancelled',
+            cancelledAt: serverTimestamp(),
+            cancelledBy: 'user',
+            updatedAt: serverTimestamp()
+          });
+
+          // Release stalls from availability
+          const availabilityRef = doc(db, 'stallAvailability', 'current');
+          const availabilityDoc = await transaction.get(availabilityRef);
+          
+          if (availabilityDoc.exists()) {
+            const currentAvailability = availabilityDoc.data().stalls || {};
+            const updatedAvailability = { ...currentAvailability };
+            
+            // Release all stalls associated with this booking
+            const stallsToRelease = bookingToCancel.stallIds || [bookingToCancel.stallId];
+            stallsToRelease.forEach(stallId => {
+              if (updatedAvailability[stallId] && updatedAvailability[stallId].bookingId === bookingToCancel.bookingId) {
+                delete updatedAvailability[stallId];
+              }
+            });
+
+            transaction.update(availabilityRef, {
+              stalls: updatedAvailability,
+              updatedAt: serverTimestamp()
+            });
+          }
         });
         
         toast.success('Stall booking cancelled successfully. Refund will be processed within 5-7 business days.');
@@ -338,8 +396,15 @@ const ProfilePage = () => {
         // Handle regular havan booking cancellation
         await runTransaction(db, async (transaction) => {
           // First, do all the reads
-          const dateKey = bookingToCancel.eventDetails.date.toISOString().split('T')[0];
-          const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${bookingToCancel.eventDetails.shift}`);
+          const eventDate = bookingToCancel.eventDetails?.date || bookingToCancel.eventDate;
+          const eventShift = bookingToCancel.eventDetails?.shift || bookingToCancel.shift;
+          
+          if (!eventDate || !eventShift) {
+            throw new Error('Missing event date or shift information');
+          }
+          
+          const dateKey = eventDate.toISOString().split('T')[0];
+          const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${eventShift}`);
           const availabilityDoc = await transaction.get(availabilityRef);
           
           // Then do all the writes
@@ -356,7 +421,8 @@ const ProfilePage = () => {
             const currentAvailability = availabilityDoc.data().seats || {};
             const updatedAvailability = { ...currentAvailability };
             
-            bookingToCancel.eventDetails.seats.forEach(seatId => {
+            const seatsToRelease = bookingToCancel.eventDetails?.seats || bookingToCancel.seats || [];
+            seatsToRelease.forEach(seatId => {
               delete updatedAvailability[seatId];
             });
 
@@ -424,7 +490,7 @@ const ProfilePage = () => {
               </span>
             </div>
             <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
-              ID: {booking.bookingId}
+              ID: {booking.id || booking.bookingId || 'N/A'}
             </span>
           </div>
           
@@ -433,39 +499,46 @@ const ProfilePage = () => {
             <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
               <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-1">Event Date</p>
               <p className="text-sm font-bold text-gray-900 leading-tight">
-                {format(booking.eventDetails.date, 'MMM dd, yyyy')}
+                {booking.eventDetails?.date ? format(booking.eventDetails.date, 'MMM dd, yyyy') : 'N/A'}
               </p>
               <p className="text-xs text-gray-600">
-                {format(booking.eventDetails.date, 'EEEE')}
+                {booking.eventDetails?.date ? format(booking.eventDetails.date, 'EEEE') : 'N/A'}
               </p>
             </div>
             
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
               <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Session</p>
               <p className="text-sm font-bold text-gray-900">
-                {booking.eventDetails.shift === 'morning' ? 'Morning' : 'Afternoon'}
+                {booking.eventDetails.shift === 'morning' ? 'Morning' : 
+                 booking.eventDetails.shift === 'evening' ? 'Evening' : 
+                 booking.eventDetails.shift === 'afternoon' ? 'Afternoon' : 
+                 booking.eventDetails.shift || 'N/A'}
               </p>
               <p className="text-xs text-gray-600">
                 {booking.eventDetails.shift === 'morning' 
                   ? '9:00 AM - 12:00 PM' 
-                  : '2:00 PM - 5:00 PM'}
+                  : booking.eventDetails.shift === 'evening'
+                  ? '4:00 PM - 10:00 PM'
+                  : booking.eventDetails.shift === 'afternoon'
+                  ? '2:00 PM - 5:00 PM'
+                  : 'N/A'}
               </p>
             </div>
             
             <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
               <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Seats</p>
               <p className="text-sm font-bold text-gray-900">
-                {booking.eventDetails.seatCount} seat{booking.eventDetails.seatCount > 1 ? 's' : ''}
+                {booking.eventDetails?.seatCount || 0} seat{(booking.eventDetails?.seatCount || 0) > 1 ? 's' : ''}
               </p>
               <p className="text-xs text-gray-600 truncate">
-                {(booking.eventDetails.seats || []).join(', ')}
+                {(booking.eventDetails?.seats || []).join(', ') || 'No seats specified'}
               </p>
             </div>
             
             <div className="bg-green-50 p-3 rounded-lg border border-green-100">
               <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Amount Paid</p>
               <p className="text-lg font-bold text-green-600">
-                ₹{booking.payment.amount}
+                ₹{booking.payment?.amount || 0}
               </p>
             </div>
           </div>
@@ -481,7 +554,7 @@ const ProfilePage = () => {
 
             {booking.status === 'confirmed' && (
               <div className="flex flex-col sm:flex-row items-center gap-2">
-                {canCancelBooking(booking.eventDetails.date) ? (
+                {canCancelBooking(booking.eventDetails?.date) ? (
                   <div className="text-center">
                     <button
                       onClick={() => handleCancelBooking(booking)}
@@ -511,7 +584,7 @@ const ProfilePage = () => {
                       Cannot Cancel
                     </button>
                     <p className="text-xs text-red-500 mt-1">
-                      Only {differenceInDays(booking.eventDetails.date, new Date())} days left
+                      Only {booking.eventDetails?.date ? differenceInDays(booking.eventDetails.date, new Date()) : 0} days left
                     </p>
                   </div>
                 )}
@@ -561,14 +634,14 @@ const ProfilePage = () => {
           <div className="px-2 sm:px-6  py-3 sm:py-4">
             <div className="flex justify-between items-center">
               <Link href="/" className="flex items-center gap-3">
-                <img 
-                  src="/havan.jpg" 
-                  alt="Havan Logo" 
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-md"
-                />
-                <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-orange-600 via-red-500 to-yellow-600 bg-clip-text text-transparent">
-                  Havan Ceremony
-                </h1>
+               <div className="flex items-center pr-2">
+            <img 
+              src="/header-logo.png" 
+              alt="Havan Logo" 
+              
+            />
+            
+          </div>
               </Link>
               
               <div className="flex items-center gap-4">
@@ -830,11 +903,11 @@ const ProfilePage = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <span className="font-medium text-gray-700">Booking ID:</span>
-                      <p className="text-gray-900">{bookingToCancel.bookingId}</p>
+                      <p className="text-gray-900">{bookingToCancel.id || bookingToCancel.bookingId || 'N/A'}</p>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Amount:</span>
-                      <p className="text-gray-900 font-semibold">₹{bookingToCancel.payment.amount}</p>
+                      <p className="text-gray-900 font-semibold">₹{bookingToCancel.payment?.amount || bookingToCancel.showDetails?.totalAmount || bookingToCancel.eventDetails?.totalAmount || 0}</p>
                     </div>
                     <div className="col-span-2">
                       <span className="font-medium text-gray-700">

@@ -24,6 +24,9 @@ function HeroSection({ user }) {
             />
           </div>
           <h2 className="text-xl sm:text-3xl md:text-5xl font-bold text-gray-800 mb-4 sm:mb-6 leading-tight">
+            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent font-bold">
+              International
+            </span><br />
             Sri Jagannatha Pancha Ratra<br />
             <span className="bg-gradient-to-r from-orange-600 via-red-500 to-yellow-600 bg-clip-text text-transparent">
               Havan Ceremony
