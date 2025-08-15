@@ -33,7 +33,11 @@ export default function ShowSeatSelection() {
             <div>
               <h3 className="text-gray-900 font-semibold">Show Details</h3>
               <p className="text-gray-600 text-sm">
-                {selectedDate ? (selectedDate instanceof Date ? format(selectedDate, 'EEEE, MMMM d, yyyy') : selectedDate) : 'N/A'}
+                {selectedDate ? (
+                  typeof selectedDate === 'string' 
+                    ? format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')
+                    : format(selectedDate, 'EEEE, MMMM d, yyyy')
+                ) : 'N/A'}
               </p>
             </div>
           </div>

@@ -132,7 +132,11 @@ const ShowPaymentProcess = () => {
               <span>Show Date</span>
             </div>
             <span className="text-gray-900 font-medium">
-              {selectedDate ? (selectedDate instanceof Date ? format(selectedDate, 'MMM dd, yyyy') : format(new Date(selectedDate), 'MMM dd, yyyy')) : 'N/A'}
+              {selectedDate ? (
+                typeof selectedDate === 'string' 
+                  ? format(new Date(selectedDate), 'MMM dd, yyyy')
+                  : format(selectedDate, 'MMM dd, yyyy')
+              ) : 'N/A'}
             </span>
           </div>
           

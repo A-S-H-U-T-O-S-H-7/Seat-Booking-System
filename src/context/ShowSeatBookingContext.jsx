@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
+import { formatDateKey } from '@/utils/dateUtils';
 
 const ShowSeatBookingContext = createContext();
 
@@ -239,14 +240,14 @@ export const ShowSeatBookingProvider = ({ children }) => {
       return;
     }
 
-    // Convert to ISO date string
+    // Convert to consistent date string
     const dateObj = new Date(state.selectedDate);
-    const dateKey = dateObj.toISOString().split('T')[0];
+    const dateKey = formatDateKey(dateObj);
     
     console.log('Setting up real-time listener for:', { dateKey, shift: state.selectedShift });
     
-    // Listen to seat availability
-    const availabilityRef = doc(db, 'showSeatAvailability', `${dateKey}_${state.selectedShift}`);
+    // Listen to seat availability (show bookings don't use shifts)
+    const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
     
     const unsubscribe = onSnapshot(availabilityRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -345,9 +346,9 @@ export const ShowSeatBookingProvider = ({ children }) => {
     try {
       console.log('Starting booking process...');
       
-      // Convert to ISO date string
+      // Convert to consistent date string
       const dateObj = new Date(state.selectedDate);
-      const dateKey = dateObj.toISOString().split('T')[0];
+      const dateKey = formatDateKey(dateObj);
       
       // Create booking document
       const bookingRef = doc(collection(db, 'showBookings'));
@@ -373,15 +374,15 @@ export const ShowSeatBookingProvider = ({ children }) => {
         userDetails,
         paymentDetails,
         status: 'confirmed',
-        bookingDate: serverTimestamp(),
+        createdAt: serverTimestamp(),
         eventType: 'show'
       };
 
       console.log('Creating booking document:', bookingData);
       await setDoc(bookingRef, bookingData);
       
-      // Update seat availability
-      const availabilityRef = doc(db, 'showSeatAvailability', `${dateKey}_${state.selectedShift}`);
+      // Update seat availability (show bookings don't use shifts)
+      const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
       const currentDoc = await getDoc(availabilityRef);
       const currentSeats = currentDoc.exists() ? currentDoc.data().seats || {} : {};
       

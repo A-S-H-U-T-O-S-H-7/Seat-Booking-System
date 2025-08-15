@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, updateDoc, setDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { format, startOfDay, addDays } from 'date-fns';
+import { formatDateKey } from '@/utils/dateUtils';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
 import { useAdmin } from '@/context/AdminContext';
@@ -73,7 +74,7 @@ export default function SeatManagement() {
     
     setLoading(true);
     try {
-      const dateKey = selectedDate.toISOString().split('T')[0];
+      const dateKey = formatDateKey(selectedDate);
       const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${selectedShift}`);
       const docSnap = await getDoc(availabilityRef);
       
@@ -149,7 +150,7 @@ export default function SeatManagement() {
 
     setIsUpdating(true);
     try {
-      const dateKey = selectedDate.toISOString().split('T')[0];
+      const dateKey = formatDateKey(selectedDate);
       const docId = `${dateKey}_${selectedShift}`;
       const availabilityRef = doc(db, 'seatAvailability', docId);
       

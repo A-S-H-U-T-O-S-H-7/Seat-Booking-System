@@ -127,7 +127,7 @@ export default function ShowBookingCancellationModal({
                   <div className="flex justify-between items-center">
                     <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Amount:</span>
                     <span className={`text-sm font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                      {formatCurrency(booking.showDetails?.totalAmount)}
+                      {formatCurrency(booking.showDetails?.totalAmount || booking.payment?.amount || 0)}
                     </span>
                   </div>
                 </div>

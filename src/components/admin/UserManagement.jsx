@@ -28,6 +28,8 @@ export default function UserManagement() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchUsers();
@@ -74,6 +76,7 @@ export default function UserManagement() {
               email: customerDetails.email || '',
               phone: customerDetails.phone || '',
               address: customerDetails.address || '',
+              aadhar: customerDetails.aadhar || customerDetails.aadharNumber || '',
               createdAt: data.createdAt || null,
               bookingCount: 1,
               lastBookingDate: data.createdAt || null,
@@ -89,6 +92,7 @@ export default function UserManagement() {
               existingUser.name = customerDetails.name || existingUser.name;
               existingUser.phone = customerDetails.phone || existingUser.phone;
               existingUser.address = customerDetails.address || existingUser.address;
+              existingUser.aadhar = customerDetails.aadhar || customerDetails.aadharNumber || existingUser.aadhar;
             }
           }
         }
@@ -121,6 +125,7 @@ export default function UserManagement() {
               email: customerDetails.email || '',
               phone: customerDetails.phone || '',
               address: customerDetails.address || '',
+              aadhar: customerDetails.aadhar || customerDetails.aadharNumber || '',
               createdAt: data.createdAt || null,
               bookingCount: 1,
               lastBookingDate: data.createdAt || null,
@@ -133,6 +138,7 @@ export default function UserManagement() {
               existingUser.name = customerDetails.name || existingUser.name;
               existingUser.phone = customerDetails.phone || existingUser.phone;
               existingUser.address = customerDetails.address || existingUser.address;
+              existingUser.aadhar = customerDetails.aadhar || customerDetails.aadharNumber || existingUser.aadhar;
             }
           }
         }
@@ -168,8 +174,21 @@ export default function UserManagement() {
   const filteredUsers = users.filter(user => 
     user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.aadhar?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.address?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleEditUser = (user) => {
     setCurrentUser(user);
@@ -268,8 +287,14 @@ export default function UserManagement() {
                   Contact
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-  Last Booking Date
-</th>
+                  Address
+                </th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  Aadhar Number
+                </th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  Last Booking Date
+                </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Total Bookings
                 </th>
@@ -279,7 +304,7 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className={`${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-              {filteredUsers.map((user) => (
+              {currentUsers.map((user) => (
                 <tr key={user.id} className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-150`}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -302,9 +327,17 @@ export default function UserManagement() {
                       {user.phone || 'N/A'}
                     </div>
                   </td>
+                  <td className={`px-6 py-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-xs`}>
+                    <div className="truncate" title={user.address || 'Not provided'}>
+                      {user.address || 'Not provided'}
+                    </div>
+                  </td>
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {user.aadhar ? user.aadhar : 'Not provided'}
+                  </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-  {user.lastBookingDate ? format(user.lastBookingDate.toDate(), 'MMM dd, yyyy') : 'N/A'}
-</td>
+                    {user.lastBookingDate ? format(user.lastBookingDate.toDate(), 'MMM dd, yyyy') : 'N/A'}
+                  </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     {user.bookingCount || 0}
                   </td>
@@ -328,9 +361,9 @@ export default function UserManagement() {
                   </td>
                 </tr>
               ))}
-              {filteredUsers.length === 0 && (
+              {currentUsers.length === 0 && (
                 <tr>
-                  <td colSpan="5" className={`px-6 py-12 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan="7" className={`px-6 py-12 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     {searchTerm ? 'No users found matching your search.' : 'No users found.'}
                   </td>
                 </tr>
@@ -338,6 +371,62 @@ export default function UserManagement() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className={`px-6 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex items-center justify-between`}>
+            <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} users
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  currentPage === 1 
+                    ? isDarkMode ? 'text-gray-500 cursor-not-allowed' : 'text-gray-400 cursor-not-allowed'
+                    : isDarkMode 
+                      ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/50'
+                      : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                }`}
+              >
+                Previous
+              </button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      currentPage === pageNum
+                        ? 'text-white bg-purple-600'
+                        : isDarkMode
+                          ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/50'
+                          : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                  currentPage === totalPages 
+                    ? isDarkMode ? 'text-gray-500 cursor-not-allowed' : 'text-gray-400 cursor-not-allowed'
+                    : isDarkMode 
+                      ? 'text-purple-400 hover:text-purple-300 hover:bg-purple-900/50'
+                      : 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Edit User Modal */}
@@ -422,6 +511,24 @@ export default function UserManagement() {
                       ? 'bg-gray-700 border-gray-600 text-white focus:border-purple-500 focus:ring-purple-500' 
                       : 'bg-white border-gray-300 text-gray-900 focus:border-purple-500 focus:ring-purple-500'
                   }`}
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                  Aadhar Number
+                </label>
+                <input
+                  type="text"
+                  name="aadhar"
+                  value={currentUser.aadhar || ''}
+                  disabled
+                  className={`block w-full px-3 py-2 rounded-md border cursor-not-allowed ${
+                    isDarkMode 
+                      ? 'bg-gray-600 border-gray-500 text-gray-400' 
+                      : 'bg-gray-100 border-gray-300 text-gray-500'
+                  }`}
+                  placeholder={currentUser.aadhar ? `****-****-${currentUser.aadhar.slice(-4)}` : 'Not provided'}
                 />
               </div>
 

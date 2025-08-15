@@ -4,6 +4,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, doc, updateDoc, getDoc, where } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
+import { useAdmin } from '@/context/AdminContext';
+import adminLogger from '@/lib/adminLogger';
 
 import BookingFilters from './BookingFilter';
 import BookingTable from './BookingTable';
@@ -15,6 +17,7 @@ import Pagination from './Pagination';
 
 export default function BookingManagement() {
   const { isDarkMode } = useTheme();
+  const { adminUser } = useAdmin();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,12 +45,21 @@ export default function BookingManagement() {
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, statusFilter, dateFilter, searchTerm]);
+  }, [currentPage, statusFilter, dateFilter]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchBookings();
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   // Reset current page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter, searchTerm]);
+  }, [statusFilter, dateFilter]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -162,6 +174,16 @@ export default function BookingManagement() {
           : booking
       ));
 
+      // Log the activity
+      if (adminUser && newStatus === 'cancelled') {
+        await adminLogger.logBookingActivity(
+          adminUser,
+          'cancel',
+          bookingId,
+          `Admin cancelled havan booking${reason ? `: ${reason}` : ''}`
+        );
+      }
+      
       toast.success(`Booking ${newStatus} successfully`);
       
       // If cancelling, should also free up the seats
@@ -261,6 +283,16 @@ export default function BookingManagement() {
           : booking
       ));
 
+      // Log the activity
+      if (adminUser) {
+        await adminLogger.logBookingActivity(
+          adminUser,
+          'price_adjustment',
+          priceAdjustment.bookingId,
+          `Admin adjusted havan booking price from ₹${originalBooking.totalAmount} to ₹${priceAdjustment.newPrice}${priceAdjustment.reason ? `. Reason: ${priceAdjustment.reason}` : ''}`
+        );
+      }
+      
       setShowPriceModal(false);
       setPriceAdjustment({ bookingId: null, newPrice: 0, discount: 0, reason: '' });
       toast.success('Price adjusted successfully');

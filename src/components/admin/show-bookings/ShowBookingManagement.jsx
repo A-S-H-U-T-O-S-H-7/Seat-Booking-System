@@ -17,6 +17,7 @@ import { toast } from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
 import { useAdmin } from '@/context/AdminContext';
 import adminLogger from '@/lib/adminLogger';
+import { formatDateKey } from '@/utils/dateUtils';
 
 import ShowBookingFilters from './ShowBookingFilters';
 import ShowBookingsTable from './ShowBookingTable';
@@ -32,25 +33,162 @@ export default function ShowBookingsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [selectedDate, setSelectedDate] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
+  const [allBookingsData, setAllBookingsData] = useState([]); // Store all fetched data
   const bookingsPerPage = 10;
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, statusFilter, dateFilter, searchTerm]);
+  }, [currentPage, statusFilter, dateFilter]);
+  
+  // Separate effect for selectedDate to avoid re-fetching data
+  useEffect(() => {
+    if (allBookingsData.length > 0) {
+      // Apply client-side filtering without re-fetching
+      applyClientSideFilters();
+    }
+  }, [selectedDate, currentPage, statusFilter, dateFilter, searchTerm, allBookingsData]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchBookings();
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter, searchTerm]);
+  }, [statusFilter, dateFilter, selectedDate]);
+
+  // Client-side filtering function that filters by show date instead of booking date
+  const applyClientSideFilters = () => {
+    if (!selectedDate) {
+      return;
+    }
+    
+    // Start with all available data
+    let filteredBookings = [...allBookingsData];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filteredBookings = filteredBookings.filter(booking => booking.status === statusFilter);
+    }
+    
+    // Apply date range filter (server-side filters like week, month, etc.)
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (dateFilter) {
+        case 'today':
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case '3months':
+          startDate.setDate(now.getDate() - 90);
+          break;
+      }
+      
+      filteredBookings = filteredBookings.filter(booking => {
+        const bookingDate = booking.bookingDate || booking.createdAt;
+        return bookingDate && bookingDate >= startDate;
+      });
+    }
+    
+    // Apply specific date filter by SHOW DATE (showDetails.date)
+    if (selectedDate) {
+      const targetDate = new Date(selectedDate);
+      targetDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      filteredBookings = filteredBookings.filter(booking => {
+        const showDate = booking.showDetails?.date;
+        
+        if (!showDate) {
+          return false;
+        }
+        
+        // Convert show date to Date object if it's not already
+        let showDateObj;
+        if (typeof showDate === 'string') {
+          showDateObj = new Date(showDate);
+        } else if (showDate.toDate && typeof showDate.toDate === 'function') {
+          showDateObj = showDate.toDate();
+        } else {
+          showDateObj = new Date(showDate);
+        }
+        
+        // Normalize show date to start of day for comparison
+        showDateObj.setHours(0, 0, 0, 0);
+        
+        const isMatch = showDateObj >= targetDate && showDateObj < nextDay;
+        
+        return isMatch;
+      });
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      filteredBookings = filteredBookings.filter(booking => 
+        booking.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (booking.userDetails?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (booking.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (booking.userEmail?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (booking.showDetails?.selectedSeats?.some(seat => 
+          String(seat).toLowerCase().includes(searchTerm.toLowerCase())
+        ))
+      );
+    }
+    
+    // Sort by booking date (most recent first)
+    filteredBookings.sort((a, b) => {
+      const dateA = a.bookingDate || a.createdAt || new Date(0);
+      const dateB = b.bookingDate || b.createdAt || new Date(0);
+      return dateB - dateA;
+    });
+
+    // Update total count
+    setTotalBookings(filteredBookings.length);
+    
+    // Apply pagination
+    const startIndex = (currentPage - 1) * bookingsPerPage;
+    const endIndex = startIndex + bookingsPerPage;
+    setBookings(filteredBookings.slice(startIndex, endIndex));
+  };
 
   const fetchBookings = async () => {
     setLoading(true);
     try {
+      // Try the simplest possible query to check if data exists
+      let snapshot;
+      try {
+        snapshot = await getDocs(collection(db, 'showBookings'));
+        
+        if (snapshot.size === 0) {
+          setBookings([]);
+          setTotalBookings(0);
+          return;
+        }
+      } catch (error) {
+        console.error('Failed to access showBookings collection:', error);
+        toast.error('Unable to access booking data. Please check permissions.');
+        return;
+      }
+      
       // Build query conditions
       const queryConditions = [];
       
@@ -59,7 +197,49 @@ export default function ShowBookingsPage() {
         queryConditions.push(where('status', '==', statusFilter));
       }
       
-      // Add date filter
+      // Use simple query approach - no orderBy since documents might not have createdAt
+      let bookingsQuery;
+      
+      try {
+        if (queryConditions.length > 0) {
+          bookingsQuery = query(collection(db, 'showBookings'), ...queryConditions);
+        } else {
+          bookingsQuery = collection(db, 'showBookings');
+        }
+        snapshot = await getDocs(bookingsQuery);
+      } catch (queryError) {
+        snapshot = await getDocs(collection(db, 'showBookings'));
+      }
+      
+      const bookingsData = [];
+      
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        
+        // Handle both createdAt and bookingDate for backward compatibility
+        const bookingTimestamp = data.bookingDate || data.createdAt;
+        
+        bookingsData.push({
+          id: doc.id,
+          ...data,
+          createdAt: bookingTimestamp?.toDate(),
+          bookingDate: bookingTimestamp?.toDate(),
+          showDetails: {
+            ...data.showDetails,
+            date: data.showDetails?.date ? 
+              (typeof data.showDetails.date === 'string' ? 
+                new Date(data.showDetails.date) : 
+                data.showDetails.date?.toDate?.() || data.showDetails.date
+              ) : null
+          }
+        });
+      });
+      
+      // Store all fetched data for client-side filtering
+      setAllBookingsData(bookingsData);
+
+      // Apply client-side date filter if server-side filtering failed
+      let filteredBookings = bookingsData;
       if (dateFilter !== 'all') {
         const now = new Date();
         let startDate = new Date();
@@ -72,47 +252,40 @@ export default function ShowBookingsPage() {
             startDate.setDate(now.getDate() - 7);
             break;
           case 'month':
-            startDate.setMonth(now.getMonth() - 1);
+            startDate.setDate(now.getDate() - 30);
+            break;
+          case '3months':
+            startDate.setDate(now.getDate() - 90);
             break;
         }
         
-        queryConditions.push(where('createdAt', '>=', startDate));
+        filteredBookings = filteredBookings.filter(booking => {
+          const bookingDate = booking.bookingDate || booking.createdAt;
+          return bookingDate && bookingDate >= startDate;
+        });
       }
       
-      // Always add orderBy
-      queryConditions.push(orderBy('createdAt', 'desc'));
+      // Skip selectedDate filtering here - it's handled by applyClientSideFilters()
       
-      // Build the final query
-      let bookingsQuery = query(collection(db, 'showBookings'), ...queryConditions);
-
-      const snapshot = await getDocs(bookingsQuery);
-      const bookingsData = [];
-      
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        bookingsData.push({
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          showDetails: {
-            ...data.showDetails,
-            date: data.showDetails?.date?.toDate?.() || new Date(data.showDetails?.date)
-          }
-        });
-      });
-
       // Apply search filter
-      let filteredBookings = bookingsData;
       if (searchTerm) {
-        filteredBookings = bookingsData.filter(booking => 
+        filteredBookings = filteredBookings.filter(booking => 
           booking.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (booking.userDetails?.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (booking.userDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (booking.userEmail?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (booking.showDetails?.selectedSeats?.some(seat => 
             String(seat).toLowerCase().includes(searchTerm.toLowerCase())
           ))
         );
       }
+      
+      // Sort by booking date (most recent first) if no server-side ordering
+      filteredBookings.sort((a, b) => {
+        const dateA = a.bookingDate || a.createdAt || new Date(0);
+        const dateB = b.bookingDate || b.createdAt || new Date(0);
+        return dateB - dateA;
+      });
 
       setTotalBookings(filteredBookings.length);
       
@@ -189,12 +362,12 @@ export default function ShowBookingsPage() {
         return;
       }
 
-      // Convert to ISO date string
+      // Convert to consistent date string
       const dateObj = new Date(booking.showDetails.date);
-      const dateKey = dateObj.toISOString().split('T')[0];
+      const dateKey = formatDateKey(dateObj);
       
       // Update seat availability
-      const availabilityRef = doc(db, 'showSeatAvailability', `${dateKey}_${booking.showDetails.time || 'evening'}`);
+      const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
       const currentDoc = await getDoc(availabilityRef);
       const currentSeats = currentDoc.exists() ? currentDoc.data().seats || {} : {};
       
@@ -300,10 +473,13 @@ export default function ShowBookingsPage() {
         setStatusFilter={setStatusFilter}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
         onSearch={fetchBookings}
         loading={loading}
         isDarkMode={isDarkMode}
       />
+
 
       {/* Bookings Table */}
       <ShowBookingsTable
@@ -316,14 +492,13 @@ export default function ShowBookingsPage() {
           setSelectedBooking(booking);
           setShowBookingModal(true);
         }}
-        onConfirm={(booking) => handleStatusUpdate(booking.id, 'confirmed')}
+        onConfirm={(booking) => booking?.id && handleStatusUpdate(booking.id, 'confirmed')}
         onCancel={(booking) => {
           setSelectedBooking(booking);
           setShowCancellationModal(true);
         }}
-        onDelete={(booking) => handleDeleteBooking(booking.id)}
-        onApproveCancellation={(booking) => handleStatusUpdate(booking.id, 'cancelled')}
-        onRejectCancellation={(booking) => handleStatusUpdate(booking.id, 'confirmed')}
+        onApproveCancellation={(booking) => booking?.id && handleStatusUpdate(booking.id, 'cancelled')}
+        onRejectCancellation={(booking) => booking?.id && handleStatusUpdate(booking.id, 'confirmed')}
       />
 
       {/* Pagination */}
@@ -351,7 +526,7 @@ export default function ShowBookingsPage() {
         booking={selectedBooking}
         onClose={() => setShowCancellationModal(false)}
         onConfirm={(reason) => {
-          handleStatusUpdate(selectedBooking.id, 'cancelled', reason);
+          selectedBooking?.id && handleStatusUpdate(selectedBooking.id, 'cancelled', reason);
           setShowCancellationModal(false);
         }}
         isUpdating={isUpdating}

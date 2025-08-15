@@ -36,12 +36,21 @@ export default function StallBookingManagement() {
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, statusFilter, dateFilter, searchTerm]);
+  }, [currentPage, statusFilter, dateFilter]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchBookings();
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   // Reset current page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter, searchTerm]);
+  }, [statusFilter, dateFilter]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -116,7 +125,7 @@ export default function StallBookingManagement() {
       let filteredBookings = bookingsData;
       if (searchTerm) {
         filteredBookings = bookingsData.filter(booking => 
-          (booking.vendorDetails?.ownername?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (booking.vendorDetails?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (booking.vendorDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (booking.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (booking.stallIds?.some(stallId => stallId.toLowerCase().includes(searchTerm.toLowerCase())))

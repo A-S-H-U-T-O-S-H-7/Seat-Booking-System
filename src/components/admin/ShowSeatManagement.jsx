@@ -154,7 +154,10 @@ export default function ShowSeatManagement() {
   const { hasPermission, adminUser } = useAdmin();
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  });
   const [viewMode, setViewMode] = useState('grid');
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
@@ -173,7 +176,7 @@ export default function ShowSeatManagement() {
     );
   }
 
-  // Initialize seats layout
+  // Initialize seats layout and load data for default date
   useEffect(() => {
     const seatLayout = generateSeatLayout();
     setSeats(seatLayout);
@@ -225,7 +228,7 @@ export default function ShowSeatManagement() {
     if (!selectedDate) return;
     
     const dateKey = selectedDate;
-    const availabilityRef = doc(db, 'showSeatAvailability', `${dateKey}_evening`);
+    const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
     
     const unsubscribe = onSnapshot(
       availabilityRef, 
@@ -312,7 +315,7 @@ export default function ShowSeatManagement() {
     try {
       setIsUpdating(true);
       const dateKey = selectedDate;
-      const availabilityRef = doc(db, 'showSeatAvailability', `${dateKey}_evening`);
+      const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
       
       // Get current availability
       const currentDoc = await getDoc(availabilityRef);
@@ -356,8 +359,7 @@ export default function ShowSeatManagement() {
       await setDoc(availabilityRef, {
         seats: updatedSeats,
         lastUpdated: serverTimestamp(),
-        date: dateKey,
-        shift: 'evening'
+        date: dateKey
       }, { merge: true });
       
       // Clear selection
@@ -751,6 +753,8 @@ export default function ShowSeatManagement() {
             <input
               type="date"
               value={selectedDate}
+              min="2020-01-01"
+              max="2030-12-31"
               onChange={(e) => handleDateChange(e.target.value)}
               disabled={dateLoading}
               className={`block w-full p-2 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${

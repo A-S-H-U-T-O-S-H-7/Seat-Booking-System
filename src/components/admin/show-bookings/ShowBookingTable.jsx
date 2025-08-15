@@ -165,18 +165,6 @@ export default function ShowBookingsTable({
           </>
         )}
 
-        <button
-          onClick={() => onDelete(booking)}
-          disabled={isUpdating}
-          className={`${baseButtonClass} ${
-            isDarkMode 
-              ? 'bg-gray-700 hover:bg-gray-600 text-gray-100 border border-gray-600' 
-              : 'bg-gray-200 hover:bg-gray-300 text-gray-700 border border-gray-300'
-          }`}
-          title="Delete Booking"
-        >
-          <TrashIcon className="h-4 w-4" />
-        </button>
       </div>
     );
   };
@@ -309,7 +297,7 @@ export default function ShowBookingsTable({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="space-y-1">
                     <div className={`text-sm font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
-                      {formatCurrency(booking.showDetails?.totalAmount)}
+                      {formatCurrency(booking.showDetails?.totalAmount || booking.showDetails?.totalPrice || booking.payment?.amount || 0)}
                     </div>
                     <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {booking.showDetails?.selectedSeats?.length || 0} seat{booking.showDetails?.selectedSeats?.length !== 1 ? 's' : ''}

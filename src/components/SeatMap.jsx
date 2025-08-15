@@ -4,6 +4,7 @@ import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useBooking } from '@/context/BookingContext';
+import { formatDateKey } from '@/utils/dateUtils';
 
 const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = [] }) => {
   const [seatAvailability, setSeatAvailability] = useState({});
@@ -48,7 +49,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
   useEffect(() => {
     if (!selectedDate || !selectedShift) return;
 
-    const dateKey = selectedDate.toISOString().split('T')[0];
+    const dateKey = formatDateKey(selectedDate);
     const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${selectedShift}`);
     
     const unsubscribe = onSnapshot(availabilityRef, (docSnap) => {

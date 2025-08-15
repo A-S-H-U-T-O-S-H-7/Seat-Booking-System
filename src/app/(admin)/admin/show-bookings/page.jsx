@@ -3,7 +3,7 @@ import { useState } from 'react';
 import ProtectedAdminRoute from '@/components/admin/ProtectedAdminRoute';
 import { AdminProvider } from '@/context/AdminContext';
 import { ThemeProvider } from '@/context/ThemeContext';
-import ShowBookingManagement from '@/components/admin/ShowBookingManagement';
+import ShowBookingManagement from '@/components/admin/show-bookings/ShowBookingManagement';
 
 export default function ShowBookingsPage() {
   return (

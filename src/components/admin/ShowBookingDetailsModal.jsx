@@ -16,8 +16,36 @@ import {
   TicketIcon
 } from '@heroicons/react/24/outline';
 
-export default function ShowBookingDetailsModal({ booking, onClose }) {
+export default function ShowBookingDetailsModal({ booking, onClose, show = false }) {
   const { isDarkMode } = useTheme();
+
+  // Add null/undefined checks for booking and show prop
+  if (!show) {
+    return null;
+  }
+
+  if (!booking) {
+    return (
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div className={`max-w-md w-full rounded-xl shadow-2xl p-6 ${
+          isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+        }`}>
+          <h2 className="text-xl font-bold mb-4">Error</h2>
+          <p className="mb-4">No booking data available to display.</p>
+          <button
+            onClick={onClose}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              isDarkMode
+                ? 'bg-gray-700 text-white hover:bg-gray-600'
+                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            }`}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -52,8 +80,8 @@ export default function ShowBookingDetailsModal({ booking, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className={`max-w-4xl w-full max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl ${
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div className={`max-w-3xl w-full max-h-[85vh] overflow-y-auto rounded-xl shadow-2xl ${
         isDarkMode ? 'bg-gray-800' : 'bg-white'
       }`}>
         
@@ -79,7 +107,7 @@ export default function ShowBookingDetailsModal({ booking, onClose }) {
                 <p className={`text-sm ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}>
-                  Booking ID: {booking.bookingId}
+                  Booking ID: {booking.id || booking.bookingId || 'N/A'}
                 </p>
               </div>
             </div>
@@ -96,10 +124,10 @@ export default function ShowBookingDetailsModal({ booking, onClose }) {
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-4">
           {/* Status and Basic Info */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className={`p-4 rounded-lg ${
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className={`p-3 rounded-lg ${
               isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
             }`}>
               <div className="flex items-center space-x-3">
@@ -123,7 +151,7 @@ export default function ShowBookingDetailsModal({ booking, onClose }) {
               </div>
             </div>
 
-            <div className={`p-4 rounded-lg ${
+            <div className={`p-3 rounded-lg ${
               isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
             }`}>
               <div className="flex items-center space-x-3">
@@ -139,13 +167,13 @@ export default function ShowBookingDetailsModal({ booking, onClose }) {
                   <p className={`text-sm ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
-                    {formatDateTime(booking.createdAt)}
+                    {formatDateTime(booking.createdAt || booking.bookingDate)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className={`p-4 rounded-lg ${
+            <div className={`p-3 rounded-lg ${
               isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
             }`}>
               <div className="flex items-center space-x-3">
@@ -161,389 +189,198 @@ export default function ShowBookingDetailsModal({ booking, onClose }) {
                   <p className={`text-lg font-bold ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
-                    ₹{booking.payment?.amount?.toLocaleString() || '0'}
+                    ₹{(booking.showDetails?.totalPrice || booking.showDetails?.totalAmount || booking.paymentDetails?.amount || booking.payment?.amount || 0).toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Customer Information */}
-          <div className={`p-6 rounded-lg border ${
-            isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
-          }`}>
-            <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
+          {/* Customer & Show Details Combined */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className={`p-4 rounded-lg border ${
+              isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
             }`}>
-              <UserIcon className="w-5 h-5 mr-2" />
-              Customer Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Name
-                </p>
-                <p className={`text-base ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {booking.userDetails?.name || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Email
-                </p>
-                <div className="flex items-center space-x-2">
-                  <EnvelopeIcon className={`w-4 h-4 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <p className={`text-base ${
+              <h3 className={`text-md font-semibold mb-3 flex items-center ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                <UserIcon className="w-4 h-4 mr-2" />
+                Customer Info
+              </h3>
+              <div className="space-y-2">
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Name:</span>
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    {booking.userDetails?.name || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Email:</span>
+                  <p className={`text-sm ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
                     {booking.userDetails?.email || 'N/A'}
                   </p>
                 </div>
-              </div>
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Phone
-                </p>
-                <div className="flex items-center space-x-2">
-                  <PhoneIcon className={`w-4 h-4 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <p className={`text-base ${
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Phone:</span>
+                  <p className={`text-sm ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
                     {booking.userDetails?.phone || 'N/A'}
                   </p>
                 </div>
               </div>
-              {booking.userDetails?.emergencyContact && (
+            </div>
+            
+            <div className={`p-4 rounded-lg border ${
+              isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`text-md font-semibold mb-3 flex items-center ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                <CalendarDaysIcon className="w-4 h-4 mr-2" />
+                Show Details
+              </h3>
+              <div className="space-y-2">
                 <div>
-                  <p className={`text-sm font-medium ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    Emergency Contact
-                  </p>
-                  <p className={`text-base ${
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Date & Time:</span>
+                  <p className={`text-sm ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
-                    {booking.userDetails.emergencyContact}
+                    {booking.showDetails?.date ? format(new Date(booking.showDetails.date), 'MMM dd, yyyy') : 'N/A'}
+                    {booking.showDetails?.time && ` (${booking.showDetails.time})`}
                   </p>
                 </div>
-              )}
-            </div>
-            {booking.userDetails?.specialRequests && (
-              <div className="mt-4">
-                <p className={`text-sm font-medium mb-2 ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Special Requests
-                </p>
-                <p className={`text-base p-3 rounded-lg ${
-                  isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-                }`}>
-                  {booking.userDetails.specialRequests}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Show Details */}
-          <div className={`p-6 rounded-lg border ${
-            isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
-          }`}>
-            <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
-            }`}>
-              <CalendarDaysIcon className="w-5 h-5 mr-2" />
-              Show Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Show Date
-                </p>
-                <p className={`text-base ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {booking.showDate ? format(booking.showDate, 'MMMM dd, yyyy') : 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Show Time
-                </p>
-                <p className={`text-base ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {booking.showDetails?.time || 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Selected Seats */}
-          <div className={`p-6 rounded-lg border ${
-            isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
-          }`}>
-            <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
-            }`}>
-              <MapPinIcon className="w-5 h-5 mr-2" />
-              Selected Seats ({booking.showDetails?.selectedSeats?.length || 0})
-            </h3>
-            
-            {booking.showDetails?.selectedSeats?.length > 0 ? (
-              <div className="space-y-4">
-                {/* Seat Summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className={`p-3 rounded-lg ${
-                    isDarkMode ? 'bg-gray-800' : 'bg-white'
-                  }`}>
-                    <p className={`text-sm font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      VIP Sofas
-                    </p>
-                    <p className={`text-xl font-bold ${
-                      isDarkMode ? 'text-purple-400' : 'text-purple-600'
-                    }`}>
-                      {booking.showDetails.selectedSeats.filter(s => s.type === 'vip').length}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${
-                    isDarkMode ? 'bg-gray-800' : 'bg-white'
-                  }`}>
-                    <p className={`text-sm font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Regular Seats
-                    </p>
-                    <p className={`text-xl font-bold ${
-                      isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                    }`}>
-                      {booking.showDetails.selectedSeats.filter(s => s.type === 'regular').length}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${
-                    isDarkMode ? 'bg-gray-800' : 'bg-white'
-                  }`}>
-                    <p className={`text-sm font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Total Seats
-                    </p>
-                    <p className={`text-xl font-bold ${
-                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                    }`}>
-                      {booking.showDetails.selectedSeats.length}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Detailed Seat List */}
-                <div className="space-y-3">
-                  <h4 className={`font-medium ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    Seat Details:
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {booking.showDetails.selectedSeats.map((seat, index) => (
-                      <div
-                        key={index}
-                        className={`p-2 rounded text-center text-sm font-medium ${
-                          seat.type === 'vip'
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Seats ({booking.showDetails?.selectedSeats?.length || 0}):</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {booking.showDetails?.selectedSeats?.map((seat, index) => {
+                      const seatStr = typeof seat === 'string' ? seat : (seat.seatId || seat.id || String(seat));
+                      const isVip = seatStr.startsWith('A-') || seatStr.startsWith('B-');
+                      return (
+                        <span key={index} className={`px-2 py-1 rounded text-xs font-medium ${
+                          isVip
                             ? (isDarkMode 
                                 ? 'bg-purple-900 text-purple-300 border border-purple-700' 
                                 : 'bg-purple-100 text-purple-800 border border-purple-200')
                             : (isDarkMode 
-                                ? 'bg-orange-900 text-orange-300 border border-orange-700' 
-                                : 'bg-orange-100 text-orange-800 border border-orange-200')
-                        }`}
-                      >
-                        {getSeatTypeDisplay(seat)}
-                      </div>
-                    ))}
+                                ? 'bg-blue-900 text-blue-300 border border-blue-700' 
+                                : 'bg-blue-100 text-blue-800 border border-blue-200')
+                        }`}>
+                          {seatStr}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            ) : (
-              <p className={`text-center py-8 ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                No seat information available
-              </p>
-            )}
+            </div>
           </div>
 
-          {/* Payment Information */}
-          <div className={`p-6 rounded-lg border ${
+          {/* Payment Details Section */}
+          <div className={`p-4 rounded-lg border ${
             isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
           }`}>
-            <h3 className={`text-lg font-semibold mb-4 flex items-center ${
+            <h3 className={`text-md font-semibold mb-3 flex items-center ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>
-              <CreditCardIcon className="w-5 h-5 mr-2" />
-              Payment Information
+              <CreditCardIcon className="w-4 h-4 mr-2" />
+              Payment Details
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Payment Method
-                </p>
-                <p className={`text-base ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {booking.payment?.method || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Total Amount
-                </p>
-                <p className={`text-lg font-bold ${
-                  isDarkMode ? 'text-green-400' : 'text-green-600'
-                }`}>
-                  ₹{booking.payment?.amount?.toLocaleString() || '0'}
-                </p>
-              </div>
-              {booking.payment?.transactionId && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <div>
-                  <p className={`text-sm font-medium ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Total Amount:</span>
+                  <p className={`text-lg font-bold ${
+                    isDarkMode ? 'text-green-400' : 'text-green-600'
                   }`}>
-                    Transaction ID
+                    ₹{(booking.showDetails?.totalPrice || booking.showDetails?.totalAmount || booking.paymentDetails?.amount || booking.payment?.amount || 0).toLocaleString()}
                   </p>
+                </div>
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Payment Status:</span>
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    {booking.paymentDetails?.status || booking.payment?.status || 'Completed'}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Payment Method:</span>
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    {booking.paymentDetails?.method || booking.payment?.method || 'Cash'}
+                  </p>
+                </div>
+                <div>
+                  <span className={`text-xs font-medium ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>Transaction ID:</span>
                   <p className={`text-sm font-mono ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
-                    {booking.payment.transactionId}
+                    {booking.paymentDetails?.transactionId || booking.payment?.transactionId || booking.payment?.razorpayPaymentId || 'N/A'}
                   </p>
                 </div>
-              )}
-              <div>
-                <p className={`text-sm font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Payment Status
-                </p>
-                <p className={`text-base ${
-                  booking.payment?.status === 'completed' 
-                    ? 'text-green-600' 
-                    : booking.payment?.status === 'failed' 
-                    ? 'text-red-600' 
-                    : 'text-yellow-600'
-                }`}>
-                  {booking.payment?.status?.charAt(0).toUpperCase() + booking.payment?.status?.slice(1) || 'N/A'}
-                </p>
               </div>
             </div>
-
-            {/* Price Breakdown if available */}
-            {booking.pricing && (
-              <div className="mt-4">
-                <h4 className={`font-medium mb-3 ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                }`}>
-                  Price Breakdown:
-                </h4>
-                <div className={`p-4 rounded-lg space-y-2 ${
-                  isDarkMode ? 'bg-gray-800' : 'bg-white'
-                }`}>
-                  {booking.pricing.vipSeats > 0 && (
-                    <div className="flex justify-between">
-                      <span>VIP Seats ({booking.pricing.vipSeats} × ₹{booking.pricing.vipPrice})</span>
-                      <span>₹{(booking.pricing.vipSeats * booking.pricing.vipPrice).toLocaleString()}</span>
-                    </div>
-                  )}
-                  {booking.pricing.regularSeats > 0 && (
-                    <div className="flex justify-between">
-                      <span>Regular Seats ({booking.pricing.regularSeats} × ₹{booking.pricing.regularPrice})</span>
-                      <span>₹{(booking.pricing.regularSeats * booking.pricing.regularPrice).toLocaleString()}</span>
-                    </div>
-                  )}
-                  {booking.pricing.discount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount</span>
-                      <span>-₹{booking.pricing.discount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {booking.pricing.tax > 0 && (
-                    <div className="flex justify-between">
-                      <span>Tax ({booking.pricing.taxRate}%)</span>
-                      <span>₹{booking.pricing.tax.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="border-t pt-2 flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>₹{booking.payment?.amount?.toLocaleString() || '0'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Additional Information */}
-          {(booking.cancelledAt || booking.updatedAt) && (
-            <div className={`p-6 rounded-lg border ${
+          {(booking.cancelledAt || booking.updatedAt || booking.cancellationReason) && (
+            <div className={`p-3 rounded-lg border ${
               isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
             }`}>
-              <h3 className={`text-lg font-semibold mb-4 ${
+              <h3 className={`text-sm font-semibold mb-2 ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
               }`}>
-                Additional Information
+                Additional Info
               </h3>
-              <div className="space-y-3">
-                {booking.cancelledAt && (
+              <div className="space-y-2 text-xs">
+                {booking.cancellationReason && (
                   <div>
-                    <p className={`text-sm font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Cancelled At
-                    </p>
-                    <p className={`text-base ${
+                    <span className={`font-medium ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Cancellation:</span>
+                    <span className={`ml-2 ${
                       isDarkMode ? 'text-red-400' : 'text-red-600'
                     }`}>
-                      {formatDateTime(booking.cancelledAt.toDate?.() || booking.cancelledAt)}
-                    </p>
-                    {booking.cancelledBy && (
-                      <p className={`text-sm ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
-                        Cancelled by: {booking.cancelledBy}
-                      </p>
-                    )}
+                      {booking.cancellationReason}
+                    </span>
                   </div>
                 )}
                 {booking.updatedAt && (
                   <div>
-                    <p className={`text-sm font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Last Updated
-                    </p>
-                    <p className={`text-base ${
+                    <span className={`font-medium ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Updated:</span>
+                    <span className={`ml-2 ${
                       isDarkMode ? 'text-white' : 'text-gray-900'
                     }`}>
                       {formatDateTime(booking.updatedAt.toDate?.() || booking.updatedAt)}
-                    </p>
+                    </span>
                   </div>
                 )}
               </div>

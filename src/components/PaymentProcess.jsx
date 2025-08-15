@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
+import { formatDateKey } from '@/utils/dateUtils';
 
 // Note: In a real implementation, you would load Razorpay script dynamically
 // and handle the payment gateway integration properly
@@ -62,7 +63,7 @@ const PaymentProcess = ({ customerDetails }) => {
   };
 
   const processBooking = async (paymentData) => {
-    const dateKey = selectedDate.toISOString().split('T')[0];
+    const dateKey = formatDateKey(selectedDate);
     const bookingId = 'BK' + Date.now();
     
     try {
@@ -97,7 +98,9 @@ const PaymentProcess = ({ customerDetails }) => {
 
         transaction.set(availabilityRef, {
           seats: updatedAvailability,
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
+          date: dateKey,
+          shift: selectedShift
         }, { merge: true });
 
         // Create booking record
