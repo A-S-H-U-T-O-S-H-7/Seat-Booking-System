@@ -97,14 +97,20 @@ const ACTIONS = {
 const getSeatPrice = (seatId) => {
   // Convert to string to handle cases where seatId might be a number or object
   const seatStr = String(seatId);
+  let price = 0;
+  
   if (seatStr.startsWith('A-') || seatStr.startsWith('B-')) {
-    return SHOW_SEAT_TYPES.VIP.price; // VIP seats ₹1000
+    price = SHOW_SEAT_TYPES.VIP.price; // VIP seats
   } else if (seatStr.startsWith('C-')) {
-    return SHOW_SEAT_TYPES.REGULAR_C.price; // Block C ₹1000
+    price = SHOW_SEAT_TYPES.REGULAR_C.price; // Block C
   } else if (seatStr.startsWith('D-')) {
-    return SHOW_SEAT_TYPES.REGULAR_D.price; // Block D ₹500
+    price = SHOW_SEAT_TYPES.REGULAR_D.price; // Block D
+  } else {
+    price = 500; // Default fallback
   }
-  return 500; // Default fallback
+  
+  // Ensure we return a number, not a string
+  return Number(price) || 500;
 };
 
 // Reducer function
@@ -287,9 +293,9 @@ export const ShowSeatBookingProvider = ({ children }) => {
         const data = docSnap.data();
         const newPriceSettings = {
           seatTypes: {
-            VIP: { price: data.seatTypes?.VIP?.price || 1000 },
-            REGULAR_C: { price: data.seatTypes?.REGULAR_C?.price || 1000 },
-            REGULAR_D: { price: data.seatTypes?.REGULAR_D?.price || 500 }
+            VIP: { price: data.seatTypes?.blockA?.price || data.seatTypes?.blockB?.price || 1000 },
+            REGULAR_C: { price: data.seatTypes?.blockC?.price || 1000 },
+            REGULAR_D: { price: data.seatTypes?.blockD?.price || 500 }
           },
           earlyBirdDiscounts: data.earlyBirdDiscounts || [],
           bulkBookingDiscounts: data.bulkBookingDiscounts || [],
@@ -303,12 +309,9 @@ export const ShowSeatBookingProvider = ({ children }) => {
         
         dispatch({ type: ACTIONS.SET_PRICE_SETTINGS, payload: newPriceSettings });
         
-        // Notify user if they have seats selected
+        // Only show toast when prices actually change and user has selections
         if (state.selectedSeats && state.selectedSeats.length > 0) {
-          toast.success('🎭 Show seat pricing updated! Your total has been recalculated.', {
-            duration: 4000,
-            position: 'top-right'
-          });
+          console.log('Pricing updated - seats selected, recalculating totals');
         }
       } else {
         // Set default values if document doesn't exist
@@ -461,7 +464,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
   // Pricing calculation functions using the pricing utilities
   const getPricingBreakdown = () => {
     // Get the base price for each selected seat and sum them
-    const basePrice = state.selectedSeats.reduce((sum, seatId) => {
+    const baseAmount = state.selectedSeats.reduce((sum, seatId) => {
       return sum + getSeatPrice(seatId);
     }, 0);
     
@@ -484,10 +487,10 @@ export const ShowSeatBookingProvider = ({ children }) => {
       };
     }
     
-    // Use average price for discount calculations
-    const averagePrice = basePrice / quantity;
+    // Use average price for discount calculations but preserve the actual total amount
+    const averagePrice = baseAmount / quantity;
     
-    return calculatePriceBreakdown({
+    const breakdown = calculatePriceBreakdown({
       basePrice: averagePrice,
       quantity: quantity,
       selectedDate: state.selectedEventDate,
@@ -496,6 +499,16 @@ export const ShowSeatBookingProvider = ({ children }) => {
       quantityKey: 'minSeats', // Shows use seat-based discounts
       taxRate: state.priceSettings.taxRate
     });
+    
+    // Override baseAmount to use actual sum instead of calculated average * quantity
+    // This ensures that mixed-price seats are calculated correctly
+    return {
+      ...breakdown,
+      baseAmount: baseAmount,
+      discountAmount: Math.round((baseAmount * breakdown.discounts.best.percent) / 100),
+      discountedAmount: baseAmount - Math.round((baseAmount * breakdown.discounts.best.percent) / 100),
+      totalAmount: baseAmount - Math.round((baseAmount * breakdown.discounts.best.percent) / 100) + breakdown.taxAmount
+    };
   };
   
   const getBaseAmount = () => {

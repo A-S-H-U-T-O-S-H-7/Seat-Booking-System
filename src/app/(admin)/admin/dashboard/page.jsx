@@ -23,7 +23,6 @@ import {
 
 // Import admin components
 import ProtectedAdminRoute from '@/components/admin/ProtectedAdminRoute';
-import EventSchedule from '@/components/admin/EventSchedule';
 import SeatManagement from '@/components/admin/SeatManagement';
 import ShowSeatManagement from '@/components/admin/ShowSeatManagement';
 import StallManagement from '@/components/admin/StallManagement';
@@ -80,12 +79,6 @@ export default function AdminDashboard() {
       name: 'Overview',
       icon: ChartBarIcon,
       permission: null
-    },
-    {
-      id: 'schedule',
-      name: 'Event Schedule',
-      icon: CalendarDaysIcon,
-      permission: 'view_events'
     },
     {
       id: 'seats',
@@ -159,8 +152,6 @@ export default function AdminDashboard() {
     switch (activeTab) {
       case 'overview':
         return <OverviewStats />;
-      case 'schedule':
-        return <EventSchedule />;
       case 'seats':
         return <SeatManagement />;
       case 'stalls':
@@ -201,7 +192,7 @@ export default function AdminDashboard() {
 
         {/* Sidebar */}
         <div className={`
-          fixed inset-y-0 left-0 z-50 w-64 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl transform transition-transform duration-300 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-64 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow-xl transform transition-transform duration-300 ease-in-out flex flex-col
           lg:translate-x-0
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}>
@@ -217,7 +208,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto admin-sidebar-nav">
             {navigationItems.map((item) => {
               if (item.permission && !hasPermission(item.permission)) {
                 return null;

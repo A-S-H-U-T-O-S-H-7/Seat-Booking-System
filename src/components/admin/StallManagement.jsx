@@ -313,7 +313,7 @@ export default function StallManagement() {
             <button
               key={stall.id}
               onClick={() => toggleStallSelection(stall.id)}
-              disabled={getStallStatus(stall.id) !== 'available'}
+              disabled={getStallStatus(stall.id) === 'booked'}
               className={`
                 w-10 h-10 sm:w-12 sm:h-12 flex flex-col items-center justify-center rounded-lg font-bold transition-all duration-200
                 ${getStallColor(stall.id)}
@@ -400,7 +400,7 @@ export default function StallManagement() {
                         type="checkbox"
                         checked={selectedStalls.includes(stall.id)}
                         onChange={() => toggleStallSelection(stall.id)}
-                        disabled={status !== 'available'}
+                        disabled={status === 'booked'}
                         className={`h-4 w-4 text-blue-600 focus:ring-blue-500 rounded ${
                           isDarkMode ? 'bg-gray-700 border-gray-600' : 'border-gray-300'
                         }`}

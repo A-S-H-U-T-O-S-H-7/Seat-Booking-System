@@ -33,9 +33,17 @@ export default function ShowAuditorium() {
       ]
     }
   });
+  const [pricingSettings, setPricingSettings] = useState({
+    seatTypes: {
+      blockA: { price: 1000 },
+      blockB: { price: 1000 },
+      blockC: { price: 1000 },
+      blockD: { price: 500 }
+    }
+  });
   const [loading, setLoading] = useState(true);
 
-  // Fetch show settings from Firebase on component mount
+  // Fetch show settings and pricing from Firebase on component mount
   useEffect(() => {
     const fetchShowSettings = async () => {
       try {
@@ -49,13 +57,35 @@ export default function ShowAuditorium() {
       } catch (error) {
         console.error('Error fetching show settings:', error);
         toast.error('Failed to load show settings, using defaults');
+      }
+    };
+    
+    const fetchPricingSettings = async () => {
+      try {
+        const pricingRef = doc(db, 'settings', 'showPricing');
+        const pricingSnap = await getDoc(pricingRef);
+        
+        if (pricingSnap.exists()) {
+          const data = pricingSnap.data();
+          setPricingSettings(data);
+        }
+      } catch (error) {
+        console.error('Error fetching pricing settings:', error);
       } finally {
         setLoading(false);
       }
     };
     
     fetchShowSettings();
+    fetchPricingSettings();
   }, []);
+
+  // Helper function to get price for a specific block
+  const getPriceForBlock = (blockId) => {
+    const blockKey = `block${blockId}`;
+    return pricingSettings?.seatTypes?.[blockKey]?.price || 
+           (blockId === 'A' || blockId === 'B' ? 1000 : blockId === 'C' ? 1000 : 500);
+  };
 
   // Generate dynamic seat layout based on show settings
   const generateSeatLayout = () => {
@@ -79,7 +109,7 @@ export default function ShowAuditorium() {
             side: block.id === 'A' ? 'LEFT' : 'RIGHT',
             type: 'VIP',
             section: block.id,
-            price: block.price,
+            price: getPriceForBlock(block.id),
             capacity: 1,
             displayName: `${block.id}-R${row}-${letter}1`,
             pairLetter: letter,
@@ -95,7 +125,7 @@ export default function ShowAuditorium() {
             side: block.id === 'A' ? 'LEFT' : 'RIGHT',
             type: 'VIP',
             section: block.id,
-            price: block.price,
+            price: getPriceForBlock(block.id),
             capacity: 1,
             displayName: `${block.id}-R${row}-${letter}2`,
             pairLetter: letter,
@@ -119,7 +149,7 @@ export default function ShowAuditorium() {
             side: block.id === 'C' ? 'LEFT' : 'RIGHT',
             type: 'REGULAR',
             section: block.id,
-            price: block.price,
+            price: getPriceForBlock(block.id),
             capacity: 1,
             displayName: `${block.id}-R${row}-S${seat}`
           };
@@ -220,7 +250,7 @@ export default function ShowAuditorium() {
       <div className="mb-10">
         <div className="text-center mb-6">
           <h3 className={`text-xl font-bold text-gray-900`}>
-            Premium Seating (₹{blockASettings?.price || blockBSettings?.price || 1000} per seat)
+            Premium Seating (₹{blockASettings ? getPriceForBlock('A') : blockBSettings ? getPriceForBlock('B') : 1000} per seat)
           </h3>
         </div>
         
@@ -340,13 +370,13 @@ export default function ShowAuditorium() {
           <div className="text-sm mt-2">
             {blockCSettings && (
               <span className="text-emerald-600 font-semibold">
-                {blockCSettings.name}: ₹{blockCSettings.price.toLocaleString()}
+                {blockCSettings.name}: ₹{getPriceForBlock('C').toLocaleString()}
               </span>
             )}
             {blockCSettings && blockDSettings && <span className="mx-4 text-gray-400">•</span>}
             {blockDSettings && (
               <span className="text-teal-600 font-semibold">
-                {blockDSettings.name}: ₹{blockDSettings.price.toLocaleString()}
+                {blockDSettings.name}: ₹{getPriceForBlock('D').toLocaleString()}
               </span>
             )}
           </div>
@@ -355,13 +385,13 @@ export default function ShowAuditorium() {
         <div className="flex items-center justify-center gap-6 mb-4">
           {blockCSettings && (
             <div className={`px-6 py-2 rounded-lg border-2 font-bold text-md bg-emerald-50 border-emerald-300 text-emerald-800`}>
-              {blockCSettings.name} (₹{blockCSettings.price.toLocaleString()})
+              {blockCSettings.name} (₹{getPriceForBlock('C').toLocaleString()})
             </div>
           )}
           <div className="w-10"></div>
           {blockDSettings && (
             <div className={`px-6 py-2 rounded-lg border-2 font-bold text-md bg-teal-50 border-teal-300 text-teal-800`}>
-              {blockDSettings.name} (₹{blockDSettings.price.toLocaleString()})
+              {blockDSettings.name} (₹{getPriceForBlock('D').toLocaleString()})
             </div>
           )}
         </div>
@@ -565,115 +595,99 @@ export default function ShowAuditorium() {
 
       {/* Selection Summary */}
       {selectedSeats.length > 0 && (
-        <div className={`mt-3 md:mt-4 p-3 md:p-4 rounded-xl border-2 shadow-lg sticky bottom-4 z-10 bg-white border-gray-200`}>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h4 className={`font-semibold text-sm sm:text-base mb-2 text-gray-800`}>
-                  Selected Seats ({selectedSeats.length})
-                </h4>
-                <div className="flex flex-wrap gap-1 sm:gap-2 mb-2 sm:mb-0">
-                  {selectedSeats.slice(0, 6).map(seatId => {
-                    const seat = allSeats[seatId];
-                    const isVIP = seat.section === 'A' || seat.section === 'B';
-                    const isBlockC = seat.section === 'C';
-                    
-                    return (
-                      <span 
-                        key={seatId} 
-                        className={`px-2 py-1 text-xs rounded font-medium ${
-                          isVIP ? 'bg-yellow-100 text-yellow-800' : 
-                          isBlockC ? 'bg-green-100 text-green-800' : 
-                          'bg-teal-100 text-teal-800'
-                        }`}
-                      >
-                        {seatId} (₹{seat.price})
-                      </span>
-                    );
-                  })}
-                  {selectedSeats.length > 6 && (
-                    <span className={`px-2 py-1 text-xs rounded font-medium bg-gray-200 text-gray-700`}>
-                      +{selectedSeats.length - 6} more
+        <div className="mt-3 md:mt-4 p-3 md:p-4 rounded-xl border-2 shadow-lg sticky bottom-4 z-10 bg-white border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Left Side - Selected Seats */}
+            <div className="flex-1">
+              <h4 className="font-semibold text-base mb-2 text-gray-800">
+                Selected Seats ({selectedSeats.length})
+              </h4>
+              
+              {/* Seat Pills - Clean format similar to screenshot */}
+              <div className="flex flex-wrap gap-2">
+                {selectedSeats.map(seatId => {
+                  const seat = allSeats[seatId];
+                  const isVIP = seat.section === 'A' || seat.section === 'B';
+                  
+                  // Simple seat display format: B-R5-B1 (₹1000)
+                  const seatDisplay = seatId;
+                  
+                  return (
+                    <span 
+                      key={seatId} 
+                      className={`px-3 py-2 rounded-full text-sm font-medium inline-flex items-center gap-1 ${
+                        isVIP 
+                          ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+                          : seat.section === 'C'
+                          ? 'bg-green-100 text-green-800 border border-green-200'
+                          : 'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}
+                    >
+                      {seatDisplay} (₹{seat.price.toLocaleString()})
                     </span>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-              <div className="text-center sm:text-right bg-blue-50 rounded-lg p-2 border border-blue-200 w-full sm:w-auto min-w-[200px]">
-                {/* Current Total */}
-                <div className="text-xl sm:text-2xl font-bold text-blue-700 mb-1">
+            </div>
+            
+            {/* Right Side - Pricing */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 min-w-[240px]">
+              {/* Total Amount */}
+              <div className="text-right mb-2">
+                <div className="text-2xl font-bold text-blue-700">
                   ₹{getTotalAmount().toLocaleString()}
                 </div>
                 
-                {/* Base calculation - Compact */}
-                {getDiscountAmount() > 0 ? (
-                  <div className="text-xs text-gray-600 space-y-0.5 mb-1">
-                    <div className="line-through">
-                      ₹{getBaseAmount().toLocaleString()}
-                    </div>
-                    <div className="text-green-600 font-medium">
-                      -₹{getDiscountAmount().toLocaleString()}
-                    </div>
+                {/* Show base amount if there's a discount */}
+                {getDiscountAmount() > 0 && (
+                  <div className="text-sm text-gray-500">
+                    <span className="line-through">₹{getBaseAmount().toLocaleString()}</span>
+                    <span className="text-green-600 font-medium ml-2">
+                      ₹{getDiscountAmount().toLocaleString()} saved
+                    </span>
                   </div>
-                ) : (
-                  <div className="text-xs text-gray-600 mb-1">
-                    {selectedSeats.length} seats selected
+                )}
+              </div>
+              
+              {/* Discount Badges */}
+              <div className="text-right space-y-1">
+                {getEarlyBirdDiscount() > 0 && (
+                  <div className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mr-1">
+                    🎉 {getEarlyBirdDiscount()}% Early Bird!
                   </div>
                 )}
                 
-                {/* Discount Badges - Compact */}
-                <div className="space-y-0.5">
-                  {getEarlyBirdDiscount() > 0 && (
-                    <div className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                      🎉 {getEarlyBirdDiscount()}% Early Bird!
-                    </div>
-                  )}
-                  
-                  {getBulkDiscount() > 0 && (
-                    <div className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                      🎯 {getBulkDiscount()}% Bulk!
-                    </div>
-                  )}
-                  
-                  {/* Next Milestone - Compact */}
-                  {(() => {
-                    const milestone = getNextMilestone();
-                    if (milestone) {
-                      return (
-                        <div className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
-                          📈 +{milestone.quantityNeeded} for {milestone.discountPercent}%
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
+                {getBulkDiscount() > 0 && (
+                  <div className="inline-block text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                    🎯 {getBulkDiscount()}% Bulk!
+                  </div>
+                )}
                 
-                {/* Seat breakdown - Compact */}
-                <div className="text-xs text-gray-600 mt-1">
+                {/* Show seat type breakdown */}
+                <div className="text-xs text-gray-600 mt-2">
                   {(() => {
-                    const breakdown = {
-                      vipSeats: 0,
-                      blockCSeats: 0,
-                      blockDSeats: 0
-                    };
+                    const breakdown = { vip: 0, blockC: 0, blockD: 0 };
                     selectedSeats.forEach(seatId => {
                       const seat = allSeats[seatId];
-                      if (seat.section === 'A' || seat.section === 'B') breakdown.vipSeats++;
-                      else if (seat.section === 'C') breakdown.blockCSeats++;
-                      else if (seat.section === 'D') breakdown.blockDSeats++;
+                      if (seat.section === 'A' || seat.section === 'B') breakdown.vip++;
+                      else if (seat.section === 'C') breakdown.blockC++;
+                      else if (seat.section === 'D') breakdown.blockD++;
                     });
+                    
                     const parts = [];
-                    if (breakdown.vipSeats > 0) parts.push(`${breakdown.vipSeats} VIP`);
-                    if (breakdown.blockCSeats > 0) parts.push(`${breakdown.blockCSeats} Block C`);
-                    if (breakdown.blockDSeats > 0) parts.push(`${breakdown.blockDSeats} Block D`);
-                    return parts.join(' + ');
-                  })()}
+                    if (breakdown.vip > 0) parts.push(`${breakdown.vip} Premium`);
+                    if (breakdown.blockC > 0) parts.push(`${breakdown.blockC} Block C`);
+                    if (breakdown.blockD > 0) parts.push(`${breakdown.blockD} Block D`);
+                    
+                    return parts.join(' • ');
+                  })()
+                }
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+      </div>
   );
 }

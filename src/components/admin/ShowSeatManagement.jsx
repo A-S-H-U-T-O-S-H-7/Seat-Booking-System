@@ -28,7 +28,6 @@ import {
 } from '@heroicons/react/24/outline';
 
 const generateSeatLayout = (showSettings) => {
-  console.log('generateSeatLayout: Called with showSettings:', showSettings);
   const seats = [];
   
   // Helper function to normalize blocks (handle both array and object formats)
@@ -70,8 +69,6 @@ const generateSeatLayout = (showSettings) => {
     }
   );
   
-  console.log('generateSeatLayout: Premium blocks (normalized):', premiumBlocks);
-  console.log('generateSeatLayout: Regular blocks (normalized):', regularBlocks);
   
   // VIP Section - Dynamic configuration
   Object.entries(premiumBlocks).forEach(([blockId, block]) => {
@@ -177,7 +174,6 @@ export default function ShowSeatManagement() {
 
   // Real-time listener for show settings from Firebase
   useEffect(() => {
-    console.log('ShowSeatManagement: Setting up real-time listener for show settings');
     const showSettingsRef = doc(db, 'settings', 'shows');
     
     const unsubscribe = onSnapshot(
@@ -185,11 +181,8 @@ export default function ShowSeatManagement() {
       (doc) => {
         if (doc.exists()) {
           const data = doc.data();
-          console.log('ShowSeatManagement: Show settings updated:', data);
-          console.log('ShowSeatManagement: Seat layout structure:', data.seatLayout);
           setShowSettings(data);
         } else {
-          console.log('ShowSeatManagement: No show settings document found');
           setShowSettings(null);
         }
       },
@@ -266,19 +259,27 @@ export default function ShowSeatManagement() {
             
             setSeats(prev => prev.map(seat => {
               const availability = seatAvailability[seat.id];
+              
+              let newStatus = 'available';
               if (availability) {
-                return {
-                  ...seat,
-                  status: availability.blocked ? 'blocked' : (availability.booked ? 'booked' : 'available'),
-                  bookingId: availability.bookingId,
-                  userId: availability.userId,
-                  bookedAt: availability.bookedAt,
-                  userEmail: availability.userEmail,
-                  userName: availability.userName,
-                  userPhone: availability.userPhone
-                };
+                // Check if the seat is blocked or booked
+                if (availability.blocked === true) {
+                  newStatus = 'blocked';
+                } else if (availability.booked === true) {
+                  newStatus = 'booked';
+                }
               }
-              return { ...seat, status: 'available' };
+              
+              return {
+                ...seat,
+                status: newStatus,
+                bookingId: availability?.bookingId,
+                userId: availability?.userId,
+                bookedAt: availability?.bookedAt,
+                userEmail: availability?.userEmail,
+                userName: availability?.userName,
+                userPhone: availability?.userPhone
+              };
             }));
           } else {
             // No availability data for this date, all seats are available
@@ -353,7 +354,6 @@ export default function ShowSeatManagement() {
       seatIds.forEach(seatId => {
         if (newStatus === 'blocked') {
           updatedSeats[seatId] = {
-            ...(updatedSeats[seatId] || {}),
             blocked: true,
             blockedAt: serverTimestamp(),
             blockedBy: adminUser?.uid || 'admin',
@@ -366,17 +366,20 @@ export default function ShowSeatManagement() {
             userPhone: null
           };
         } else if (newStatus === 'available') {
-          // Remove blocked status
-          if (updatedSeats[seatId] && updatedSeats[seatId].blocked) {
-            delete updatedSeats[seatId].blocked;
-            delete updatedSeats[seatId].blockedAt;
-            delete updatedSeats[seatId].blockedBy;
-            delete updatedSeats[seatId].blockedReason;
-            
-            // If no other status, remove the seat entry entirely
-            if (Object.keys(updatedSeats[seatId]).length === 0) {
-              delete updatedSeats[seatId];
-            }
+          // Set all blocking properties to false/null to make seat available
+          if (updatedSeats[seatId]) {
+            updatedSeats[seatId] = {
+              blocked: false,
+              booked: false,
+              blockedAt: null,
+              blockedBy: null,
+              blockedReason: null,
+              bookingId: null,
+              userId: null,
+              userEmail: null,
+              userName: null,
+              userPhone: null
+            };
           }
         }
       });
@@ -454,13 +457,11 @@ export default function ShowSeatManagement() {
     };
     
     const premiumBlocks = normalizeBlocks(showSettings?.seatLayout?.premiumBlocks);
-    console.log('renderVIPSection: Using premiumBlocks:', premiumBlocks);
     
     const maxRows = Math.max(
       premiumBlocks?.A?.maxRows || 8,
       premiumBlocks?.B?.maxRows || 8
     );
-    console.log('renderVIPSection: maxRows calculated:', maxRows);
     
     const rows = Array.from({ length: maxRows }, (_, i) => i + 1);
     
@@ -491,8 +492,9 @@ export default function ShowSeatManagement() {
                       <button
                         key={seat.id}
                         onClick={() => handleSeatClick(seat)}
+                        disabled={seat.status === 'booked'}
                         className={`w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded text-xs font-bold transition-all ${
-                          seat.status === 'booked' ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-110'
+                          seat.status === 'booked' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:scale-110'
                         } ${getSeatColor(seat)}`}
                         title={`${seat.id} - ${seat.status}`}
                       >
@@ -531,8 +533,9 @@ export default function ShowSeatManagement() {
                       <button
                         key={seat.id}
                         onClick={() => handleSeatClick(seat)}
+                        disabled={seat.status === 'booked'}
                         className={`w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded text-xs font-bold transition-all ${
-                          seat.status === 'booked' ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-110'
+                          seat.status === 'booked' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:scale-110'
                         } ${getSeatColor(seat)}`}
                         title={`${seat.id} - ${seat.status}`}
                       >
@@ -569,13 +572,11 @@ export default function ShowSeatManagement() {
     };
     
     const regularBlocks = normalizeBlocks(showSettings?.seatLayout?.regularBlocks);
-    console.log('renderRegularSection: Using regularBlocks:', regularBlocks);
     
     const maxRows = Math.max(
       regularBlocks?.C?.maxRows || 25,
       regularBlocks?.D?.maxRows || 25
     );
-    console.log('renderRegularSection: maxRows calculated:', maxRows);
     
     const rows = Array.from({ length: maxRows }, (_, i) => i + 1);
     
@@ -606,8 +607,9 @@ export default function ShowSeatManagement() {
                       <button
                         key={seat.id}
                         onClick={() => handleSeatClick(seat)}
+                        disabled={seat.status === 'booked'}
                         className={`w-4 h-4 md:w-6 md:h-6 flex items-center justify-center rounded text-xs font-bold transition-all ${
-                          seat.status === 'booked' ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-110'
+                          seat.status === 'booked' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:scale-110'
                         } ${getSeatColor(seat)}`}
                         title={`${seat.id} - ${seat.status}`}
                       >
@@ -646,8 +648,9 @@ export default function ShowSeatManagement() {
                       <button
                         key={seat.id}
                         onClick={() => handleSeatClick(seat)}
+                        disabled={seat.status === 'booked'}
                         className={`w-4 h-4 md:w-6 md:h-6 flex items-center justify-center rounded text-xs font-bold transition-all ${
-                          seat.status === 'booked' ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-110'
+                          seat.status === 'booked' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:scale-110'
                         } ${getSeatColor(seat)}`}
                         title={`${seat.id} - ${seat.status}`}
                       >

@@ -25,7 +25,7 @@ export const calculateEarlyBirdDiscount = (selectedDate, earlyBirdDiscounts = []
   
   const daysUntilEvent = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
 
-  // Find applicable early bird discounts (within timeframe)
+  // Find applicable early bird discounts (within timeframe and active)
   const applicableDiscounts = earlyBirdDiscounts
     .filter(discount => {
       // Validate discount object structure
@@ -35,6 +35,10 @@ export const calculateEarlyBirdDiscount = (selectedDate, earlyBirdDiscounts = []
           discount.daysBeforeEvent < 0 ||
           discount.discountPercent < 0) {
         console.warn('Invalid early bird discount object:', discount);
+        return false;
+      }
+      // Only include active discounts
+      if (discount.isActive === false) {
         return false;
       }
       return daysUntilEvent >= discount.daysBeforeEvent;
@@ -62,7 +66,7 @@ export const calculateBulkDiscount = (quantity, bulkDiscounts = [], quantityKey 
     return { percent: 0, appliedDiscount: null };
   }
 
-  // Find applicable bulk discounts (meets minimum quantity)
+  // Find applicable bulk discounts (meets minimum quantity and is active)
   const applicableDiscounts = bulkDiscounts
     .filter(discount => {
       // Validate discount object structure
@@ -72,6 +76,10 @@ export const calculateBulkDiscount = (quantity, bulkDiscounts = [], quantityKey 
           discount[quantityKey] < 0 ||
           discount.discountPercent < 0) {
         console.warn('Invalid bulk discount object:', discount);
+        return false;
+      }
+      // Only include active discounts
+      if (discount.isActive === false) {
         return false;
       }
       return quantity >= discount[quantityKey];
@@ -208,6 +216,10 @@ export const getNextBulkMilestone = (currentQuantity, bulkDiscounts = [], quanti
           discount[quantityKey] < 0 ||
           discount.discountPercent < 0) {
         console.warn('Invalid bulk discount object in milestone calculation:', discount);
+        return false;
+      }
+      // Only include active discounts
+      if (discount.isActive === false) {
         return false;
       }
       return true;

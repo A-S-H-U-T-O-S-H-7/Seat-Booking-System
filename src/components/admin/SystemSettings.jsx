@@ -18,7 +18,10 @@ import {
   EyeSlashIcon,
   PencilIcon,
   ChevronDownIcon,
-  ChevronUpIcon
+  ChevronUpIcon,
+  HomeIcon,
+  BuildingStorefrontIcon,
+  TicketIcon
 } from '@heroicons/react/24/outline';
 
 const SystemSettings = () => {
@@ -26,6 +29,7 @@ const SystemSettings = () => {
   const { adminUser } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('havan');
 
   // Date Range Settings
   const [dateSettings, setDateSettings] = useState({
@@ -166,24 +170,24 @@ const SystemSettings = () => {
     return errors;
   };
 
-  // Single dropdown state for Havan Settings
-  const [isHavanSettingsOpen, setIsHavanSettingsOpen] = useState(true);
-  // Separate dropdown state for Stall Settings
-  const [isStallSettingsOpen, setIsStallSettingsOpen] = useState(true);
-  // Separate dropdown state for Show Settings
-  const [isShowSettingsOpen, setIsShowSettingsOpen] = useState(true);
-
-  const toggleHavanSettings = () => {
-    setIsHavanSettingsOpen(prev => !prev);
-  };
-
-  const toggleStallSettings = () => {
-    setIsStallSettingsOpen(prev => !prev);
-  };
-
-  const toggleShowSettings = () => {
-    setIsShowSettingsOpen(prev => !prev);
-  };
+  // Tab component
+  const TabButton = ({ id, label, icon, isActive, onClick }) => (
+    <button
+      onClick={() => onClick(id)}
+      className={`flex items-center px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+        isActive
+          ? isDarkMode
+            ? 'bg-purple-600 text-white shadow-lg'
+            : 'bg-purple-600 text-white shadow-lg'
+          : isDarkMode
+            ? 'text-gray-300 hover:text-white hover:bg-gray-700'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+      }`}
+    >
+      {icon}
+      <span className="ml-2">{label}</span>
+    </button>
+  );
 
   const iconOptions = ['🌅', '🌆', '🌙', '☀️', '⭐', '🔥', '🕉️', '🙏', '🎭', '🎪'];
 
@@ -466,68 +470,69 @@ const SystemSettings = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-bold ${
+          <h1 className={`text-3xl font-bold ${
             isDarkMode ? 'text-white' : 'text-gray-900'
           }`}>
-            System Settings
+            ⚙️ System Settings Center
           </h1>
-          <p className={`mt-1 text-sm ${
+          <p className={`mt-2 text-sm ${
             isDarkMode ? 'text-gray-400' : 'text-gray-600'
           }`}>
-            Configure date ranges, shifts, and seat layouts for your havan booking system
+            Comprehensive system configuration for Havan, Show, and Stall management
           </p>
         </div>
         <button
           onClick={saveSettings}
           disabled={saving}
-          className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`inline-flex items-center px-6 py-3 text-sm font-medium rounded-lg transition-colors shadow-lg ${
             isDarkMode 
-              ? 'bg-purple-600 hover:bg-purple-700 text-white'
-              : 'bg-purple-600 hover:bg-purple-700 text-white'
-          } disabled:opacity-50`}
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+              : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          <CheckCircleIcon className="w-4 h-4 mr-2" />
-          {saving ? 'Saving...' : 'Save All Settings'}
+          <CheckCircleIcon className="w-5 h-5 mr-2" />
+          {saving ? 'Saving Changes...' : 'Save All Settings'}
         </button>
       </div>
 
-      {/* Havan Settings Dropdown */}
-      <div className={`rounded-lg border ${
-        isDarkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200 shadow-sm'
+      {/* Tab Navigation */}
+      <div className={`flex flex-wrap gap-2 p-1 rounded-xl ${
+        isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-100 border border-gray-200'
       }`}>
-        {/* Main Dropdown Header */}
-        <button
-          onClick={toggleHavanSettings}
-          className={`w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          <div className="flex items-center">
-            <Cog6ToothIcon className="w-6 h-6 mr-3" />
-            <div>
-              <h2 className="text-xl font-semibold">🕉️ Havan Settings</h2>
-              <p className={`mt-1 text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Configure all aspects of your Havan booking system
-              </p>
-            </div>
-          </div>
-          {isHavanSettingsOpen ? (
-            <ChevronUpIcon className="w-6 h-6" />
-          ) : (
-            <ChevronDownIcon className="w-6 h-6" />
-          )}
-        </button>
+        <TabButton
+          id="havan"
+          label="Havan Settings"
+          icon={<HomeIcon className="w-5 h-5" />}
+          isActive={activeTab === 'havan'}
+          onClick={setActiveTab}
+        />
+        <TabButton
+          id="show"
+          label="Show Settings"
+          icon={<TicketIcon className="w-5 h-5" />}
+          isActive={activeTab === 'show'}
+          onClick={setActiveTab}
+        />
+        <TabButton
+          id="stall"
+          label="Stall Settings"
+          icon={<BuildingStorefrontIcon className="w-5 h-5" />}
+          isActive={activeTab === 'stall'}
+          onClick={setActiveTab}
+        />
+      </div>
 
-        {/* Content visible when Havan Settings is open */}
-        {isHavanSettingsOpen && (
+      {/* Tab Content */}
+      <div className={`rounded-xl border shadow-xl ${
+        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        
+        {/* Havan Settings */}
+        {activeTab === 'havan' && (
           <div className="p-6 space-y-8">
             {/* Date Range Section */}
             <div className={`rounded-lg border p-6 ${
@@ -1158,41 +1163,376 @@ const SystemSettings = () => {
 
           </div>
         )}
-      </div>
 
-      {/* Separate Stall Settings Dropdown */}
-      <div className={`rounded-lg border ${
-        isDarkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200 shadow-sm'
-      }`}>
-        {/* Stall Settings Dropdown Header */}
-        <button
-          onClick={toggleStallSettings}
-          className={`w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          <div className="flex items-center">
-            <Cog6ToothIcon className="w-6 h-6 mr-3" />
-            <div>
-              <h2 className="text-xl font-semibold">🏪 Stall Settings</h2>
-              <p className={`mt-1 text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+        {/* Show Settings */}
+        {activeTab === 'show' && (
+          <div className="p-6 space-y-8">
+            {/* Show Date Configuration */}
+            <div className={`rounded-lg border p-6 ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
               }`}>
-                Configure stall layout, pricing, and booking settings
-              </p>
+                <CalendarDaysIcon className="w-5 h-5 mr-2" />
+                Show Date Configuration
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-center mb-4">
+                  <input
+                    id="showDatesActive"
+                    type="checkbox"
+                    checked={showSettings.eventDates.isActive}
+                    onChange={(e) => setShowSettings({
+                      ...showSettings,
+                      eventDates: {
+                        ...showSettings.eventDates,
+                        isActive: e.target.checked
+                      }
+                    })}
+                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="showDatesActive" className={`ml-2 block text-sm ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    Enable custom show date range
+                  </label>
+                </div>
+
+                {showSettings.eventDates.isActive && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={showSettings.eventDates.startDate}
+                        onChange={(e) => setShowSettings({
+                          ...showSettings,
+                          eventDates: {
+                            ...showSettings.eventDates,
+                            startDate: e.target.value
+                          }
+                        })}
+                        className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white' 
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={showSettings.eventDates.endDate}
+                        onChange={(e) => setShowSettings({
+                          ...showSettings,
+                          eventDates: {
+                            ...showSettings.eventDates,
+                            endDate: e.target.value
+                          }
+                        })}
+                        className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white' 
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-sm font-medium mb-2 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Available Days
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={showSettings.eventDates.availableDays}
+                        onChange={(e) => setShowSettings({
+                          ...showSettings,
+                          eventDates: {
+                            ...showSettings.eventDates,
+                            availableDays: parseInt(e.target.value) || 5
+                          }
+                        })}
+                        className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white' 
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className={`p-3 rounded-md ${
+                  isDarkMode 
+                    ? 'bg-blue-900 bg-opacity-30 border border-blue-700' 
+                    : 'bg-blue-50 border border-blue-200'
+                }`}>
+                  <p className={`text-sm ${
+                    isDarkMode ? 'text-blue-300' : 'text-blue-800'
+                  }`}>
+                    {showSettings.eventDates.isActive && showSettings.eventDates.startDate && showSettings.eventDates.endDate
+                      ? `Show dates will be available from ${showSettings.eventDates.startDate} to ${showSettings.eventDates.endDate}`
+                      : `When disabled, the default ${showSettings.eventDates.availableDays}-day range from today will be used`
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Show Timing Management */}
+            <div className={`rounded-lg border p-6 ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                <ClockIcon className="w-5 h-5 mr-2" />
+                Show Timing Management
+              </h3>
+
+              {/* Existing Show Timings */}
+              <div className="space-y-3 mb-6">
+                {showSettings.shows.map((show, index) => (
+                  <div key={show.id || index} className={`flex items-center space-x-3 p-4 rounded-md border ${
+                    isDarkMode ? 'bg-gray-600 border-gray-500' : 'bg-white border-gray-200'
+                  } ${!show.isActive ? 'opacity-60' : ''}`}>
+                    <button
+                      onClick={() => {
+                        const updatedShows = [...showSettings.shows];
+                        updatedShows[index].isActive = !updatedShows[index].isActive;
+                        setShowSettings({
+                          ...showSettings,
+                          shows: updatedShows
+                        });
+                      }}
+                      className={`p-1 rounded ${
+                        show.isActive 
+                          ? 'text-green-600 hover:bg-green-100' 
+                          : 'text-gray-400 hover:bg-gray-200'
+                      }`}
+                      title={show.isActive ? 'Disable show' : 'Enable show'}
+                    >
+                      {show.isActive ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
+                    </button>
+                    
+                    <div className="text-2xl">{show.icon}</div>
+                    
+                    <div className="flex-1">
+                      <div className={`text-sm font-medium mb-1 ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {show.name}
+                        {show.badgeText && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                            {show.badgeText}
+                          </span>
+                        )}
+                      </div>
+                      <div className={`text-xs mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                      }`}>
+                        {formatTime(show.timeFrom)} - {formatTime(show.timeTo)}
+                      </div>
+                      {show.description && (
+                        <div className={`text-xs ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`}>
+                          {show.description}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => {
+                          const updatedShows = showSettings.shows.filter((_, i) => i !== index);
+                          setShowSettings({
+                            ...showSettings,
+                            shows: updatedShows
+                          });
+                          toast.success('Show timing removed successfully');
+                        }}
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Remove show timing"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {showSettings.shows.length === 0 && (
+                  <div className={`text-center py-6 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    No show timings configured. Add one below.
+                  </div>
+                )}
+              </div>
+
+              {/* Add New Show Timing */}
+              <div className={`border-t pt-4 ${
+                isDarkMode ? 'border-gray-600' : 'border-gray-300'
+              }`}>
+                <h4 className={`text-sm font-medium mb-3 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  Add New Show Timing
+                </h4>
+                <div className="space-y-3" id="newShowForm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Show ID (e.g., morning_show)"
+                      className={`px-3 py-2 text-sm rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      id="newShowId"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Show Name"
+                      className={`px-3 py-2 text-sm rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      id="newShowName"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <input
+                      type="time"
+                      className={`px-3 py-2 text-sm rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-gray-600 border-gray-500 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      id="newShowTimeFrom"
+                    />
+                    <input
+                      type="time"
+                      className={`px-3 py-2 text-sm rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-gray-600 border-gray-500 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      id="newShowTimeTo"
+                    />
+                    <select
+                      className={`px-3 py-2 text-sm rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-gray-600 border-gray-500 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                      id="newShowIcon"
+                    >
+                      {iconOptions.map(icon => (
+                        <option key={icon} value={icon}>{icon}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Badge Text (Optional)"
+                      className={`px-3 py-2 text-sm rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                      }`}
+                      id="newShowBadgeText"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Description"
+                    className={`w-full px-3 py-2 text-sm rounded-md border ${
+                      isDarkMode 
+                        ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
+                    id="newShowDescription"
+                  />
+                  <button
+                    onClick={() => {
+                      const form = document.getElementById('newShowForm');
+                      const id = form.querySelector('#newShowId').value.trim();
+                      const name = form.querySelector('#newShowName').value.trim();
+                      const timeFrom = form.querySelector('#newShowTimeFrom').value;
+                      const timeTo = form.querySelector('#newShowTimeTo').value;
+                      const icon = form.querySelector('#newShowIcon').value;
+                      const badgeText = form.querySelector('#newShowBadgeText').value.trim();
+                      const description = form.querySelector('#newShowDescription').value.trim();
+                      
+                      if (!id || !name || !timeFrom || !timeTo) {
+                        toast.error('Please fill in all required fields');
+                        return;
+                      }
+                      
+                      if (showSettings.shows.some(show => show.id === id)) {
+                        toast.error('Show ID already exists');
+                        return;
+                      }
+                      
+                      const newShow = {
+                        id,
+                        name,
+                        timeFrom,
+                        timeTo,
+                        icon,
+                        badgeText,
+                        description,
+                        isActive: true
+                      };
+                      
+                      setShowSettings({
+                        ...showSettings,
+                        shows: [...showSettings.shows, newShow]
+                      });
+                      
+                      // Clear form
+                      form.querySelectorAll('input, select').forEach(input => {
+                        if (input.type === 'text' || input.type === 'time') {
+                          input.value = '';
+                        } else if (input.tagName === 'SELECT') {
+                          input.selectedIndex = 0;
+                        }
+                      });
+                      
+                      toast.success('Show timing added successfully');
+                    }}
+                    className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Add Show Timing
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          {isStallSettingsOpen ? (
-            <ChevronUpIcon className="w-6 h-6" />
-          ) : (
-            <ChevronDownIcon className="w-6 h-6" />
-          )}
-        </button>
+        )}
 
-        {/* Content visible when Stall Settings is open */}
-        {isStallSettingsOpen && (
+        {/* Stall Settings */}
+        {activeTab === 'stall' && (
           <div className="p-6 space-y-8">
             {/* Stall Configuration Section */}
             <div className={`rounded-lg border p-6 ${
@@ -1643,821 +1983,6 @@ const SystemSettings = () => {
                       isDarkMode ? 'text-orange-300' : 'text-orange-700'
                     }`}>Max Price</div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Show Settings Dropdown */}
-      <div className={`rounded-lg border ${
-        isDarkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-white border-gray-200 shadow-sm'
-      }`}>
-        {/* Show Settings Dropdown Header */}
-        <button
-          onClick={toggleShowSettings}
-          className={`w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          <div className="flex items-center">
-            <Cog6ToothIcon className="w-6 h-6 mr-3" />
-            <div>
-              <h2 className="text-xl font-semibold">🎭 Show Settings</h2>
-              <p className={`mt-1 text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Configure show dates, timings, and premium/regular seat layouts
-              </p>
-            </div>
-          </div>
-          {isShowSettingsOpen ? (
-            <ChevronUpIcon className="w-6 h-6" />
-          ) : (
-            <ChevronDownIcon className="w-6 h-6" />
-          )}
-        </button>
-
-        {/* Content visible when Show Settings is open */}
-        {isShowSettingsOpen && (
-          <div className="p-6 space-y-8">
-            {/* Show Date Configuration */}
-            <div className={`rounded-lg border p-6 ${
-              isDarkMode 
-                ? 'bg-gray-700 border-gray-600' 
-                : 'bg-gray-50 border-gray-200'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                <CalendarDaysIcon className="w-5 h-5 mr-2" />
-                Show Date Configuration
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="flex items-center mb-4">
-                  <input
-                    id="showDatesActive"
-                    type="checkbox"
-                    checked={showSettings.eventDates.isActive}
-                    onChange={(e) => setShowSettings({
-                      ...showSettings,
-                      eventDates: {
-                        ...showSettings.eventDates,
-                        isActive: e.target.checked
-                      }
-                    })}
-                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="showDatesActive" className={`ml-2 block text-sm ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  }`}>
-                    Enable custom show date range
-                  </label>
-                </div>
-
-                {showSettings.eventDates.isActive && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={showSettings.eventDates.startDate}
-                        onChange={(e) => setShowSettings({
-                          ...showSettings,
-                          eventDates: {
-                            ...showSettings.eventDates,
-                            startDate: e.target.value
-                          }
-                        })}
-                        className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                          isDarkMode 
-                            ? 'bg-gray-600 border-gray-500 text-white' 
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={showSettings.eventDates.endDate}
-                        onChange={(e) => setShowSettings({
-                          ...showSettings,
-                          eventDates: {
-                            ...showSettings.eventDates,
-                            endDate: e.target.value
-                          }
-                        })}
-                        className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                          isDarkMode 
-                            ? 'bg-gray-600 border-gray-500 text-white' 
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Available Days
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="30"
-                        value={showSettings.eventDates.availableDays}
-                        onChange={(e) => setShowSettings({
-                          ...showSettings,
-                          eventDates: {
-                            ...showSettings.eventDates,
-                            availableDays: parseInt(e.target.value) || 5
-                          }
-                        })}
-                        className={`block w-full px-3 py-2 rounded-md border transition-colors focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                          isDarkMode 
-                            ? 'bg-gray-600 border-gray-500 text-white' 
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className={`p-3 rounded-md ${
-                  isDarkMode 
-                    ? 'bg-blue-900 bg-opacity-30 border border-blue-700' 
-                    : 'bg-blue-50 border border-blue-200'
-                }`}>
-                  <p className={`text-sm ${
-                    isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                  }`}>
-                    {showSettings.eventDates.isActive && showSettings.eventDates.startDate && showSettings.eventDates.endDate
-                      ? `Show dates will be available from ${showSettings.eventDates.startDate} to ${showSettings.eventDates.endDate}`
-                      : `When disabled, the default ${showSettings.eventDates.availableDays}-day range from today will be used`
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Show Timing Management */}
-            <div className={`rounded-lg border p-6 ${
-              isDarkMode 
-                ? 'bg-gray-700 border-gray-600' 
-                : 'bg-gray-50 border-gray-200'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                <ClockIcon className="w-5 h-5 mr-2" />
-                Show Timing Management
-              </h3>
-
-              {/* Existing Show Timings */}
-              <div className="space-y-3 mb-6">
-                {showSettings.shows.map((show, index) => (
-                  <div key={show.id || index} className={`flex items-center space-x-3 p-4 rounded-md border ${
-                    isDarkMode ? 'bg-gray-600 border-gray-500' : 'bg-white border-gray-200'
-                  } ${!show.isActive ? 'opacity-60' : ''}`}>
-                    <button
-                      onClick={() => {
-                        const updatedShows = [...showSettings.shows];
-                        updatedShows[index].isActive = !updatedShows[index].isActive;
-                        setShowSettings({
-                          ...showSettings,
-                          shows: updatedShows
-                        });
-                      }}
-                      className={`p-1 rounded ${
-                        show.isActive 
-                          ? 'text-green-600 hover:bg-green-100' 
-                          : 'text-gray-400 hover:bg-gray-200'
-                      }`}
-                      title={show.isActive ? 'Disable show' : 'Enable show'}
-                    >
-                      {show.isActive ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
-                    </button>
-                    
-                    <div className="text-2xl">{show.icon}</div>
-                    
-                    <div className="flex-1">
-                      <div className={`text-sm font-medium mb-1 ${
-                        isDarkMode ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {show.name}
-                        {show.badgeText && (
-                          <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
-                            {show.badgeText}
-                          </span>
-                        )}
-                      </div>
-                      <div className={`text-xs mb-1 ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                      }`}>
-                        {formatTime(show.timeFrom)} - {formatTime(show.timeTo)}
-                      </div>
-                      {show.description && (
-                        <div className={`text-xs ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
-                          {show.description}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex space-x-1">
-                      <button
-                        onClick={() => {
-                          const updatedShows = showSettings.shows.filter((_, i) => i !== index);
-                          setShowSettings({
-                            ...showSettings,
-                            shows: updatedShows
-                          });
-                          toast.success('Show timing removed successfully');
-                        }}
-                        className="text-red-600 hover:text-red-900 p-1"
-                        title="Remove show timing"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                
-                {showSettings.shows.length === 0 && (
-                  <div className={`text-center py-6 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
-                    No show timings configured. Add one below.
-                  </div>
-                )}
-              </div>
-
-              {/* Add New Show Timing */}
-              <div className={`border-t pt-4 ${
-                isDarkMode ? 'border-gray-600' : 'border-gray-300'
-              }`}>
-                <h4 className={`text-sm font-medium mb-3 ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
-                  Add New Show Timing
-                </h4>
-                <div className="space-y-3" id="newShowForm">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Show ID (e.g., morning_show)"
-                      className={`px-3 py-2 text-sm rounded-md border ${
-                        isDarkMode 
-                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
-                      id="newShowId"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Show Name"
-                      className={`px-3 py-2 text-sm rounded-md border ${
-                        isDarkMode 
-                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
-                      id="newShowName"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <input
-                      type="time"
-                      className={`px-3 py-2 text-sm rounded-md border ${
-                        isDarkMode 
-                          ? 'bg-gray-600 border-gray-500 text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      id="newShowTimeFrom"
-                    />
-                    <input
-                      type="time"
-                      className={`px-3 py-2 text-sm rounded-md border ${
-                        isDarkMode 
-                          ? 'bg-gray-600 border-gray-500 text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      id="newShowTimeTo"
-                    />
-                    <select
-                      className={`px-3 py-2 text-sm rounded-md border ${
-                        isDarkMode 
-                          ? 'bg-gray-600 border-gray-500 text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      id="newShowIcon"
-                    >
-                      {iconOptions.map(icon => (
-                        <option key={icon} value={icon}>{icon}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Badge Text (Optional)"
-                      className={`px-3 py-2 text-sm rounded-md border ${
-                        isDarkMode 
-                          ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                      }`}
-                      id="newShowBadgeText"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Description"
-                    className={`w-full px-3 py-2 text-sm rounded-md border ${
-                      isDarkMode 
-                        ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                    }`}
-                    id="newShowDescription"
-                  />
-                  <button
-                    onClick={() => {
-                      const form = document.getElementById('newShowForm');
-                      const id = form.querySelector('#newShowId').value.trim();
-                      const name = form.querySelector('#newShowName').value.trim();
-                      const timeFrom = form.querySelector('#newShowTimeFrom').value;
-                      const timeTo = form.querySelector('#newShowTimeTo').value;
-                      const icon = form.querySelector('#newShowIcon').value;
-                      const badgeText = form.querySelector('#newShowBadgeText').value.trim();
-                      const description = form.querySelector('#newShowDescription').value.trim();
-                      
-                      if (!id || !name || !timeFrom || !timeTo) {
-                        toast.error('Please fill in all required fields');
-                        return;
-                      }
-                      
-                      if (showSettings.shows.some(show => show.id === id)) {
-                        toast.error('Show ID already exists');
-                        return;
-                      }
-                      
-                      const newShow = {
-                        id,
-                        name,
-                        timeFrom,
-                        timeTo,
-                        icon,
-                        badgeText,
-                        description,
-                        isActive: true
-                      };
-                      
-                      setShowSettings({
-                        ...showSettings,
-                        shows: [...showSettings.shows, newShow]
-                      });
-                      
-                      // Clear form
-                      form.querySelectorAll('input, select').forEach(input => {
-                        if (input.type === 'text' || input.type === 'time') {
-                          input.value = '';
-                        } else if (input.tagName === 'SELECT') {
-                          input.selectedIndex = 0;
-                        }
-                      });
-                      
-                      toast.success('Show timing added successfully');
-                    }}
-                    className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
-                  >
-                    <PlusIcon className="w-4 h-4 mr-2" />
-                    Add Show Timing
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Premium Seat Layout Management */}
-            <div className={`rounded-lg border p-6 ${
-              isDarkMode 
-                ? 'bg-gray-700 border-gray-600' 
-                : 'bg-gray-50 border-gray-200'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                <Cog6ToothIcon className="w-5 h-5 mr-2" />
-                Premium Seat Layout (Blocks A & B)
-              </h3>
-
-              {/* Premium Blocks Configuration */}
-              <div className="space-y-4 mb-6">
-                {showSettings.seatLayout.premiumBlocks.map((block, index) => (
-                  <div key={block.id} className={`p-4 rounded-md border ${
-                    isDarkMode ? 'bg-gray-600 border-gray-500' : 'bg-white border-gray-200'
-                  } ${!block.isActive ? 'opacity-60' : ''}`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => {
-                            const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
-                            updatedBlocks[index].isActive = !updatedBlocks[index].isActive;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                premiumBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`p-1 rounded ${
-                            block.isActive 
-                              ? 'text-green-600 hover:bg-green-100' 
-                              : 'text-gray-400 hover:bg-gray-200'
-                          }`}
-                          title={block.isActive ? 'Disable block' : 'Enable block'}
-                        >
-                          {block.isActive ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
-                        </button>
-                        <div className="text-xl">💎</div>
-                        <div>
-                          <div className={`text-sm font-medium ${
-                            isDarkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {block.name} (Premium)
-                          </div>
-                          <div className={`text-xs ${
-                            isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                          }`}>
-                            Max {block.maxPairsPerRow} pairs per row • ₹{block.price.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Block Name
-                        </label>
-                        <input
-                          type="text"
-                          value={block.name}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
-                            updatedBlocks[index].name = e.target.value;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                premiumBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Max Rows
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="15"
-                          value={block.maxRows}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
-                            updatedBlocks[index].maxRows = parseInt(e.target.value) || 8;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                premiumBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Max Pairs/Row
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="7"
-                          value={block.maxPairsPerRow}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
-                            updatedBlocks[index].maxPairsPerRow = parseInt(e.target.value) || 7;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                premiumBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Price (₹)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="100"
-                          value={block.price}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
-                            updatedBlocks[index].price = parseInt(e.target.value) || 1000;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                premiumBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className={`mt-3 p-2 rounded text-xs ${
-                      isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      Total seats: {block.maxRows * block.maxPairsPerRow * 2} ({block.maxRows} rows × {block.maxPairsPerRow} pairs × 2 seats)
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Regular Seat Layout Management */}
-            <div className={`rounded-lg border p-6 ${
-              isDarkMode 
-                ? 'bg-gray-700 border-gray-600' 
-                : 'bg-gray-50 border-gray-200'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                <Cog6ToothIcon className="w-5 h-5 mr-2" />
-                Regular Seat Layout (Blocks C & D)
-              </h3>
-
-              {/* Regular Blocks Configuration */}
-              <div className="space-y-4 mb-6">
-                {showSettings.seatLayout.regularBlocks.map((block, index) => (
-                  <div key={block.id} className={`p-4 rounded-md border ${
-                    isDarkMode ? 'bg-gray-600 border-gray-500' : 'bg-white border-gray-200'
-                  } ${!block.isActive ? 'opacity-60' : ''}`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => {
-                            const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
-                            updatedBlocks[index].isActive = !updatedBlocks[index].isActive;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                regularBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`p-1 rounded ${
-                            block.isActive 
-                              ? 'text-green-600 hover:bg-green-100' 
-                              : 'text-gray-400 hover:bg-gray-200'
-                          }`}
-                          title={block.isActive ? 'Disable block' : 'Enable block'}
-                        >
-                          {block.isActive ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
-                        </button>
-                        <div className="text-xl">🪑</div>
-                        <div>
-                          <div className={`text-sm font-medium ${
-                            isDarkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {block.name} (Regular)
-                          </div>
-                          <div className={`text-xs ${
-                            isDarkMode ? 'text-gray-300' : 'text-gray-500'
-                          }`}>
-                            Max {block.maxSeatsPerRow} seats per row • ₹{block.price.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Block Name
-                        </label>
-                        <input
-                          type="text"
-                          value={block.name}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
-                            updatedBlocks[index].name = e.target.value;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                regularBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Max Rows
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="30"
-                          value={block.maxRows}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
-                            updatedBlocks[index].maxRows = parseInt(e.target.value) || 25;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                regularBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Max Seats/Row
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="15"
-                          value={block.maxSeatsPerRow}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
-                            updatedBlocks[index].maxSeatsPerRow = parseInt(e.target.value) || 15;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                regularBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className={`block text-xs font-medium mb-1 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          Price (₹)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="100"
-                          value={block.price}
-                          onChange={(e) => {
-                            const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
-                            updatedBlocks[index].price = parseInt(e.target.value) || 500;
-                            setShowSettings({
-                              ...showSettings,
-                              seatLayout: {
-                                ...showSettings.seatLayout,
-                                regularBlocks: updatedBlocks
-                              }
-                            });
-                          }}
-                          className={`w-full px-2 py-1 text-sm rounded border ${
-                            isDarkMode ? 'bg-gray-500 border-gray-400 text-white' : 'bg-gray-100 border-gray-300'
-                          }`}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className={`mt-3 p-2 rounded text-xs ${
-                      isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      Total seats: {block.maxRows * block.maxSeatsPerRow} ({block.maxRows} rows × {block.maxSeatsPerRow} seats)
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Show Settings Summary */}
-            <div className={`rounded-lg border p-6 ${
-              isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                📊 Show Settings Summary
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className={`p-4 rounded-lg text-center ${
-                  isDarkMode ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-200'
-                }`}>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                  }`}>
-                    {showSettings.shows.filter(s => s.isActive).length}
-                  </div>
-                  <div className={`text-sm font-medium ${
-                    isDarkMode ? 'text-blue-300' : 'text-blue-700'
-                  }`}>Active Shows</div>
-                </div>
-                <div className={`p-4 rounded-lg text-center ${
-                  isDarkMode ? 'bg-purple-900/30 border border-purple-700' : 'bg-purple-50 border border-purple-200'
-                }`}>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    isDarkMode ? 'text-purple-400' : 'text-purple-600'
-                  }`}>
-                    {showSettings.seatLayout.premiumBlocks.filter(b => b.isActive).reduce((sum, b) => sum + (b.maxRows * b.maxPairsPerRow * 2), 0)}
-                  </div>
-                  <div className={`text-sm font-medium ${
-                    isDarkMode ? 'text-purple-300' : 'text-purple-700'
-                  }`}>Premium Seats</div>
-                </div>
-                <div className={`p-4 rounded-lg text-center ${
-                  isDarkMode ? 'bg-green-900/30 border border-green-700' : 'bg-green-50 border border-green-200'
-                }`}>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    isDarkMode ? 'text-green-400' : 'text-green-600'
-                  }`}>
-                    {showSettings.seatLayout.regularBlocks.filter(b => b.isActive).reduce((sum, b) => sum + (b.maxRows * b.maxSeatsPerRow), 0)}
-                  </div>
-                  <div className={`text-sm font-medium ${
-                    isDarkMode ? 'text-green-300' : 'text-green-700'
-                  }`}>Regular Seats</div>
-                </div>
-                <div className={`p-4 rounded-lg text-center ${
-                  isDarkMode ? 'bg-orange-900/30 border border-orange-700' : 'bg-orange-50 border border-orange-200'
-                }`}>
-                  <div className={`text-3xl font-bold mb-1 ${
-                    isDarkMode ? 'text-orange-400' : 'text-orange-600'
-                  }`}>
-                    {showSettings.seatLayout.premiumBlocks.filter(b => b.isActive).reduce((sum, b) => sum + (b.maxRows * b.maxPairsPerRow * 2), 0) +
-                     showSettings.seatLayout.regularBlocks.filter(b => b.isActive).reduce((sum, b) => sum + (b.maxRows * b.maxSeatsPerRow), 0)}
-                  </div>
-                  <div className={`text-sm font-medium ${
-                    isDarkMode ? 'text-orange-300' : 'text-orange-700'
-                  }`}>Total Seats</div>
                 </div>
               </div>
             </div>
