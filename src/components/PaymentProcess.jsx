@@ -8,6 +8,7 @@ import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { formatDateKey } from '@/utils/dateUtils';
+import { useShifts } from '@/hooks/useShifts';
 
 // Note: In a real implementation, you would load Razorpay script dynamically
 // and handle the payment gateway integration properly
@@ -27,6 +28,8 @@ const PaymentProcess = ({ customerDetails }) => {
     getTotalAmount,
     clearSelection
   } = useBooking();
+
+  const { getShiftLabel, getShiftTime } = useShifts();
 
   // Simulate Razorpay payment (replace with actual integration)
   const initiatePayment = async () => {
@@ -208,7 +211,7 @@ const PaymentProcess = ({ customerDetails }) => {
                 
                 <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200 col-span-2 sm:col-span-1">
                   <p className="text-xs text-gray-600 mb-1">Shift</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm">{selectedShift === 'morning' ? 'Morning' : 'Evening'}</p>
+                  <p className="font-bold text-green-800 text-xs sm:text-sm">{getShiftLabel(selectedShift)}</p>
                 </div>
                 
                 <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200">
@@ -334,19 +337,19 @@ const PaymentProcess = ({ customerDetails }) => {
                 </h4>
                 <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
                   <p><span className="font-medium text-gray-900">Date:</span> {format(selectedDate, 'EEEE, MMMM dd, yyyy')}</p>
-                  <p><span className="font-medium text-gray-900">Shift:</span> {selectedShift === 'morning' ? 'Morning (9:00 AM - 12:00 PM)' : 'Evening (4:00 PM - 10:00 PM)'}</p>
+                  <p><span className="font-medium text-gray-900">Shift:</span> {getShiftLabel(selectedShift)} ({getShiftTime(selectedShift)})</p>
                   <p><span className="font-medium text-gray-900">Seats:</span> {selectedSeats.join(', ')}</p>
                   <p><span className="font-medium text-gray-900">Seat Count:</span> {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''}</p>
                 </div>
               </div>
             </div>
-
+ 
             {/* Total Amount - Highlighted */}
             <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
                 <div className="mb-2 sm:mb-0">
                   <h4 className="text-base sm:text-lg font-semibold text-amber-800">Total Amount to Pay</h4>
-                  <p className="text-xs sm:text-sm text-amber-600">All taxes and fees included</p>
+                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-amber-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.”</p>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-amber-800 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl shadow-md">
                   ₹{getTotalAmount()}

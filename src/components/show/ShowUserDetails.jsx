@@ -77,6 +77,25 @@ const ShowUserDetails = () => {
     return aadharRegex.test(aadhar);
   };
 
+  const validateName = (name) => {
+    return name && name.trim().length >= 3;
+  };
+
+  const validateAddress = (address) => {
+    return address && address.trim().length >= 5;
+  };
+
+  // Export validation functions for use in booking flow
+  const isFormValid = () => {
+    return (
+      validateName(details.name) &&
+      validateEmail(details.email) &&
+      validatePhone(details.phone) &&
+      validateAadhar(details.aadhar) &&
+      validateAddress(details.address)
+    );
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
       <div className="flex items-center gap-3 mb-6">
@@ -92,25 +111,35 @@ const ShowUserDetails = () => {
       <div className="space-y-4">
         {/* Full Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <User className="w-4 h-4" />
-            Full Name *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              Full Name *
+            </div>
           </label>
           <input
             type="text"
             value={details.name}
             onChange={(e) => handleChange('name', e.target.value)}
             className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
-            placeholder="Enter your full name"
+            placeholder="Enter your full name (minimum 3 characters)"
             required
           />
+          {details.name && !validateName(details.name) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Name must be at least 3 characters long
+            </p>
+          )}
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            Email Address *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4" />
+              Email Address *
+            </div>
           </label>
           <input
             type="email"
@@ -130,9 +159,11 @@ const ShowUserDetails = () => {
 
         {/* Phone */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <Phone className="w-4 h-4" />
-            Phone Number *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              Phone Number *
+            </div>
           </label>
           <input
             type="tel"
@@ -153,9 +184,11 @@ const ShowUserDetails = () => {
 
         {/* Aadhar Card */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />
-            Aadhar Number *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              Aadhar Number *
+            </div>
           </label>
           <input
             type="text"
@@ -176,36 +209,45 @@ const ShowUserDetails = () => {
 
         {/* Address */}
         <div>
-          <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <MapPin className="w-4 h-4" />
-            Complete Address *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Complete Address *
+            </div>
           </label>
           <textarea
             value={details.address}
             onChange={(e) => handleChange('address', e.target.value)}
             rows="3"
             className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500 resize-none"
-            placeholder="Enter your complete address (street, city, state, pincode)"
+            placeholder="Enter your complete address (minimum 5 characters)"
             required
           />
+          {details.address && !validateAddress(details.address) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Address must be at least 5 characters long
+            </p>
+          )}
         </div>
 
         {/* Emergency Contact */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            Emergency Contact Number *
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Emergency Contact Number (Optional)
+            </div>
           </label>
           <input
             type="tel"
             value={details.emergencyContact}
             onChange={(e) => handleChange('emergencyContact', e.target.value.replace(/\D/g, ''))}
             maxLength="10"
-            className="w-full px-3 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
-            placeholder="Enter emergency contact number"
-            required
+            className="w-full px-4 py-3 text-gray-900 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 placeholder:text-gray-500"
+            placeholder="Enter emergency contact number (optional)"
           />
-          {details.emergencyContact && !validatePhone(details.emergencyContact) && (
+          {details.emergencyContact && details.emergencyContact.length > 0 && !validatePhone(details.emergencyContact) && (
             <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
               Please enter a valid 10-digit mobile number

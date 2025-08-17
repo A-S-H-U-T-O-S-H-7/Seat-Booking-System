@@ -83,7 +83,7 @@ function BookingSection({ user }) {
                   </div>
                 </div>
                 <p className="text-gray-700 text-sm leading-relaxed">
-                  Book seats for cultural shows and performances. VIP and regular seating available.
+                  Book seats for cultural shows and performances.
                 </p>
               </Link>
             </div>
@@ -108,7 +108,7 @@ function BookingSection({ user }) {
             <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💳</div>
               <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Secure Payment</h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Safe online payment with instant confirmation</p>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Safe online donation payment with instant confirmation</p>
             </div>
             
             <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">

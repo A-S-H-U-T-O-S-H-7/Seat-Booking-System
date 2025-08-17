@@ -11,6 +11,8 @@ import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import ShowBookingCard from '@/components/show/ShowBookingCard';
 import StallBookingCard from '@/components/stall/StallBookingCard';
+import { useShifts } from '@/hooks/useShifts';
+import { cancelBooking } from '@/utils/cancellationUtils';
 
 const ProfilePage = () => {
   const { user, logout } = useAuth();
@@ -24,6 +26,8 @@ const ProfilePage = () => {
   const [bookingToCancel, setBookingToCancel] = useState(null);
   const [activeTab, setActiveTab] = useState('havan');
 
+  const { getShiftLabel, getShiftTime } = useShifts();
+
   useEffect(() => {
     if (user) {
       fetchUserBookings();
@@ -34,7 +38,6 @@ const ProfilePage = () => {
 
   const fetchUserBookings = async () => {
     try {
-      setLoading(true);
       console.log('Fetching bookings for user:', user.uid);
       
       const bookingsQuery = query(
@@ -509,19 +512,10 @@ const ProfilePage = () => {
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
               <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Session</p>
               <p className="text-sm font-bold text-gray-900">
-                {booking.eventDetails.shift === 'morning' ? 'Morning' : 
-                 booking.eventDetails.shift === 'evening' ? 'Evening' : 
-                 booking.eventDetails.shift === 'afternoon' ? 'Afternoon' : 
-                 booking.eventDetails.shift || 'N/A'}
+                {getShiftLabel(booking.eventDetails.shift) || 'N/A'}
               </p>
               <p className="text-xs text-gray-600">
-                {booking.eventDetails.shift === 'morning' 
-                  ? '9:00 AM - 12:00 PM' 
-                  : booking.eventDetails.shift === 'evening'
-                  ? '4:00 PM - 10:00 PM'
-                  : booking.eventDetails.shift === 'afternoon'
-                  ? '2:00 PM - 5:00 PM'
-                  : 'N/A'}
+                {getShiftTime(booking.eventDetails.shift) || 'N/A'}
               </p>
             </div>
             
@@ -557,19 +551,35 @@ const ProfilePage = () => {
                 {canCancelBooking(booking.eventDetails?.date) ? (
                   <div className="text-center">
                     <button
-                      onClick={() => handleCancelBooking(booking)}
+                      onClick={async () => {
+                        if (window.confirm('Are you sure you want to cancel this Havan booking? This action cannot be undone.')) {
+                          setCancellingBooking(booking.id);
+                          try {
+                            const result = await cancelBooking(
+                              booking,
+                              'User requested cancellation',
+                              { uid: user?.uid, name: user?.displayName, email: user?.email, isAdmin: false },
+                              true // Release seats
+                            );
+                            
+                            if (result.success) {
+                              toast.success('Havan booking cancelled successfully');
+                              fetchUserBookings(); // Refresh bookings
+                            } else {
+                              toast.error(result.error || 'Failed to cancel Havan booking');
+                            }
+                          } catch (error) {
+                            toast.error('Error cancelling Havan booking');
+                            console.error('Havan cancellation error:', error);
+                          } finally {
+                            setCancellingBooking(null);
+                          }
+                        }
+                      }}
                       disabled={cancellingBooking === booking.id}
-                      className="bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md disabled:transform-none min-w-[100px]"
+                      className={`${cancellingBooking === booking.id ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'} bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[100px]`}
                     >
-                      {cancellingBooking === booking.id ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Cancelling...
-                        </span>
-                      ) : 'Cancel Booking'}
+                      {cancellingBooking === booking.id ? 'Cancelling...' : 'Cancel Booking'}
                     </button>
                     <p className="text-xs text-green-600 mt-1 font-medium">
                       ✓ Free cancellation
@@ -597,11 +607,21 @@ const ProfilePage = () => {
   };
 
   const renderShowBookingCard = (booking) => {
-    return <ShowBookingCard key={booking.id} booking={booking} onCancel={handleCancelBooking} />;
+    return <ShowBookingCard key={booking.id} booking={booking} onCancel={() => {
+      // Refresh show bookings after cancellation
+      setTimeout(() => {
+        fetchUserShowBookings();
+      }, 1000);
+    }} />;
   };
 
   const renderStallBookingCard = (booking) => {
-    return <StallBookingCard key={booking.id} booking={booking} onCancel={handleCancelBooking} />;
+    return <StallBookingCard key={booking.id} booking={booking} onCancel={() => {
+      // Refresh stall bookings after cancellation
+      setTimeout(() => {
+        fetchUserStallBookings();
+      }, 1000);
+    }} />;
   };
 
   const handleLogout = async () => {

@@ -367,7 +367,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
               <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
                 <div className="mb-2 sm:mb-0">
                   <h4 className="text-base sm:text-lg font-semibold text-amber-800">Total Amount to Pay</h4>
-                  <p className="text-xs sm:text-sm text-amber-600">All taxes and fees included</p>
+                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-amber-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.”</p>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-amber-800 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl shadow-md">
                   ₹{getTotalAmount?.() || 0}
@@ -434,7 +434,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
               <li className="flex items-start">
                 <span className="text-yellow-600 mr-2 mt-1">•</span>
                 <span>Payment must be completed to confirm your stall booking</span>
-              </li>
+              </li> 
               <li className="flex items-start">
                 <span className="text-yellow-600 mr-2 mt-1">•</span>
                 <span>Stall will be released if payment is not completed within 10 minutes</span>

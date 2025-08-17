@@ -5,39 +5,81 @@ import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useBooking } from '@/context/BookingContext';
 import { formatDateKey } from '@/utils/dateUtils';
+import { Info } from 'lucide-react';
 
 const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = [] }) => {
   const [seatAvailability, setSeatAvailability] = useState({});
   const [loading, setLoading] = useState(true);
+  const [layoutSettings, setLayoutSettings] = useState({
+    blocks: []
+  });
   
   // Get pricing information from booking context
   const { priceSettings, getTotalAmount, getCurrentDiscountInfo, getNextMilestone } = useBooking();
   
-  // Generate seat structure: 4 blocks (A,B,C,D) × 5 columns × 5 kunds × 4 seats = 400 seats
-  const generateSeats = () => {
-    const blocks = ['A', 'B', 'C', 'D'];
-    const columns = [1, 2, 3, 4, 5];
-    const kunds = ['K1', 'K2', 'K3', 'K4', 'K5'];
-    const seats = ['S1', 'S2', 'S3', 'S4'];
+  // Listen to layout settings changes in real-time
+  useEffect(() => {
+    const layoutRef = doc(db, 'settings', 'seatLayout');
     
+    const unsubscribe = onSnapshot(layoutRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setLayoutSettings(docSnap.data());
+      } else {
+        // Default layout settings if none exist
+        const defaultLayout = {
+          blocks: [
+            { id: 'A', name: 'Block A', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true },
+            { id: 'B', name: 'Block B', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true },
+            { id: 'C', name: 'Block C', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true },
+            { id: 'D', name: 'Block D', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true }
+          ]
+        };
+        setLayoutSettings(defaultLayout);
+      }
+    }, (error) => {
+      console.error('Error listening to layout settings:', error);
+      // Set default layout on error
+      const defaultLayout = {
+        blocks: [
+          { id: 'A', name: 'Block A', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true },
+          { id: 'B', name: 'Block B', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true },
+          { id: 'C', name: 'Block C', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true },
+          { id: 'D', name: 'Block D', columns: 5, kunds: 5, seatsPerKund: 4, isActive: true }
+        ]
+      };
+      setLayoutSettings(defaultLayout);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Generate seat structure dynamically based on layout settings
+  const generateSeats = () => {
     const allSeats = [];
     
-    blocks.forEach(block => {
-      columns.forEach(col => {
-        kunds.forEach(kund => {
-          seats.forEach(seat => {
-            const seatId = `${block}-${col}-${kund}-${seat}`;
+    // Only process active blocks
+    const activeBlocks = layoutSettings.blocks?.filter(block => block.isActive) || [];
+    
+    activeBlocks.forEach(blockConfig => {
+      for (let col = 1; col <= blockConfig.columns; col++) {
+        for (let kundIndex = 1; kundIndex <= blockConfig.kunds; kundIndex++) {
+          const kund = `K${kundIndex}`;
+          for (let seatIndex = 1; seatIndex <= blockConfig.seatsPerKund; seatIndex++) {
+            const seat = `S${seatIndex}`;
+            const seatId = `${blockConfig.id}${col}-K${kundIndex}-S${seatIndex}`;
             allSeats.push({
               id: seatId,
-              block,
+              block: blockConfig.id,
+              blockName: blockConfig.name,
               column: col,
               kund,
               seat,
-              displayName: seatId
+              displayName: seatId,
+              blockConfig
             });
-          });
-        });
-      });
+          }
+        }
+      }
     });
     
     return allSeats;
@@ -69,7 +111,23 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
   }, [selectedDate, selectedShift]);
 
   const getSeatStatus = (seatId) => {
-    const availability = seatAvailability[seatId];
+    // First try the exact seat ID
+    let availability = seatAvailability[seatId];
+    
+    // If not found, try the old format (backward compatibility)
+    if (!availability) {
+      // Convert new format A1-K1-S1 to old format A-1-K1-S1
+      const oldFormatId = seatId.replace(/^([A-Z])(\d+)-/, '$1-$2-');
+      availability = seatAvailability[oldFormatId];
+    }
+    
+    // If still not found, try the new format (in case current ID is old format)
+    if (!availability) {
+      // Convert old format A-1-K1-S1 to new format A1-K1-S1
+      const newFormatId = seatId.replace(/^([A-Z])-(\d+)-/, '$1$2-');
+      availability = seatAvailability[newFormatId];
+    }
+    
     if (!availability) return 'available';
     
     if (availability.blocked) return 'blocked';
@@ -82,9 +140,9 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
     const isSelected = selectedSeats.includes(seatId);
     
     if (isSelected) return 'bg-blue-500 text-white shadow-lg border-2 border-blue-300'; // Selected
-    if (status === 'booked') return 'bg-gray-400 text-white border border-gray-300'; // Booked
-    if (status === 'blocked') return 'bg-gray-300 text-gray-500 border border-gray-200'; // Blocked
-    return 'bg-green-500 text-white hover:bg-green-600 border border-green-400 hover:border-green-500'; // Available
+    if (status === 'booked') return 'bg-gray-500 text-white border border-gray-400 cursor-not-allowed'; // Booked - Gray
+    if (status === 'blocked') return 'bg-gray-300 text-gray-600 border border-gray-300 cursor-not-allowed'; // Blocked - Light Gray
+    return 'bg-green-500 text-white hover:bg-green-600 border border-green-400 hover:border-green-500'; // Available - Green
   };
 
   const handleSeatClick = (seatId) => {
@@ -99,8 +157,73 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
   };
 
   const renderKundUnit = (blockName, col, kund, seats) => {
+    // Generate dynamic seat positions based on number of seats
+    const generateSeatPositions = (numSeats) => {
+      switch (numSeats) {
+        case 1:
+          return [{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }];
+        case 2:
+          return [
+            { top: '25%', left: '50%', transform: 'translate(-50%, -50%)' },
+            { bottom: '25%', left: '50%', transform: 'translate(-50%, 50%)' }
+          ];
+        case 3:
+          return [
+            { top: '10%', left: '50%', transform: 'translate(-50%, -50%)' },
+            { bottom: '10%', left: '25%', transform: 'translate(-50%, 50%)' },
+            { bottom: '10%', right: '25%', transform: 'translate(50%, 50%)' }
+          ];
+        case 4:
+        default:
+          return [
+            { top: '2px', left: '25%', transform: 'translateX(-50%)' }, // Top S1 (left side)
+            { top: '2px', right: '25%', transform: 'translateX(50%)' }, // Top S2 (right side)
+            { bottom: '2px', left: '25%', transform: 'translateX(-50%)' }, // Bottom S3 (left side)
+            { bottom: '2px', right: '25%', transform: 'translateX(50%)' }  // Bottom S4 (right side)
+          ];
+        case 5:
+          return [
+            { top: '0', left: '50%', transform: 'translateX(-50%)' },
+            { top: '25%', right: '0', transform: 'translateY(-50%)' },
+            { bottom: '25%', right: '0', transform: 'translateY(-50%)' },
+            { bottom: '0', left: '50%', transform: 'translateX(-50%)' },
+            { top: '50%', left: '0', transform: 'translateY(-50%)' }
+          ];
+        case 6:
+          return [
+            { top: '0', left: '35%', transform: 'translateX(-50%)' },
+            { top: '0', right: '35%', transform: 'translateX(50%)' },
+            { top: '50%', right: '0', transform: 'translateY(-50%)' },
+            { bottom: '0', right: '35%', transform: 'translateX(50%)' },
+            { bottom: '0', left: '35%', transform: 'translateX(-50%)' },
+            { top: '50%', left: '0', transform: 'translateY(-50%)' }
+          ];
+        case 7:
+          return [
+            { top: '0', left: '50%', transform: 'translateX(-50%)' },
+            { top: '15%', right: '15%', transform: 'translate(50%, -50%)' },
+            { top: '50%', right: '0', transform: 'translateY(-50%)' },
+            { bottom: '15%', right: '15%', transform: 'translate(50%, 50%)' },
+            { bottom: '0', left: '50%', transform: 'translateX(-50%)' },
+            { bottom: '15%', left: '15%', transform: 'translate(-50%, 50%)' },
+            { top: '50%', left: '0', transform: 'translateY(-50%)' }
+          ];
+        case 8:
+          return [
+            { top: '0', left: '35%', transform: 'translateX(-50%)' },
+            { top: '0', right: '35%', transform: 'translateX(50%)' },
+            { top: '25%', right: '0', transform: 'translateY(-50%)' },
+            { bottom: '25%', right: '0', transform: 'translateY(-50%)' },
+            { bottom: '0', right: '35%', transform: 'translateX(50%)' },
+            { bottom: '0', left: '35%', transform: 'translateX(-50%)' },
+            { bottom: '25%', left: '0', transform: 'translateY(-50%)' },
+            { top: '25%', left: '0', transform: 'translateY(-50%)' }
+          ];
+      }
+    };
+
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-1 sm:p-2 md:p-3 hover:shadow-md transition-all duration-200 hover:border-orange-300">
+      <div className="bg-white border border-gray-200 rounded-lg p-1 sm:p-2 md:p-2 hover:shadow-md transition-all duration-200 hover:border-orange-300">
         {/* Kund Label */}
         <div className="text-center text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2 truncate">
           <span className="sm:hidden">{blockName}{col}-{kund}</span>
@@ -108,22 +231,17 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
         </div>
         
         {/* Seats arranged around havan icon */}
-        <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 mx-auto">
+        <div className="relative w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 mx-auto">
           {/* Center Havan Icon */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-orange-400 rounded-full flex items-center justify-center text-white text-xs font-bold">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 bg-orange-400 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold">
               🔥
             </div>
           </div>
           
-          {/* Four seats positioned around the icon */}
+          {/* Dynamic seats positioned around the icon */}
           {seats.map((seat, index) => {
-            const positions = [
-              { top: '0', left: '50%', transform: 'translateX(-50%)' }, // Top (S1)
-              { top: '50%', right: '0', transform: 'translateY(-50%)' }, // Right (S2)
-              { bottom: '0', left: '50%', transform: 'translateX(-50%)' }, // Bottom (S3)
-              { top: '50%', left: '0', transform: 'translateY(-50%)' }  // Left (S4)
-            ];
+            const positions = generateSeatPositions(seats.length);
             
             return (
               <button
@@ -131,7 +249,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
                 onClick={() => handleSeatClick(seat.id)}
                 disabled={getSeatStatus(seat.id) !== 'available' && !selectedSeats.includes(seat.id)}
                 className={`
-                  absolute w-3 h-3 sm:w-4 sm:h-4 text-xs font-bold rounded-full seat-button transition-all duration-200
+                  absolute w-5 h-4 sm:w-6 sm:h-5 md:w-7 md:h-6 lg:w-8 lg:h-7 text-xs font-bold rounded-md seat-button transition-all duration-200 flex items-center justify-center
                   ${getSeatColor(seat.id)}
                   ${(getSeatStatus(seat.id) !== 'available' && !selectedSeats.includes(seat.id)) 
                     ? 'cursor-not-allowed opacity-60' 
@@ -152,7 +270,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
     );
   };
 
-  const renderBlock = (blockName, blockSeats) => {
+  const renderBlock = (blockConfig, blockSeats) => {
     // Group seats by column and kund for better layout
     const columnGroups = {};
     
@@ -164,28 +282,47 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
       columnGroups[key].push(seat);
     });
 
+    // Generate dynamic grid classes based on block configuration
+    const getGridCols = (cols) => {
+      const gridClasses = {
+        1: 'grid-cols-1',
+        2: 'grid-cols-2', 
+        3: 'grid-cols-3',
+        4: 'grid-cols-4',
+        5: 'grid-cols-5',
+        6: 'grid-cols-6',
+        7: 'grid-cols-7',
+        8: 'grid-cols-8',
+        9: 'grid-cols-9',
+        10: 'grid-cols-10'
+      };
+      return gridClasses[cols] || 'grid-cols-5';
+    };
+
     return (
-      <div key={blockName} className="bg-gradient-to-br from-orange-50 to-amber-50 p-2 sm:p-2 rounded-xl border-2 border-orange-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <div key={blockConfig.id} className="bg-gradient-to-br from-orange-50 to-amber-50 p-2 sm:p-3 md:p-4 rounded-xl border-2 border-orange-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
         {/* Block Header */}
         <div className="text-center mb-2 sm:mb-4">
           <h3 className="text-sm sm:text-lg md:text-xl font-bold text-orange-800 bg-gradient-to-r from-orange-100 to-amber-100 p-2 sm:p-3 rounded-lg border border-orange-300 shadow-sm">
-            <span className="sm:hidden">🏛️ {blockName} 🏛️</span>
-            <span className="hidden sm:inline">🏛️ Block {blockName} 🏛️</span>
+            <span className="sm:hidden">🏦 {blockConfig.id} 🏦</span>
+            <span className="hidden sm:inline">🏦 {blockConfig.name} 🏦</span>
           </h3>
         </div>
         
-        {/* Kund grid - Responsive 5x5 layout */}
-        <div className="grid grid-cols-5 gap-1 sm:gap-2 md:gap-3 lg:gap-4">
-          {['K1', 'K2', 'K3', 'K4', 'K5'].map(kund => (
-            [1, 2, 3, 4, 5].map(col => {
+        {/* Dynamic Kund grid based on block configuration */}
+        <div className={`grid ${getGridCols(blockConfig.columns)} gap-1 sm:gap-2 md:gap-2 lg:gap-3`}>
+          {Array.from({ length: blockConfig.kunds }, (_, kundIndex) => {
+            const kund = `K${kundIndex + 1}`;
+            return Array.from({ length: blockConfig.columns }, (_, colIndex) => {
+              const col = colIndex + 1;
               const kundSeats = columnGroups[`${col}-${kund}`] || [];
               return (
                 <div key={`${col}-${kund}`} className="aspect-square">
-                  {renderKundUnit(blockName, col, kund, kundSeats)}
+                  {renderKundUnit(blockConfig.id, col, kund, kundSeats)}
                 </div>
               );
-            })
-          ))}
+            });
+          }).flat()}
         </div>
       </div>
     );
@@ -225,11 +362,11 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
           <span className="text-gray-600 font-medium">Selected</span>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 bg-gray-400 rounded border border-gray-300"></div>
+          <div className="w-3 h-3 bg-gray-500 rounded border border-gray-400"></div>
           <span className="text-gray-600 font-medium">Booked</span>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
-          <div className="w-3 h-3 bg-gray-300 rounded border border-gray-200"></div>
+          <div className="w-3 h-3 bg-gray-300 rounded border border-gray-300"></div>
           <span className="text-gray-600 font-medium">Blocked</span>
         </div>
       </div>
@@ -242,9 +379,9 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
       </div>
 
       {/* Seat blocks in responsive grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-        {['A', 'B', 'C', 'D'].map(block => 
-          renderBlock(block, seatsByBlock[block] || [])
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4 md:gap-6">
+        {layoutSettings.blocks?.filter(block => block.isActive).map(blockConfig => 
+          renderBlock(blockConfig, seatsByBlock[blockConfig.id] || [])
         )}
       </div>
 
@@ -282,7 +419,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
               const currentDiscount = getCurrentDiscountInfo();
               if (currentDiscount) {
                 return (
-                  <div className="bg-green-100 border border-green-300 p-2 rounded-lg">
+                  <div className=" max-w-md ">
                     <div className="flex items-center gap-2">
                       <span className="text-green-600 font-bold text-xs">🎉</span>
                       <span className="text-green-800 text-xs font-medium">
@@ -300,7 +437,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
               const nextMilestone = getNextMilestone();
               if (nextMilestone) {
                 return (
-                  <div className="bg-orange-100 border border-orange-300 p-2 rounded-lg">
+                  <div className="max-w-md ">
                     <div className="flex items-center gap-2">
                       <span className="text-orange-600 font-bold text-xs">🎯</span>
                       <span className="text-orange-800 text-xs font-medium">
@@ -312,7 +449,22 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
               }
               return null;
             })()}
+
+      <div className="bg-rose-50 border border-rose-200 rounded-lg p-2  w-full shadow-sm">
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <Info className="h-5 w-5 text-rose-500 mt-0.5" />
           </div>
+          <div className="flex-1">
+            <p className="text-rose-800 text-sm font-medium">
+              Please scroll down to proceed to the next step
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+     </div>
         </div>
       )}
     </div>

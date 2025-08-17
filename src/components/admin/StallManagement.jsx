@@ -29,24 +29,66 @@ export default function StallManagement() {
   const [filterStatus, setFilterStatus] = useState('all'); // all, available, booked, blocked
   const [selectedStalls, setSelectedStalls] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [stallSettings, setStallSettings] = useState({ stalls: [] }); // Add stall settings state
 
-  // Generate 70 stalls in a grid layout
-  const generateStalls = () => {
-    const stalls = []; 
-    
-    for (let i = 1; i <= 70; i++) {
-      stalls.push({
-        id: `S${i}`,
-        number: i,
-        row: Math.ceil(i / 14),
-        position: i % 14 || 14
-      });
-    }
-    
-    return stalls;
+  // Get stalls from system settings instead of hardcoded generation
+  const getAllStalls = () => {
+    return stallSettings.stalls.map((stall, index) => ({
+      id: stall.id,
+      number: parseInt(stall.id.replace('S', '')),
+      row: Math.ceil((index + 1) / 14),
+      position: (index + 1) % 14 || 14,
+      name: stall.name,
+      price: stall.price,
+      size: stall.size,
+      isActive: stall.isActive
+    }));
   };
 
-  const allStalls = generateStalls();
+  const allStalls = getAllStalls();
+
+  // Fetch stall settings from SystemSettings
+  useEffect(() => {
+    const fetchStallSettings = async () => {
+      try {
+        const stallRef = doc(db, 'settings', 'stalls');
+        const stallSnap = await getDoc(stallRef);
+        if (stallSnap.exists()) {
+          setStallSettings(stallSnap.data());
+        } else {
+          // If no settings exist, create default 70 stalls
+          const defaultStalls = [];
+          for (let i = 1; i <= 70; i++) {
+            defaultStalls.push({
+              id: `S${i}`,
+              name: `Stall S${i}`,
+              size: '10x10 ft',
+              price: 5000,
+              isActive: true
+            });
+          }
+          const defaultSettings = {
+            totalStalls: 70,
+            defaultPrice: 5000,
+            stalls: defaultStalls,
+            eventDates: {
+              startDate: '2025-11-15',
+              endDate: '2025-11-20',
+              isActive: true
+            }
+          };
+          setStallSettings(defaultSettings);
+          // Save default settings
+          await setDoc(stallRef, defaultSettings);
+        }
+      } catch (error) {
+        console.error('Error fetching stall settings:', error);
+        toast.error('Failed to load stall settings');
+      }
+    };
+
+    fetchStallSettings();
+  }, []);
 
   // Real-time stall availability listener
   useEffect(() => {

@@ -15,6 +15,7 @@ import {
 import { useAuth } from './AuthContext';
 import { toast } from 'react-hot-toast';
 import { formatDateKey } from '@/utils/dateUtils';
+import { calculatePriceBreakdown, getNextBulkMilestone, formatCurrency, getDiscountDisplayInfo } from '@/utils/pricingUtils';
 
 const ShowSeatBookingContext = createContext();
 
@@ -57,7 +58,21 @@ const initialState = {
     paymentDetails: {}
   },
   loading: false,
-  error: null
+  error: null,
+  // Event settings for discount calculations
+  eventSettings: null,
+  selectedEventDate: null,
+  // New pricing settings from admin
+  priceSettings: {
+    seatTypes: {
+      VIP: { price: 1000 },
+      REGULAR_C: { price: 1000 },
+      REGULAR_D: { price: 500 }
+    },
+    earlyBirdDiscounts: [],
+    bulkBookingDiscounts: [],
+    taxRate: 0
+  }
 };
 
 // Action types
@@ -72,7 +87,10 @@ const ACTIONS = {
   SET_ERROR: 'SET_ERROR',
   CLEAR_SELECTION: 'CLEAR_SELECTION',
   RESET_BOOKING: 'RESET_BOOKING',
-  UPDATE_PRICING: 'UPDATE_PRICING'
+  UPDATE_PRICING: 'UPDATE_PRICING',
+  SET_PRICE_SETTINGS: 'SET_PRICE_SETTINGS',
+  SET_EVENT_SETTINGS: 'SET_EVENT_SETTINGS',
+  SET_SELECTED_EVENT_DATE: 'SET_SELECTED_EVENT_DATE'
 };
 
 // Helper function to get seat price based on seat type
@@ -219,6 +237,32 @@ const showSeatBookingReducer = (state, action) => {
       };
       break;
 
+    case ACTIONS.SET_PRICE_SETTINGS:
+      // Update pricing settings and recalculate totals if seats are selected
+      const currentSeats = Array.isArray(state.selectedSeats) ? state.selectedSeats : [];
+      const recalculatedPrice = currentSeats.reduce((sum, id) => sum + getSeatPrice(id), 0);
+      
+      newState = {
+        ...state,
+        priceSettings: action.payload,
+        totalPrice: recalculatedPrice
+      };
+      break;
+
+    case ACTIONS.SET_EVENT_SETTINGS:
+      newState = {
+        ...state,
+        eventSettings: action.payload
+      };
+      break;
+
+    case ACTIONS.SET_SELECTED_EVENT_DATE:
+      newState = {
+        ...state,
+        selectedEventDate: action.payload
+      };
+      break;
+
     default:
       console.warn('Unknown action type:', action.type);
       return state;
@@ -232,6 +276,117 @@ const showSeatBookingReducer = (state, action) => {
 export const ShowSeatBookingProvider = ({ children }) => {
   const [state, dispatch] = useReducer(showSeatBookingReducer, initialState);
   const { user } = useAuth();
+
+  // Real-time sync with admin pricing settings for shows
+  useEffect(() => {
+    const pricingRef = doc(db, 'settings', 'showPricing');
+    
+    // Set up real-time listener for show pricing changes
+    const unsubscribePricing = onSnapshot(pricingRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const newPriceSettings = {
+          seatTypes: {
+            VIP: { price: data.seatTypes?.VIP?.price || 1000 },
+            REGULAR_C: { price: data.seatTypes?.REGULAR_C?.price || 1000 },
+            REGULAR_D: { price: data.seatTypes?.REGULAR_D?.price || 500 }
+          },
+          earlyBirdDiscounts: data.earlyBirdDiscounts || [],
+          bulkBookingDiscounts: data.bulkBookingDiscounts || [],
+          taxRate: data.taxRate || 0
+        };
+        
+        // Update global SHOW_SEAT_TYPES
+        SHOW_SEAT_TYPES.VIP.price = newPriceSettings.seatTypes.VIP.price;
+        SHOW_SEAT_TYPES.REGULAR_C.price = newPriceSettings.seatTypes.REGULAR_C.price;
+        SHOW_SEAT_TYPES.REGULAR_D.price = newPriceSettings.seatTypes.REGULAR_D.price;
+        
+        dispatch({ type: ACTIONS.SET_PRICE_SETTINGS, payload: newPriceSettings });
+        
+        // Notify user if they have seats selected
+        if (state.selectedSeats && state.selectedSeats.length > 0) {
+          toast.success('🎭 Show seat pricing updated! Your total has been recalculated.', {
+            duration: 4000,
+            position: 'top-right'
+          });
+        }
+      } else {
+        // Set default values if document doesn't exist
+        const defaultSettings = {
+          seatTypes: {
+            VIP: { price: 1000 },
+            REGULAR_C: { price: 1000 },
+            REGULAR_D: { price: 500 }
+          },
+          earlyBirdDiscounts: [],
+          bulkBookingDiscounts: [],
+          taxRate: 0
+        };
+        dispatch({ type: ACTIONS.SET_PRICE_SETTINGS, payload: defaultSettings });
+      }
+    }, (error) => {
+      console.error('Error listening to show price settings:', error);
+      // Set default values on error
+      const defaultSettings = {
+        seatTypes: {
+          VIP: { price: 1000 },
+          REGULAR_C: { price: 1000 },
+          REGULAR_D: { price: 500 }
+        },
+        earlyBirdDiscounts: [],
+        bulkBookingDiscounts: [],
+        taxRate: 0
+      };
+      dispatch({ type: ACTIONS.SET_PRICE_SETTINGS, payload: defaultSettings });
+    });
+
+    // Return cleanup function
+    return () => {
+      unsubscribePricing();
+    };
+  }, [state.selectedSeats]);
+
+  // Real-time sync with show event settings to get event dates
+  useEffect(() => {
+    const showSettingsRef = doc(db, 'settings', 'shows');
+    
+    const unsubscribeShowSettings = onSnapshot(showSettingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        dispatch({ type: ACTIONS.SET_EVENT_SETTINGS, payload: data });
+        
+        // Set the event date for discount calculations
+        // Use the start date of the show event for early bird calculations
+        if (data.eventDates?.startDate) {
+          // Convert the date string to a proper Date object
+          const eventDate = new Date(data.eventDates.startDate);
+          if (!isNaN(eventDate.getTime())) {
+            dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: eventDate });
+            console.log('ShowSeatBookingContext: Set event date for early bird calculation:', eventDate);
+          }
+        } else {
+          // Fallback to default event date if not set in Firebase
+          const defaultEventDate = new Date('2025-11-15');
+          dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: defaultEventDate });
+          console.log('ShowSeatBookingContext: Using default event date:', defaultEventDate);
+        }
+      } else {
+        // Use default event date if document doesn't exist
+        const defaultEventDate = new Date('2025-11-15');
+        dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: defaultEventDate });
+        console.log('ShowSeatBookingContext: No show settings found, using default event date:', defaultEventDate);
+      }
+    }, (error) => {
+      console.error('Error listening to show settings:', error);
+      // Use default event date on error
+      const defaultEventDate = new Date('2025-11-15');
+      dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: defaultEventDate });
+    });
+
+    return () => {
+      unsubscribeShowSettings();
+    };
+  }, []);
 
   // Listen to real-time seat availability updates
   useEffect(() => {
@@ -301,6 +456,85 @@ export const ShowSeatBookingProvider = ({ children }) => {
 
   const resetBooking = () => {
     dispatch({ type: ACTIONS.RESET_BOOKING });
+  };
+
+  // Pricing calculation functions using the pricing utilities
+  const getPricingBreakdown = () => {
+    // Get the base price for each selected seat and sum them
+    const basePrice = state.selectedSeats.reduce((sum, seatId) => {
+      return sum + getSeatPrice(seatId);
+    }, 0);
+    
+    const quantity = state.selectedSeats.length;
+    
+    if (quantity === 0) {
+      return {
+        basePrice: 0,
+        quantity: 0,
+        baseAmount: 0,
+        discounts: {
+          earlyBird: { percent: 0, applied: false },
+          bulk: { percent: 0, applied: false },
+          best: { percent: 0, type: 'none' }
+        },
+        discountAmount: 0,
+        discountedAmount: 0,
+        taxAmount: 0,
+        totalAmount: 0
+      };
+    }
+    
+    // Use average price for discount calculations
+    const averagePrice = basePrice / quantity;
+    
+    return calculatePriceBreakdown({
+      basePrice: averagePrice,
+      quantity: quantity,
+      selectedDate: state.selectedEventDate,
+      earlyBirdDiscounts: state.priceSettings.earlyBirdDiscounts,
+      bulkDiscounts: state.priceSettings.bulkBookingDiscounts,
+      quantityKey: 'minSeats', // Shows use seat-based discounts
+      taxRate: state.priceSettings.taxRate
+    });
+  };
+  
+  const getBaseAmount = () => {
+    return state.selectedSeats.reduce((sum, seatId) => {
+      return sum + getSeatPrice(seatId);
+    }, 0);
+  };
+  
+  const getDiscountAmount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.discountAmount;
+  };
+  
+  const getTaxAmount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.taxAmount;
+  };
+  
+  const getTotalAmount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.totalAmount;
+  };
+  
+  const getEarlyBirdDiscount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.discounts.earlyBird.percent;
+  };
+  
+  const getBulkDiscount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.discounts.bulk.percent;
+  };
+  
+  const getNextMilestone = () => {
+    return getNextBulkMilestone(
+      state.selectedSeats.length,
+      state.priceSettings.bulkBookingDiscounts,
+      'minSeats'
+    );
   };
 
   // Get seat status
@@ -442,7 +676,16 @@ export const ShowSeatBookingProvider = ({ children }) => {
     getSeatStatus,
     isSeatSelected,
     isSeatAvailable,
-    getSeatPrice
+    getSeatPrice,
+    // Pricing calculation functions
+    getPricingBreakdown,
+    getBaseAmount,
+    getDiscountAmount,
+    getTaxAmount,
+    getTotalAmount,
+    getEarlyBirdDiscount,
+    getBulkDiscount,
+    getNextMilestone
   };
 
   return (

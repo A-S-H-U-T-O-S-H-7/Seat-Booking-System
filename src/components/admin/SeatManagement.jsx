@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, updateDoc, setDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, doc, getDoc, updateDoc, setDoc, getDocs, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { format, startOfDay, addDays } from 'date-fns';
 import { formatDateKey } from '@/utils/dateUtils';
 import { toast } from 'react-hot-toast';
@@ -28,40 +28,114 @@ export default function SeatManagement() {
   const [filterStatus, setFilterStatus] = useState('all'); // all, available, booked, blocked
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const shifts = [
-    { id: 'morning', name: 'Morning', time: '6:00 AM - 12:00 PM' },
-    { id: 'evening', name: 'Evening', time: '4:00 PM - 10:00 PM' }
-  ];
+  const [layoutSettings, setLayoutSettings] = useState({
+    blocks: []
+  });
+  const [shifts, setShifts] = useState([]);
 
   useEffect(() => {
     fetchSeatAvailability();
   }, [selectedDate, selectedShift]);
 
-  const generateSeats = () => {
-    const blocks = ['A', 'B', 'C', 'D'];
-    const columns = [1, 2, 3, 4, 5];
-    const kunds = ['K1', 'K2', 'K3', 'K4', 'K5'];
-    const seats = ['S1', 'S2', 'S3', 'S4'];
+  // Listen for layout settings changes
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'settings', 'seatLayout'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setLayoutSettings(docSnap.data());
+        } else {
+          setLayoutSettings({ blocks: [] });
+        }
+      },
+      (error) => {
+        console.error('Error listening to layout settings:', error);
+        toast.error('Failed to load seat layout settings');
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Listen for shifts changes
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'settings', 'shifts'),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const activeShifts = (data.shifts || []).filter(shift => shift.isActive);
+          setShifts(activeShifts);
+          
+          // Set default shift if none selected and shifts are available
+          if (!selectedShift && activeShifts.length > 0) {
+            setSelectedShift(activeShifts[0].id);
+          }
+        } else {
+          setShifts([]);
+        }
+      },
+      (error) => {
+        console.error('Error listening to shifts:', error);
+        toast.error('Failed to load shifts');
+      }
+    );
+
+    return () => unsubscribe();
+  }, [selectedShift]);
+
+  // Listen for real-time seat availability changes
+  useEffect(() => {
+    if (!selectedDate || !selectedShift) return;
     
+    const dateKey = formatDateKey(selectedDate);
+    const docId = `${dateKey}_${selectedShift}`;
+    
+    const unsubscribe = onSnapshot(
+      doc(db, 'seatAvailability', docId),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setSeatAvailability(docSnap.data().seats || {});
+        } else {
+          setSeatAvailability({});
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to seat availability:', error);
+        toast.error('Failed to load real-time seat availability');
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [selectedDate, selectedShift]);
+
+  const generateSeats = () => {
+    if (!layoutSettings.blocks || layoutSettings.blocks.length === 0) {
+      return [];
+    }
+
     const allSeats = [];
     
-    blocks.forEach(block => {
-      columns.forEach(col => {
-        kunds.forEach(kund => {
-          seats.forEach(seat => {
-            const seatId = `${block}-${col}-${kund}-${seat}`;
+    layoutSettings.blocks.forEach(block => {
+      if (!block.isActive) return; // Skip inactive blocks
+      
+      for (let col = 1; col <= block.columns; col++) {
+        for (let kund = 1; kund <= block.kunds; kund++) {
+          for (let seatNum = 1; seatNum <= block.seatsPerKund; seatNum++) {
+            const seatId = `${block.id}${col}-K${kund}-S${seatNum}`;
             allSeats.push({
               id: seatId,
-              block,
+              block: block.id,
               column: col,
-              kund,
-              seat,
+              kund: kund,
+              seat: seatNum,
               displayName: seatId
             });
-          });
-        });
-      });
+          }
+        }
+      }
     });
     
     return allSeats;
@@ -92,7 +166,23 @@ export default function SeatManagement() {
   };
 
   const getSeatStatus = (seatId) => {
-    const availability = seatAvailability[seatId];
+    // First try the exact seat ID
+    let availability = seatAvailability[seatId];
+    
+    // If not found, try the old format (backward compatibility)
+    if (!availability) {
+      // Convert new format A1-K1-S1 to old format A-1-K1-S1
+      const oldFormatId = seatId.replace(/^([A-Z])(\d+)-/, '$1-$2-');
+      availability = seatAvailability[oldFormatId];
+    }
+    
+    // If still not found, try the new format (in case current ID is old format)
+    if (!availability) {
+      // Convert old format A-1-K1-S1 to new format A1-K1-S1
+      const newFormatId = seatId.replace(/^([A-Z])-(\d+)-/, '$1$2-');
+      availability = seatAvailability[newFormatId];
+    }
+    
     if (!availability) return 'available';
     
     if (availability.blocked) return 'blocked';
@@ -265,53 +355,134 @@ export default function SeatManagement() {
   const statusCounts = getStatusCounts();
 
   const renderGridView = () => {
+    if (!layoutSettings.blocks || layoutSettings.blocks.length === 0) {
+      return (
+        <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-gray-200 text-gray-600'} rounded-xl shadow-sm border p-12 text-center`}>
+          <div className="text-gray-400 mb-4">
+            <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0012 15c-2.887 0-5.438.892-7.573 2.573A8.003 8.003 0 012 12V8h20v4a8.003 8.003 0 01-2.427 5.573z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold mb-2">No Seat Layout Configured</h3>
+          <p className="text-sm">Please configure the seat layout in System Settings to view seats.</p>
+        </div>
+      );
+    }
+
     const seatsByBlock = filteredSeats.reduce((acc, seat) => {
       if (!acc[seat.block]) acc[seat.block] = [];
       acc[seat.block].push(seat);
       return acc;
     }, {});
 
+    // Sort blocks alphabetically to ensure consistent display order
+    const sortedBlocks = [...layoutSettings.blocks]
+      .filter(block => block.isActive)
+      .sort((a, b) => a.id.localeCompare(b.id));
+
+    // Group blocks into rows of 2 (A,B then C,D)
+    const blockRows = [];
+    for (let i = 0; i < sortedBlocks.length; i += 2) {
+      blockRows.push(sortedBlocks.slice(i, i + 2));
+    }
+
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {['A', 'B', 'C', 'D'].map(block => (
-          <div key={block} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6`}>
-            <h3 className={`text-xl font-bold mb-6 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              🏛️ Block {block} 🏛️
-            </h3>
-            <div className="grid grid-cols-5 gap-2">
-              {['K1', 'K2', 'K3', 'K4', 'K5'].map(kund => (
-                [1, 2, 3, 4, 5].map(col => {
-                  const kundSeats = (seatsByBlock[block] || []).filter(
-                    seat => seat.kund === kund && seat.column === col
-                  );
+      <div className="space-y-8">
+        {blockRows.map((blockRow, rowIndex) => (
+          <div key={rowIndex} className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            {blockRow.map(block => {
+              const blockSeats = seatsByBlock[block.id] || [];
+              
+              return (
+                <div key={block.id} className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-4`}>
+                  <h3 className={`text-lg font-bold mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    🏛️ Block {block.id} 🏛️
+                  </h3>
                   
-                  return (
-                    <div key={`${col}-${kund}`} className={`${isDarkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'} border rounded-lg p-3 hover:shadow-md transition-all duration-200`}>
-                      <div className={`text-xs text-center font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {block}{col}-{kund}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {kundSeats.map(seat => (
-                          <button
-                            key={seat.id}
-                            onClick={() => toggleSeatSelection(seat.id)}
-                            disabled={getSeatStatus(seat.id) === 'booked'}
-                            className={`
-                              text-xs p-2 rounded-lg font-bold transition-all duration-200 hover:scale-105 active:scale-95
-                              ${getSeatColor(seat.id)}
-                              ${getSeatStatus(seat.id) === 'booked' ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:shadow-lg'}
-                            `}
-                            title={`${seat.id} - ${getSeatStatus(seat.id)}`}
+                  {/* Rectangular seat layout with responsive design */}
+                  <div className="space-y-6">
+                    {/* Create rows of kunds */}
+                    {Array.from({ length: block.kunds }, (_, kundIndex) => {
+                      const kund = kundIndex + 1;
+                      return (
+                        <div key={`kund-${kund}`} className="w-full">
+                          {/* Responsive grid with proper column handling */}
+                          <div 
+                            className="grid gap-1 justify-items-center"
+                            style={{
+                              gridTemplateColumns: block.columns <= 2 
+                                ? `repeat(${block.columns}, 1fr)` 
+                                : block.columns <= 4 
+                                ? 'repeat(2, 1fr)'
+                                : 'repeat(auto-fit, minmax(90px, 1fr))'
+                            }}
                           >
-                            {seat.seat.replace('S', '')}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })
-              ))}
-            </div>
+                            {/* Create columns for each kund */}
+                            {Array.from({ length: block.columns }, (_, colIndex) => {
+                              const col = colIndex + 1;
+                              const kundSeats = blockSeats.filter(
+                                seat => seat.kund === kund && seat.column === col
+                              ).sort((a, b) => a.seat - b.seat); // Sort seats by number
+                              
+                              return (
+                                <div 
+                                  key={`col-${col}`} 
+                                  className={`
+                                    ${isDarkMode ? 'border-gray-600 bg-gray-700/50' : 'border-gray-300 bg-gray-100/50'} 
+                                    border rounded-md py-2 w-full max-w-[100px] min-w-[80px] 
+                                    hover:shadow-sm transition-all duration-200
+                                  `}
+                                >
+                                  <div className={`text-xs text-center font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    {block.id}{col}-K{kund}
+                                  </div>
+                                  
+                                  {/* Seats arranged in pairs: 1,2 then 3,4 */}
+                                  <div className="space-y-1">
+                                    {/* Group seats into pairs and create rows */}
+                                    {Array.from({ length: Math.ceil(block.seatsPerKund / 2) }, (_, pairIndex) => {
+                                      const startSeat = pairIndex * 2;
+                                      const seatsInThisPair = kundSeats.slice(startSeat, startSeat + 2);
+                                      
+                                      return (
+                                        <div key={`pair-${pairIndex}`} className="flex justify-center space-x-1">
+                                          {seatsInThisPair.map(seat => {
+                                            const status = getSeatStatus(seat.id);
+                                            return (
+                                              <button
+                                                key={seat.id}
+                                                onClick={() => toggleSeatSelection(seat.id)}
+                                                disabled={status === 'booked'}
+                                                className={`
+                                                  text-xs w-9 h-7 rounded font-bold transition-all duration-200 hover:scale-105 active:scale-95
+                                                  ${getSeatColor(seat.id)}
+                                                  ${status === 'booked' ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:shadow-sm'}
+                                                `}
+                                                title={`${seat.id} - ${status.toUpperCase()}${status === 'booked' && seatAvailability[seat.id]?.customerName ? ` - ${seatAvailability[seat.id].customerName}` : ''}${status === 'blocked' && seatAvailability[seat.id]?.blockedReason ? ` - ${seatAvailability[seat.id].blockedReason}` : ''}`}
+                                              >
+                                                {seat.seat}
+                                              </button>
+                                            );
+                                          })}
+                                          {/* Add placeholder for odd number of seats */}
+                                          {seatsInThisPair.length === 1 && (
+                                            <div className="w-6 h-6"></div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -480,7 +651,6 @@ export default function SeatManagement() {
               type="date"
               value={format(selectedDate, 'yyyy-MM-dd')}
               onChange={(e) => setSelectedDate(new Date(e.target.value))}
-              min={format(new Date(), 'yyyy-MM-dd')}
               className={`block w-full h-12 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 ${
                 isDarkMode 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -506,7 +676,7 @@ export default function SeatManagement() {
             >
               {shifts.map(shift => (
                 <option key={shift.id} value={shift.id}>
-                  {shift.name} ({shift.time})
+                  {shift.label} ({shift.timeFrom} - {shift.timeTo})
                 </option>
               ))}
             </select>

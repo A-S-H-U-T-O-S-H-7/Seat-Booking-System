@@ -27,124 +27,122 @@ import {
   FunnelIcon
 } from '@heroicons/react/24/outline';
 
-const generateSeatLayout = () => {
+const generateSeatLayout = (showSettings) => {
+  console.log('generateSeatLayout: Called with showSettings:', showSettings);
   const seats = [];
   
-  // VIP Section - 8 rows, 14 seats per row (7 left, 7 right) - 2 people per sofa
-  for (let row = 1; row <= 8; row++) {
-    // A Block (Left side)
-    const leftSeats = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-    leftSeats.forEach((letter) => {
-      // A1 seat
-      const seatIdA1 = `A-R${row}-${letter}1`;
-      seats.push({
-        id: seatIdA1,
-        row: row,
-        seat: `${letter}1`,
-        side: 'LEFT',
-        type: 'VIP',
-        section: 'A',
-        price: 1000,
-        capacity: 1,
-        displayName: `${letter}1`,
-        pairLetter: letter,
-        pairPosition: 1,
-        status: 'available'
-      });
-      
-      // A2 seat
-      const seatIdA2 = `A-R${row}-${letter}2`;
-      seats.push({
-        id: seatIdA2,
-        row: row,
-        seat: `${letter}2`,
-        side: 'LEFT',
-        type: 'VIP',
-        section: 'A',
-        price: 1000,
-        capacity: 1,
-        displayName: `${letter}2`,
-        pairLetter: letter,
-        pairPosition: 2,
-        status: 'available'
-      });
-    });
+  // Helper function to normalize blocks (handle both array and object formats)
+  const normalizeBlocks = (blocks, defaultBlocks) => {
+    if (!blocks) return defaultBlocks;
     
-    // B Block (Right side)
-    const rightSeats = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-    rightSeats.forEach((letter) => {
-      // B1 seat
-      const seatIdB1 = `B-R${row}-${letter}1`;
-      seats.push({
-        id: seatIdB1,
-        row: row,
-        seat: `${letter}1`,
-        side: 'RIGHT',
-        type: 'VIP',
-        section: 'B',
-        price: 1000,
-        capacity: 1,
-        displayName: `${letter}1`,
-        pairLetter: letter,
-        pairPosition: 1,
-        status: 'available'
+    // If it's an array, convert to object using id as key
+    if (Array.isArray(blocks)) {
+      const normalized = {};
+      blocks.forEach(block => {
+        if (block.id) {
+          normalized[block.id] = {
+            ...block,
+            active: block.active !== undefined ? block.active : block.isActive
+          };
+        }
       });
+      return normalized;
+    }
+    
+    // If it's already an object, use as is
+    return blocks;
+  };
+  
+  // Use dynamic show settings or fallback to defaults
+  const premiumBlocks = normalizeBlocks(
+    showSettings?.seatLayout?.premiumBlocks, 
+    {
+      'A': { name: 'Block A', maxRows: 8, maxPairsPerRow: 7, price: 1000, active: true },
+      'B': { name: 'Block B', maxRows: 8, maxPairsPerRow: 7, price: 1000, active: true }
+    }
+  );
+  
+  const regularBlocks = normalizeBlocks(
+    showSettings?.seatLayout?.regularBlocks,
+    {
+      'C': { name: 'Block C', maxRows: 25, maxSeatsPerRow: 15, price: 1000, active: true },
+      'D': { name: 'Block D', maxRows: 25, maxSeatsPerRow: 15, price: 500, active: true }
+    }
+  );
+  
+  console.log('generateSeatLayout: Premium blocks (normalized):', premiumBlocks);
+  console.log('generateSeatLayout: Regular blocks (normalized):', regularBlocks);
+  
+  // VIP Section - Dynamic configuration
+  Object.entries(premiumBlocks).forEach(([blockId, block]) => {
+    if (!block.active) return;
+    
+    for (let row = 1; row <= block.maxRows; row++) {
+      const side = blockId === 'A' ? 'LEFT' : 'RIGHT';
+      const letters = Array.from({ length: block.maxPairsPerRow }, (_, i) => String.fromCharCode(65 + i));
       
-      // B2 seat
-      const seatIdB2 = `B-R${row}-${letter}2`;
-      seats.push({
-        id: seatIdB2,
-        row: row,
-        seat: `${letter}2`,
-        side: 'RIGHT',
-        type: 'VIP',
-        section: 'B',
-        price: 1000,
-        capacity: 1,
-        displayName: `${letter}2`,
-        pairLetter: letter,
-        pairPosition: 2,
-        status: 'available'
+      letters.forEach((letter) => {
+        // Seat 1 of pair
+        const seatId1 = `${blockId}-R${row}-${letter}1`;
+        seats.push({
+          id: seatId1,
+          row: row,
+          seat: `${letter}1`,
+          side: side,
+          type: 'VIP',
+          section: blockId,
+          price: block.price,
+          capacity: 1,
+          displayName: `${letter}1`,
+          pairLetter: letter,
+          pairPosition: 1,
+          status: 'available'
+        });
+        
+        // Seat 2 of pair
+        const seatId2 = `${blockId}-R${row}-${letter}2`;
+        seats.push({
+          id: seatId2,
+          row: row,
+          seat: `${letter}2`,
+          side: side,
+          type: 'VIP',
+          section: blockId,
+          price: block.price,
+          capacity: 1,
+          displayName: `${letter}2`,
+          pairLetter: letter,
+          pairPosition: 2,
+          status: 'available'
+        });
       });
-    });
-  }
+    }
+  });
 
-  // Regular Section - 25 rows, 30 seats per row (15 left, 15 right)
-  for (let row = 1; row <= 25; row++) {
-    // C Block (Left side) - 15 seats per row, ₹1000
-    for (let seat = 1; seat <= 15; seat++) {
-      const seatId = `C-R${row}-S${seat}`;
-      seats.push({
-        id: seatId,
-        row: row,
-        seat: seat,
-        side: 'LEFT',
-        type: 'REGULAR',
-        section: 'C',
-        price: 1000,
-        capacity: 1,
-        displayName: `${seat}`,
-        status: 'available'
-      });
-    }
+  // Regular Section - Dynamic configuration
+  Object.entries(regularBlocks).forEach(([blockId, block]) => {
+    if (!block.active) return;
     
-    // D Block (Right side) - 15 seats per row, ₹500
-    for (let seat = 1; seat <= 15; seat++) {
-      const seatId = `D-R${row}-S${seat}`;
-      seats.push({
-        id: seatId,
-        row: row,
-        seat: seat,
-        side: 'RIGHT',
-        type: 'REGULAR',
-        section: 'D',
-        price: 500,
-        capacity: 1,
-        displayName: `${seat}`,
-        status: 'available'
-      });
+    for (let row = 1; row <= block.maxRows; row++) {
+      const side = blockId === 'C' ? 'LEFT' : 'RIGHT';
+      
+      for (let seat = 1; seat <= block.maxSeatsPerRow; seat++) {
+        const seatId = `${blockId}-R${row}-S${seat}`;
+        seats.push({
+          id: seatId,
+          row: row,
+          seat: seat,
+          side: side,
+          type: 'REGULAR',
+          section: blockId,
+          price: block.price,
+          capacity: 1,
+          displayName: `${seat}`,
+          status: 'available'
+        });
+      }
     }
-  }
+  });
   
   return seats;
 };
@@ -154,6 +152,7 @@ export default function ShowSeatManagement() {
   const { hasPermission, adminUser } = useAdmin();
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(null);
   const [selectedDate, setSelectedDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
@@ -176,12 +175,39 @@ export default function ShowSeatManagement() {
     );
   }
 
-  // Initialize seats layout and load data for default date
+  // Real-time listener for show settings from Firebase
   useEffect(() => {
-    const seatLayout = generateSeatLayout();
+    console.log('ShowSeatManagement: Setting up real-time listener for show settings');
+    const showSettingsRef = doc(db, 'settings', 'shows');
+    
+    const unsubscribe = onSnapshot(
+      showSettingsRef,
+      (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          console.log('ShowSeatManagement: Show settings updated:', data);
+          console.log('ShowSeatManagement: Seat layout structure:', data.seatLayout);
+          setShowSettings(data);
+        } else {
+          console.log('ShowSeatManagement: No show settings document found');
+          setShowSettings(null);
+        }
+      },
+      (error) => {
+        console.error('Error listening to show settings:', error);
+        toast.error('Failed to load show settings');
+      }
+    );
+    
+    return () => unsubscribe();
+  }, []);
+
+  // Initialize seats layout when show settings are loaded
+  useEffect(() => {
+    const seatLayout = generateSeatLayout(showSettings);
     setSeats(seatLayout);
     setLoading(false);
-  }, []);
+  }, [showSettings]);
 
   // Memoized filtered seats for better performance
   const filteredSeats = useMemo(() => {
@@ -409,7 +435,34 @@ export default function ShowSeatManagement() {
 
   // Render VIP section in grid view
   const renderVIPSection = () => {
-    const rows = Array.from({ length: 8 }, (_, i) => i + 1);
+    // Get normalized premium blocks
+    const normalizeBlocks = (blocks) => {
+      if (!blocks) return {};
+      if (Array.isArray(blocks)) {
+        const normalized = {};
+        blocks.forEach(block => {
+          if (block.id) {
+            normalized[block.id] = {
+              ...block,
+              active: block.active !== undefined ? block.active : block.isActive
+            };
+          }
+        });
+        return normalized;
+      }
+      return blocks;
+    };
+    
+    const premiumBlocks = normalizeBlocks(showSettings?.seatLayout?.premiumBlocks);
+    console.log('renderVIPSection: Using premiumBlocks:', premiumBlocks);
+    
+    const maxRows = Math.max(
+      premiumBlocks?.A?.maxRows || 8,
+      premiumBlocks?.B?.maxRows || 8
+    );
+    console.log('renderVIPSection: maxRows calculated:', maxRows);
+    
+    const rows = Array.from({ length: maxRows }, (_, i) => i + 1);
     
     return (
       <div className={`rounded-xl border p-3 md:p-4 mb-4 md:mb-6 ${
@@ -497,7 +550,34 @@ export default function ShowSeatManagement() {
 
   // Render regular section in grid view
   const renderRegularSection = () => {
-    const rows = Array.from({ length: 25 }, (_, i) => i + 1);
+    // Get normalized regular blocks
+    const normalizeBlocks = (blocks) => {
+      if (!blocks) return {};
+      if (Array.isArray(blocks)) {
+        const normalized = {};
+        blocks.forEach(block => {
+          if (block.id) {
+            normalized[block.id] = {
+              ...block,
+              active: block.active !== undefined ? block.active : block.isActive
+            };
+          }
+        });
+        return normalized;
+      }
+      return blocks;
+    };
+    
+    const regularBlocks = normalizeBlocks(showSettings?.seatLayout?.regularBlocks);
+    console.log('renderRegularSection: Using regularBlocks:', regularBlocks);
+    
+    const maxRows = Math.max(
+      regularBlocks?.C?.maxRows || 25,
+      regularBlocks?.D?.maxRows || 25
+    );
+    console.log('renderRegularSection: maxRows calculated:', maxRows);
+    
+    const rows = Array.from({ length: maxRows }, (_, i) => i + 1);
     
     return (
       <div className={`rounded-xl border p-3 md:p-4 ${

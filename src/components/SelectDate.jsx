@@ -1,16 +1,72 @@
 "use client";
+import { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
-import { format, addDays, startOfToday } from 'date-fns';
+import { format, addDays, startOfToday, parseISO, isWithinInterval } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const SelectDate = ({ selectedDate, onDateSelect }) => {
-  // Generate next 5 days for the event
+  const [dateSettings, setDateSettings] = useState({
+    startDate: '',
+    endDate: '',
+    isActive: false
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Listen to date range settings changes
+  useEffect(() => {
+    const dateRef = doc(db, 'settings', 'dateRange');
+    
+    const unsubscribe = onSnapshot(dateRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setDateSettings(docSnap.data());
+      } else {
+        // Default settings if none exist
+        setDateSettings({
+          startDate: '',
+          endDate: '',
+          isActive: false
+        });
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error listening to date settings:', error);
+      setDateSettings({
+        startDate: '',
+        endDate: '',
+        isActive: false
+      });
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Generate event dates based on settings
   const generateEventDates = () => {
     const today = startOfToday();
     const dates = [];
     
-    for (let i = 0; i < 5; i++) {
-      dates.push(addDays(today, i));
-    } 
+    if (dateSettings.isActive && dateSettings.startDate && dateSettings.endDate) {
+      // Use custom date range - show all dates in the range
+      const startDate = parseISO(dateSettings.startDate);
+      const endDate = parseISO(dateSettings.endDate);
+      
+      let currentDate = startDate;
+      while (currentDate <= endDate) {
+        dates.push(currentDate);
+        currentDate = addDays(currentDate, 1);
+      }
+      
+      // If no dates are in the future, show all dates from the custom range
+      const futureDates = dates.filter(date => date >= today);
+      return futureDates.length > 0 ? futureDates : dates;
+    } else {
+      // Use default 5-day range from today
+      for (let i = 0; i < 5; i++) {
+        dates.push(addDays(today, i));
+      }
+    }
     
     return dates;
   };
@@ -18,8 +74,26 @@ const SelectDate = ({ selectedDate, onDateSelect }) => {
   const eventDates = generateEventDates();
   const today = startOfToday();
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
+  if (eventDates.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Event Dates Available</h3>
+        <p className="text-gray-600">Please check back later or contact support.</p>
+      </div>
+    );
+  }
+ 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl  mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent mb-2">
           Choose Your Sacred Day
@@ -32,6 +106,7 @@ const SelectDate = ({ selectedDate, onDateSelect }) => {
           const isSelected = selectedDate && 
             format(selectedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
           const isToday = format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+          const isPast = date < today;
           
           return (
             <div
@@ -39,6 +114,8 @@ const SelectDate = ({ selectedDate, onDateSelect }) => {
               className={`group relative p-3 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105 transform ${
                 isSelected
                   ? 'bg-gradient-to-br from-orange-100 to-yellow-100 border-2 border-orange-300 shadow-xl scale-105'
+                  : isPast
+                  ? 'bg-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-sm opacity-75'
                   : 'bg-white border border-gray-200 hover:border-orange-200 hover:shadow-lg'
               }`}
               onClick={() => onDateSelect(date)}
@@ -46,6 +123,11 @@ const SelectDate = ({ selectedDate, onDateSelect }) => {
               {isToday && (
                 <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-400 to-yellow-400 text-white text-xs px-2 py-1 rounded-full font-semibold animate-pulse">
                   Today
+                </div>
+              )}
+              {isPast && !isToday && (
+                <div className="absolute -top-2 -right-2 bg-gray-400 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  Past
                 </div>
               )}
               

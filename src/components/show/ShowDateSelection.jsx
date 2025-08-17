@@ -1,28 +1,138 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useShowSeatBooking } from "@/context/ShowSeatBookingContext";
 import { Calendar } from "lucide-react";
 import { format, addDays, startOfToday, isSameDay } from "date-fns";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 export default function ShowDateSelection() {
   const { selectedDate, setDateAndShift, selectedShift } = useShowSeatBooking();
+  const [showSettings, setShowSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Generate only 5 days starting from tomorrow
+  // Real-time listener for show settings from Firebase
+  useEffect(() => {
+    console.log('ShowDateSelection: Setting up real-time listener for show settings');
+    setLoading(true);
+    
+    const showSettingsRef = doc(db, 'settings', 'shows');
+    
+    const unsubscribe = onSnapshot(
+      showSettingsRef,
+      (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          console.log('ShowDateSelection: Show settings updated:', data);
+          console.log('ShowDateSelection: Event dates structure:', data.eventDates);
+          console.log('ShowDateSelection: Shows array:', data.shows);
+          setShowSettings(data);
+        } else {
+          console.log('ShowDateSelection: No show settings document found');
+          setShowSettings(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('ShowDateSelection: Error listening to show settings:', error);
+        setLoading(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, []);
+
+  // Generate dates based on settings or fallback to default 5 days
   const generateAvailableDates = () => {
-    const today = startOfToday();
     const dates = [];
-    for (let i = 1; i <= 5; i++) {
+    
+    console.log('ShowDateSelection: Generating dates with showSettings:', showSettings);
+    
+    // Check different possible structures for event dates configuration
+    const eventDates = showSettings?.eventDates;
+    
+    if (eventDates) {
+      console.log('ShowDateSelection: Event dates found:', eventDates);
+      
+      // If we have specific start and end dates, use them
+      if (eventDates.startDate && eventDates.endDate) {
+        const startDate = new Date(eventDates.startDate);
+        const endDate = new Date(eventDates.endDate);
+        
+        console.log('ShowDateSelection: Using date range from', startDate, 'to', endDate);
+        
+        const currentDate = new Date(startDate);
+        while (currentDate <= endDate) {
+          dates.push(new Date(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        return dates;
+      }
+    }
+    
+    // Fallback to tomorrow + X days logic
+    const today = startOfToday();
+    let dayCount = 5; // Default fallback
+    
+    if (eventDates) {
+      // Check for enabled and dayCount properties
+      if (eventDates.enabled && eventDates.dayCount) {
+        dayCount = eventDates.dayCount;
+      }
+      // Check for isActive and availableDays properties (alternative structure)
+      else if (eventDates.isActive && eventDates.availableDays) {
+        dayCount = eventDates.availableDays;
+      }
+      // Check for direct dayCount property
+      else if (eventDates.dayCount) {
+        dayCount = eventDates.dayCount;
+      }
+      // Check for direct availableDays property
+      else if (eventDates.availableDays) {
+        dayCount = eventDates.availableDays;
+      }
+    }
+    
+    console.log('ShowDateSelection: Using dayCount fallback:', dayCount);
+    
+    for (let i = 1; i <= dayCount; i++) {
       dates.push(addDays(today, i));
     }
     return dates;
   };
 
   const availableDates = generateAvailableDates();
+  
+  // Handle different possible structures for shows array
+  const activeShows = showSettings?.shows?.filter(show => 
+    show.active === true || show.isActive === true
+  ) || [];
+  
+  console.log('ShowDateSelection: Active shows found:', activeShows);
 
   const handleDateSelect = (date) => {
-    console.log('Date selected:', date);
+    console.log('ShowDateSelection: Date selected:', date);
+    console.log('ShowDateSelection: Available active shows:', activeShows);
+    
     // Set both date and shift in the context
-    setDateAndShift(date, "evening");
+    // Use the first active show or default to "evening"
+    const firstShow = activeShows.length > 0 ? 
+      (activeShows[0].name || activeShows[0].label || 'evening').toLowerCase() : 
+      "evening";
+    
+    console.log('ShowDateSelection: Setting shift to:', firstShow);
+    setDateAndShift(date, firstShow);
+  };
+  
+  // Format time to AM/PM format
+  const formatTime = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
   };
 
   // Fixed date comparison
@@ -107,28 +217,56 @@ export default function ShowDateSelection() {
 
       {/* Show Timing Info */}
       {selectedDate && (
-        <div className="mt-10 max-w-4xl mx-auto">
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-pink-100 via-pink-50 to-pink-100 border-2 border-pink-300 shadow-md hover:shadow-pink-200 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <span className="text-pink-600 text-3xl">🎭</span>
-                <div>
-                  <p className="text-lg font-semibold text-pink-700">Evening Show</p>
-                  <p className="text-sm text-pink-600">5:00 PM - 10:00 PM</p>
-                </div>
-              </div>
-              <span className="px-4 py-1 bg-pink-200 text-pink-700 rounded-full text-sm font-medium">
-                Daily Event
-              </span>
+        <div className="mt-10 max-w-4xl mx-auto space-y-4">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
             </div>
-            <p className="text-gray-700 text-sm leading-relaxed">
-              Join us for an evening of{" "}
-              <span className="text-pink-600 font-medium">
-                mesmerizing cultural performances
-              </span>{" "}
-              and unforgettable moments.
-            </p>
-          </div>
+          ) : activeShows.length > 0 ? (
+            activeShows.map((show, index) => (
+              <div key={index} className="p-6 rounded-2xl bg-gradient-to-r from-pink-100 via-pink-50 to-pink-100 border-2 border-pink-300 shadow-md hover:shadow-pink-200 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-pink-600 text-3xl">{show.icon || '🎭'}</span>
+                    <div>
+                      <p className="text-lg font-semibold text-pink-700">{show.name}</p>
+                      <p className="text-sm text-pink-600">
+                        {formatTime(show.timeFrom || show.startTime)} - {formatTime(show.timeTo || show.endTime)}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-4 py-1 bg-pink-200 text-pink-700 rounded-full text-sm font-medium">
+                    {show.badgeText || 'Daily Event'}
+                  </span>
+                </div>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  {show.description || 'Join us for an unforgettable experience filled with mesmerizing performances and memorable moments.'}
+                </p>
+              </div>
+            ))
+          ) : (
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-pink-100 via-pink-50 to-pink-100 border-2 border-pink-300 shadow-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <span className="text-pink-600 text-3xl">🎭</span>
+                  <div>
+                    <p className="text-lg font-semibold text-pink-700">Evening Show</p>
+                    <p className="text-sm text-pink-600">5:00 PM - 10:00 PM</p>
+                  </div>
+                </div>
+                <span className="px-4 py-1 bg-pink-200 text-pink-700 rounded-full text-sm font-medium">
+                  Daily Event
+                </span>
+              </div>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                Join us for an evening of{" "}
+                <span className="text-pink-600 font-medium">
+                  mesmerizing cultural performances
+                </span>{" "}
+                and unforgettable moments.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -143,7 +281,7 @@ export default function ShowDateSelection() {
                   ? new Date(selectedDate) 
                   : selectedDate, 
                 "EEEE, MMMM dd, yyyy"
-              )} — Evening Show
+              )} — {activeShows.length > 0 ? activeShows[0].name : 'Evening Show'}
             </p>
           </div>
         </div>

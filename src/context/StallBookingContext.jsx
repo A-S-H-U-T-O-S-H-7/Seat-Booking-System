@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { calculatePriceBreakdown, getNextBulkMilestone, formatCurrency, getDiscountDisplayInfo } from '@/utils/pricingUtils';
 
 const StallBookingContext = createContext();
 
@@ -11,9 +12,11 @@ export const StallBookingProvider = ({ children }) => {
   const [priceSettings, setPriceSettings] = useState({
     defaultStallPrice: 5000,
     taxRate: 0,
-    discountPercent: 0,
-    earlyBirdDiscount: { isActive: false, discountPercent: 0, daysBeforeEvent: 7 }
+    earlyBirdDiscounts: [],
+    bulkBookingDiscounts: []
   });
+  const [selectedEventDate, setSelectedEventDate] = useState(null);
+  const [eventSettings, setEventSettings] = useState(null);
   const [loading, setLoading] = useState(false);
   
   // Real-time sync with admin pricing settings for stalls
@@ -25,20 +28,28 @@ export const StallBookingProvider = ({ children }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const newPriceSettings = {
-          defaultStallPrice: data.defaultStallPrice || 5000,
-          taxRate: data.taxRate || 0,
-          discountPercent: data.discountPercent || 0,
-          earlyBirdDiscount: data.earlyBirdDiscount || { isActive: false, discountPercent: 0, daysBeforeEvent: 7 }
+          defaultStallPrice: data.seatPrice || 5000, // Admin uses seatPrice field
+          taxRate: 0, // No tax as per requirements
+          earlyBirdDiscounts: data.earlyBirdDiscounts || [],
+          bulkBookingDiscounts: data.bulkBookingDiscounts || []
         };
         
         setPriceSettings(newPriceSettings);
+        
+        // Notify user if they have stalls selected
+        if (selectedStalls.length > 0) {
+          toast.success('💰 Stall pricing updated! Your total has been recalculated.', {
+            duration: 4000,
+            position: 'top-right'
+          });
+        }
       } else {
         // Set default values if document doesn't exist
         setPriceSettings({
           defaultStallPrice: 5000,
           taxRate: 0,
-          discountPercent: 0,
-          earlyBirdDiscount: { isActive: false, discountPercent: 0, daysBeforeEvent: 7 }
+          earlyBirdDiscounts: [],
+          bulkBookingDiscounts: []
         });
       }
     }, (error) => {
@@ -47,14 +58,56 @@ export const StallBookingProvider = ({ children }) => {
       setPriceSettings({
         defaultStallPrice: 5000,
         taxRate: 0,
-        discountPercent: 0,
-        earlyBirdDiscount: { isActive: false, discountPercent: 0, daysBeforeEvent: 7 }
+        earlyBirdDiscounts: [],
+        bulkBookingDiscounts: []
       });
     });
 
     // Cleanup function
     return () => {
       unsubscribePricing();
+    };
+  }, []);
+
+  // Real-time sync with stall event settings to get event dates
+  useEffect(() => {
+    const stallSettingsRef = doc(db, 'settings', 'stalls');
+    
+    const unsubscribeStallSettings = onSnapshot(stallSettingsRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setEventSettings(data);
+        
+        // Set the event date for discount calculations
+        // Use the start date of the event for early bird calculations
+        if (data.eventDates?.startDate) {
+          // Convert the date string to a proper Date object
+          const eventDate = new Date(data.eventDates.startDate);
+          if (!isNaN(eventDate.getTime())) {
+            setSelectedEventDate(eventDate);
+            console.log('StallBookingContext: Set event date for early bird calculation:', eventDate);
+          }
+        } else {
+          // Fallback to default event date if not set in Firebase
+          const defaultEventDate = new Date('2025-11-15');
+          setSelectedEventDate(defaultEventDate);
+          console.log('StallBookingContext: Using default event date:', defaultEventDate);
+        }
+      } else {
+        // Use default event date if document doesn't exist
+        const defaultEventDate = new Date('2025-11-15');
+        setSelectedEventDate(defaultEventDate);
+        console.log('StallBookingContext: No stall settings found, using default event date:', defaultEventDate);
+      }
+    }, (error) => {
+      console.error('Error listening to stall settings:', error);
+      // Use default event date on error
+      const defaultEventDate = new Date('2025-11-15');
+      setSelectedEventDate(defaultEventDate);
+    });
+
+    return () => {
+      unsubscribeStallSettings();
     };
   }, []);
 
@@ -80,61 +133,55 @@ export const StallBookingProvider = ({ children }) => {
     }
   };
 
-  // Calculate early bird discount
-  const getEarlyBirdDiscount = () => {
-    if (!priceSettings.earlyBirdDiscount.isActive) return 0;
-    
-    const today = new Date();
-    const eventStart = new Date('2025-11-15'); // Adjust event start date as needed
-    const daysUntilEvent = Math.ceil((eventStart - today) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilEvent >= priceSettings.earlyBirdDiscount.daysBeforeEvent) {
-      return priceSettings.earlyBirdDiscount.discountPercent;
-    }
-    
-    return 0;
+  // Use new pricing utility functions for calculations
+  const getPricingBreakdown = () => {
+    return calculatePriceBreakdown({
+      basePrice: priceSettings.defaultStallPrice,
+      quantity: selectedStalls.length,
+      selectedDate: selectedEventDate,
+      earlyBirdDiscounts: priceSettings.earlyBirdDiscounts,
+      bulkDiscounts: priceSettings.bulkBookingDiscounts,
+      quantityKey: 'minSeats', // Admin uses minSeats for stalls too
+      taxRate: priceSettings.taxRate
+    });
   };
-
-  // Calculate base amount for all selected stalls
+  
   const getBaseAmount = () => {
-    return selectedStalls.length * priceSettings.defaultStallPrice;
+    const breakdown = getPricingBreakdown();
+    return breakdown.baseAmount;
   };
   
-  // Calculate total discount percentage
-  const getTotalDiscountPercent = () => {
-    const earlyBirdDiscount = getEarlyBirdDiscount();
-    const regularDiscount = priceSettings.discountPercent || 0;
-    
-    // Apply the higher discount
-    return Math.max(earlyBirdDiscount, regularDiscount);
-  };
-  
-  // Calculate discounted amount
-  const getDiscountedAmount = () => {
-    const baseAmount = getBaseAmount();
-    const discountPercent = getTotalDiscountPercent();
-    const discountAmount = (baseAmount * discountPercent) / 100;
-    return baseAmount - discountAmount;
-  };
-  
-  // Calculate tax amount
-  const getTaxAmount = () => {
-    const discountedAmount = getDiscountedAmount();
-    return (discountedAmount * priceSettings.taxRate) / 100;
-  };
-  
-  // Calculate final total amount
-  const getTotalAmount = () => {
-    const discountedAmount = getDiscountedAmount();
-    const taxAmount = getTaxAmount();
-    return Math.round(discountedAmount + taxAmount);
-  };
-
-  // Calculate total discount amount
   const getDiscountAmount = () => {
-    const baseAmount = getBaseAmount();
-    const discountedAmount = getDiscountedAmount();
-    return Math.round(baseAmount - discountedAmount);
+    const breakdown = getPricingBreakdown();
+    return breakdown.discountAmount;
+  };
+  
+  const getTaxAmount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.taxAmount;
+  };
+  
+  const getTotalAmount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.totalAmount;
+  };
+  
+  const getEarlyBirdDiscount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.discounts.earlyBird.percent;
+  };
+  
+  const getBulkDiscount = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.discounts.bulk.percent;
+  };
+  
+  const getNextMilestone = () => {
+    return getNextBulkMilestone(
+      selectedStalls.length,
+      priceSettings.bulkBookingDiscounts,
+      'minSeats'
+    );
   };
 
   const isBookingComplete = () => {
@@ -146,6 +193,8 @@ export const StallBookingProvider = ({ children }) => {
     selectedStalls, // Changed from selectedStall
     priceSettings,
     loading,
+    selectedEventDate,
+    eventSettings,
     
     // Actions
     setSelectedStalls,
@@ -154,6 +203,7 @@ export const StallBookingProvider = ({ children }) => {
     toggleStall,
     clearSelection,
     setLoading,
+    setSelectedEventDate,
     
     // Pricing calculations
     getTotalAmount,
@@ -161,6 +211,9 @@ export const StallBookingProvider = ({ children }) => {
     getBaseAmount,
     getTaxAmount,
     getEarlyBirdDiscount,
+    getBulkDiscount,
+    getPricingBreakdown,
+    getNextMilestone,
     
     // Computed values
     isBookingComplete,
@@ -173,7 +226,8 @@ export const StallBookingProvider = ({ children }) => {
       totalAmount: getTotalAmount(),
       discountAmount: getDiscountAmount(),
       taxAmount: getTaxAmount(),
-      baseAmount: getBaseAmount()
+      baseAmount: getBaseAmount(),
+      eventDate: selectedEventDate
     }
   };
 

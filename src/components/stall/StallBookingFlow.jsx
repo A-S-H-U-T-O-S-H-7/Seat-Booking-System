@@ -76,10 +76,7 @@ const StallBookingFlow = () => {
     switch (currentStep) {
       case 1:
         return (
-          <StallMap 
-            selectedStalls={selectedStalls}
-            onStallsSelect={setSelectedStalls}
-          />
+          <StallMap />
         );
       
       case 2:
@@ -103,21 +100,21 @@ const StallBookingFlow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="container mx-auto px-2 py-4 md:py-8">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen  bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="container  mx-auto px-2 py-4 md:py-8">
+        <div className="max-w-7xl  mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="relative bg-gradient-to-br from-white via-blue-50/40 to-purple-50/40 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/60 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-purple-200 via-white to-purple-200 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/60 overflow-hidden">
               {/* Background Decoration */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/5 to-pink-400/5"></div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
               
               <div className="relative z-10">
                 {/* Main Icon */}
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl shadow-xl mb-4 transform hover:scale-105 transition-transform duration-300">
-                  <ShoppingBag className="w-8 h-8 text-white" />
+                <div className="inline-flex items-center justify-center w-16 h-16 ">
+                  <img src="/stall3.jpg" alt="Stall" className="w-12 h-12 object-contain" />
                 </div>
                 
                 {/* Title */}
@@ -231,7 +228,7 @@ const StallBookingFlow = () => {
           </div>
 
           {/* Step Content */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200 p-2 md:p-4 mb-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-purple-300 p-2 md:p-4 mb-8">
             {renderStepContent()}
           </div>
 

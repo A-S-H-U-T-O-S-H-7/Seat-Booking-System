@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
 import { useAdmin } from '@/context/AdminContext';
 import adminLogger from '@/lib/adminLogger';
+import { cancelBooking } from '@/utils/cancellationUtils';
 
 import BookingFilters from './BookingFilter';
 import BookingTable from './BookingTable';
@@ -154,41 +155,47 @@ export default function BookingManagement() {
   const handleStatusUpdate = async (bookingId, newStatus, reason = '') => {
     setIsUpdating(true);
     try {
-      const bookingRef = doc(db, 'bookings', bookingId);
-      const updates = {
-        status: newStatus,
-        updatedAt: new Date()
-      };
-
-      if (newStatus === 'cancelled' && reason) {
-        updates.cancellationReason = reason;
-        updates.cancellationDate = new Date();
-      }
-
-      await updateDoc(bookingRef, updates);
-
-      // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, ...updates }
-          : booking
-      ));
-
-      // Log the activity
-      if (adminUser && newStatus === 'cancelled') {
-        await adminLogger.logBookingActivity(
-          adminUser,
-          'cancel',
-          bookingId,
-          `Admin cancelled havan booking${reason ? `: ${reason}` : ''}`
-        );
-      }
-      
-      toast.success(`Booking ${newStatus} successfully`);
-      
-      // If cancelling, should also free up the seats
       if (newStatus === 'cancelled') {
-        await handleSeatRelease(bookingId);
+        // Use the new cancellation utility
+        const bookingData = bookings.find(b => b.id === bookingId);
+        if (bookingData) {
+          const result = await cancelBooking(
+            bookingData,
+            reason,
+            { ...adminUser, isAdmin: true },
+            true // Release seats
+          );
+          
+          if (result.success) {
+            toast.success(result.message);
+            // Update local state
+            setBookings(prev => prev.map(booking => 
+              booking.id === bookingId 
+                ? { ...booking, status: 'cancelled', cancellationReason: reason, cancellationDate: new Date() }
+                : booking
+            ));
+          } else {
+            toast.error(result.error || 'Failed to cancel booking');
+          }
+        }
+      } else {
+        // Handle other status updates normally
+        const bookingRef = doc(db, 'bookings', bookingId);
+        const updates = {
+          status: newStatus,
+          updatedAt: new Date()
+        };
+
+        await updateDoc(bookingRef, updates);
+
+        // Update local state
+        setBookings(prev => prev.map(booking => 
+          booking.id === bookingId 
+            ? { ...booking, ...updates }
+            : booking
+        ));
+        
+        toast.success(`Booking ${newStatus} successfully`);
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
@@ -198,21 +205,10 @@ export default function BookingManagement() {
     }
   };
 
+  // This function is now handled by the cancellation utilities
   const handleSeatRelease = async (bookingId) => {
-    try {
-      const booking = bookings.find(b => b.id === bookingId);
-      if (!booking || !booking.seats || booking.seats.length === 0) {
-        console.error('No seats found for release:', bookingId);
-        return;
-      }
-
-      // Implementation for seat release logic
-      console.log('Releasing seats:', booking.seats, 'for booking:', bookingId);
-      toast.success(`Released ${booking.seats.length} seats back to availability`);
-    } catch (error) {
-      console.error('Error releasing seats:', error);
-      toast.error('Failed to release seats');
-    }
+    // Legacy function - seat release is now handled in cancelBooking utility
+    console.log('Seat release handled by cancellation utility for booking:', bookingId);
   };
 
   const handleCancellationRequest = async (bookingId, action) => {

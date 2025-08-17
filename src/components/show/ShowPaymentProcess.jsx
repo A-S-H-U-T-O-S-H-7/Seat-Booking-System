@@ -30,7 +30,7 @@ const ShowPaymentProcess = () => {
     console.log('completeBooking called with userDetails:', userDetails);
     
     // Validate that all required user details are filled
-    const requiredFields = ['name', 'email', 'phone', 'aadhar', 'address', 'emergencyContact'];
+    const requiredFields = ['name', 'email', 'phone', 'aadhar', 'address'];
     if (requiredFields.some(field => !userDetails[field])) {
       toast.error('Please fill all required details before completing booking');
       return;
@@ -82,7 +82,7 @@ const ShowPaymentProcess = () => {
             <CheckCircle className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">🎉 Booking Confirmed!</h3>
-          <p className="text-gray-600 mb-6">Your show tickets have been successfully booked</p>
+          <p className="text-gray-600 mb-6">Your show seats have been successfully booked</p>
           
           <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
             <div className="text-center mb-4">
@@ -114,7 +114,7 @@ const ShowPaymentProcess = () => {
         </div>
         <div>
           <h3 className="text-xl font-bold text-gray-900">Complete Booking</h3>
-          <p className="text-gray-600 text-sm">Confirm your show tickets</p>
+          <p className="text-gray-600 text-sm">Confirm your show seats</p>
         </div>
       </div>
 
@@ -125,13 +125,13 @@ const ShowPaymentProcess = () => {
           Booking Summary
         </h4>
         
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div className="flex items-center gap-2 text-gray-600">
               <Calendar className="w-4 h-4" />
               <span>Show Date</span>
             </div>
-            <span className="text-gray-900 font-medium">
+            <span className="text-gray-900 font-medium text-right sm:text-left">
               {selectedDate ? (
                 typeof selectedDate === 'string' 
                   ? format(new Date(selectedDate), 'MMM dd, yyyy')
@@ -140,27 +140,27 @@ const ShowPaymentProcess = () => {
             </span>
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div className="flex items-center gap-2 text-gray-600">
               <Clock className="w-4 h-4" />
               <span>Show Time</span>
             </div>
-            <span className="text-gray-900 font-medium">5:00 PM - 10:00 PM</span>
+            <span className="text-gray-900 font-medium text-right sm:text-left">5:00 PM - 10:00 PM</span>
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div className="flex items-center gap-2 text-gray-600">
               <Users className="w-4 h-4" />
               <span>Selected Seats</span>
             </div>
-            <span className="text-gray-900 font-medium">
+            <span className="text-gray-900 font-medium text-right sm:text-left">
               {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''}
             </span>
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
             <div className="text-gray-600">Seat Numbers</div>
-            <span className="text-gray-900 font-medium">
+            <span className="text-gray-900 font-medium text-right sm:text-left break-words">
               {selectedSeats.slice(0, 3).join(', ')}
               {selectedSeats.length > 3 && ` +${selectedSeats.length - 3} more`}
             </span>
@@ -176,17 +176,17 @@ const ShowPaymentProcess = () => {
         </h4>
         
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between">
             <span className="text-gray-600">Name:</span>
-            <span className="text-gray-900">{userDetails.name || 'N/A'}</span>
+            <span className="text-gray-900 text-right sm:text-left break-words">{userDetails.name || 'N/A'}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between">
             <span className="text-gray-600">Email:</span>
-            <span className="text-gray-900">{userDetails.email || 'N/A'}</span>
+            <span className="text-gray-900 text-right sm:text-left break-words">{userDetails.email || 'N/A'}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between">
             <span className="text-gray-600">Phone:</span>
-            <span className="text-gray-900">{userDetails.phone || 'N/A'}</span>
+            <span className="text-gray-900 text-right sm:text-left">{userDetails.phone || 'N/A'}</span>
           </div>
         </div>
       </div>
@@ -197,7 +197,7 @@ const ShowPaymentProcess = () => {
           <span className="text-gray-700 font-medium">Total Amount</span>
           <span className="text-gray-900 font-bold text-xl">₹{totalPrice.toLocaleString('en-IN')}</span>
         </div>
-        <p className="text-gray-500 text-sm">Including all taxes and fees</p>
+                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-amber-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.”</p>
       </div>
 
       {/* Complete Booking Button */}

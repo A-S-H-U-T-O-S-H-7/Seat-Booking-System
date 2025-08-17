@@ -18,6 +18,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAdmin } from '@/context/AdminContext';
 import adminLogger from '@/lib/adminLogger';
 import { formatDateKey } from '@/utils/dateUtils';
+import { cancelBooking } from '@/utils/cancellationUtils';
 
 import ShowBookingFilters from './ShowBookingFilters';
 import ShowBookingsTable from './ShowBookingTable';
@@ -310,41 +311,63 @@ export default function ShowBookingsPage() {
 
     setIsUpdating(true);
     try {
-      const bookingRef = doc(db, 'showBookings', bookingId);
-      const updates = {
-        status: newStatus,
-        updatedAt: serverTimestamp()
-      };
-
-      if (newStatus === 'cancelled' && reason) {
-        updates.cancellationReason = reason;
-        updates.cancellationDate = serverTimestamp();
-      }
-
-      await updateDoc(bookingRef, updates);
-
-      // Log the activity
-      if (adminUser) {
-        await adminLogger.logBookingActivity(
-          adminUser,
-          'update',
-          bookingId,
-          `Changed status to ${newStatus}` + (reason ? ` with reason: ${reason}` : '')
-        );
-      }
-
-      // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, ...updates }
-          : booking
-      ));
-
-      toast.success(`Booking ${newStatus} successfully`);
-      
-      // If cancelling, should also free up the seats
       if (newStatus === 'cancelled') {
-        await handleSeatRelease(bookingId);
+        // Use the new cancellation utility
+        const bookingData = bookings.find(b => b.id === bookingId) || allBookingsData.find(b => b.id === bookingId);
+        if (bookingData) {
+          const result = await cancelBooking(
+            bookingData,
+            reason,
+            { ...adminUser, isAdmin: true },
+            true // Release seats
+          );
+          
+          if (result.success) {
+            toast.success(result.message);
+            // Update local state
+            setBookings(prev => prev.map(booking => 
+              booking.id === bookingId 
+                ? { ...booking, status: 'cancelled', cancellationReason: reason, cancellationDate: new Date() }
+                : booking
+            ));
+            // Also update allBookingsData if needed
+            setAllBookingsData(prev => prev.map(booking => 
+              booking.id === bookingId 
+                ? { ...booking, status: 'cancelled', cancellationReason: reason, cancellationDate: new Date() }
+                : booking
+            ));
+          } else {
+            toast.error(result.error || 'Failed to cancel booking');
+          }
+        }
+      } else {
+        // Handle other status updates normally
+        const bookingRef = doc(db, 'showBookings', bookingId);
+        const updates = {
+          status: newStatus,
+          updatedAt: serverTimestamp()
+        };
+
+        await updateDoc(bookingRef, updates);
+
+        // Log the activity
+        if (adminUser) {
+          await adminLogger.logBookingActivity(
+            adminUser,
+            'update',
+            bookingId,
+            `Changed status to ${newStatus}` + (reason ? ` with reason: ${reason}` : '')
+          );
+        }
+
+        // Update local state
+        setBookings(prev => prev.map(booking => 
+          booking.id === bookingId 
+            ? { ...booking, ...updates }
+            : booking
+        ));
+
+        toast.success(`Booking ${newStatus} successfully`);
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
@@ -354,55 +377,10 @@ export default function ShowBookingsPage() {
     }
   };
 
+  // This function is now handled by the cancellation utilities
   const handleSeatRelease = async (bookingId) => {
-    try {
-      const booking = bookings.find(b => b.id === bookingId);
-      if (!booking || !booking.showDetails?.selectedSeats || booking.showDetails.selectedSeats.length === 0) {
-        console.error('No seats found for release:', bookingId);
-        return;
-      }
-
-      // Convert to consistent date string
-      const dateObj = new Date(booking.showDetails.date);
-      const dateKey = formatDateKey(dateObj);
-      
-      // Update seat availability
-      const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
-      const currentDoc = await getDoc(availabilityRef);
-      const currentSeats = currentDoc.exists() ? currentDoc.data().seats || {} : {};
-      
-      const updatedSeats = { ...currentSeats };
-      booking.showDetails.selectedSeats.forEach(seatId => {
-        if (updatedSeats[seatId]) {
-          updatedSeats[seatId] = {
-            ...updatedSeats[seatId],
-            booked: false,
-            bookingId: null,
-            userId: null
-          };
-        }
-      });
-      
-      await updateDoc(availabilityRef, {
-        seats: updatedSeats,
-        lastUpdated: serverTimestamp()
-      });
-
-      toast.success(`Released ${booking.showDetails.selectedSeats.length} seats back to availability`);
-
-      // Log the seat release
-      if (adminUser) {
-        await adminLogger.logBookingActivity(
-          adminUser,
-          'update',
-          bookingId,
-          `Released ${booking.showDetails.selectedSeats.length} seats`
-        );
-      }
-    } catch (error) {
-      console.error('Error releasing seats:', error);
-      toast.error('Failed to release seats');
-    }
+    // Legacy function - seat release is now handled in cancelBooking utility
+    console.log('Seat release handled by cancellation utility for booking:', bookingId);
   };
 
   const handleDeleteBooking = async (bookingId) => {

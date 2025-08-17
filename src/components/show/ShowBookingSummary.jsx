@@ -3,6 +3,9 @@ import { useShowSeatBooking } from '@/context/ShowSeatBookingContext';
 import { useTheme } from '@/context/ThemeContext';
 import { format } from 'date-fns';
 import { ArrowLeftIcon, ArrowRightIcon, CheckCircleIcon, TicketIcon, UserIcon, MapPinIcon, PhoneIcon, CalendarIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function ShowBookingSummary({ onNext, onBack }) {
   const { 
@@ -16,14 +19,67 @@ export default function ShowBookingSummary({ onNext, onBack }) {
     SEAT_TYPES 
   } = useShowSeatBooking();
   const { isDarkMode } = useTheme();
+  
+  const [showSettings, setShowSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const shifts = [
+  // Real-time listener for show settings from Firebase
+  useEffect(() => {
+    setLoading(true);
+    
+    const showSettingsRef = doc(db, 'settings', 'shows');
+    
+    const unsubscribe = onSnapshot(
+      showSettingsRef,
+      (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          setShowSettings(data);
+        } else {
+          setShowSettings(null);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error listening to show settings:', error);
+        setLoading(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Format time to AM/PM format
+  const formatTime = (time) => {
+    if (!time) return '';
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+  
+  // Get active shows and create shifts array dynamically
+  const activeShows = showSettings?.shows?.filter(show => 
+    show.active === true || show.isActive === true
+  ) || [];
+  
+  // Create dynamic shifts from admin settings
+  const shifts = activeShows.map(show => ({
+    id: (show.name || show.label || 'show').toLowerCase().replace(/\s+/g, '_'),
+    name: show.name,
+    time: `${formatTime(show.timeFrom || show.startTime)} - ${formatTime(show.timeTo || show.endTime)}`
+  }));
+  
+  // Fallback to hardcoded shifts if no active shows
+  const fallbackShifts = [
     { id: 'morning', name: 'Morning Show', time: '10:00 AM - 1:00 PM' },
     { id: 'afternoon', name: 'Afternoon Show', time: '2:00 PM - 5:00 PM' },
     { id: 'evening', name: 'Evening Show', time: '6:00 PM - 9:00 PM' }
   ];
-
-  const selectedShiftInfo = shifts.find(s => s.id === selectedShift);
+  
+  const availableShifts = shifts.length > 0 ? shifts : fallbackShifts;
+  const selectedShiftInfo = availableShifts.find(s => s.id === selectedShift) || availableShifts.find(s => s.name.toLowerCase().includes(selectedShift)) || availableShifts[0];
   const userDetails = bookingData?.userDetails || {};
 
   // Group selected seats by type

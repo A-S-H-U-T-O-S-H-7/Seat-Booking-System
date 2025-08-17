@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { calculatePriceBreakdown, getNextBulkMilestone, formatCurrency, getDiscountDisplayInfo } from '@/utils/pricingUtils';
 
 const BookingContext = createContext();
 
@@ -19,23 +20,25 @@ export const BookingProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(false);
   
-  // Real-time sync with admin pricing settings
+  // Real-time sync with admin pricing settings (Havan booking)
   useEffect(() => {
-    const pricingRef = doc(db, 'settings', 'pricing');
+    const havanPricingRef = doc(db, 'settings', 'havanPricing');
     
-    // Set up real-time listener for pricing changes
-    const unsubscribePricing = onSnapshot(pricingRef, (docSnap) => {
+    // Set up real-time listener for havan pricing changes
+    const unsubscribeHavanPricing = onSnapshot(havanPricingRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const newPriceSettings = {
-          defaultSeatPrice: data.defaultSeatPrice || 500,
-          taxRate: data.taxRate || 0,
-          bulkDiscounts: data.bulkDiscounts || [],
-          earlyBirdDiscount: data.earlyBirdDiscount || { isActive: false, discountPercent: 0, daysBeforeEvent: 7 },
-          seasonalPricing: data.seasonalPricing || []
+          defaultSeatPrice: data.seatPrice || 500,
+          taxRate: 0, // No tax as per admin requirements
+          bulkDiscounts: data.bulkBookingDiscounts || [],
+          earlyBirdDiscounts: data.earlyBirdDiscounts || [],
+          seasonalPricing: [] // Not implemented for havan yet
         };
         
         setPriceSettings(newPriceSettings);
+        
+        // Pricing updated silently - no toast needed
       } else {
         // Fallback to general settings for backward compatibility
         const generalRef = doc(db, 'settings', 'general');
@@ -46,12 +49,7 @@ export const BookingProvider = ({ children }) => {
               defaultSeatPrice: generalSnap.data().seatPrice || 500
             }));
             
-            if (selectedSeats.length > 0) {
-              toast.success('🔄 Seat price updated! Your total has been recalculated.', {
-                duration: 4000,
-                position: 'top-right'
-              });
-            }
+            // Pricing updated silently - no toast needed
           }
         }, (error) => {
           console.error('Error listening to general settings:', error);
@@ -60,20 +58,20 @@ export const BookingProvider = ({ children }) => {
         return unsubscribeGeneral;
       }
     }, (error) => {
-      console.error('Error listening to price settings:', error);
+      console.error('Error listening to havan price settings:', error);
       // Set default values on error
       setPriceSettings({
         defaultSeatPrice: 500,
         taxRate: 0,
         bulkDiscounts: [],
-        earlyBirdDiscount: { isActive: false, discountPercent: 0, daysBeforeEvent: 7 },
+        earlyBirdDiscounts: [],
         seasonalPricing: []
       });
     });
 
     // Cleanup function
     return () => {
-      unsubscribePricing();
+      unsubscribeHavanPricing();
     };
   }, [selectedSeats.length]); // Re-run when selectedSeats changes to properly handle notifications
 
@@ -120,103 +118,81 @@ export const BookingProvider = ({ children }) => {
     return activeSeasonalPricing ? activeSeasonalPricing.multiplier : 1;
   };
   
-  // Calculate early bird discount
-  const getEarlyBirdDiscount = () => {
-    if (!selectedDate || !priceSettings.earlyBirdDiscount.isActive) return 0;
-    
-    const eventDate = new Date(selectedDate);
-    const today = new Date();
-    const daysUntilEvent = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (daysUntilEvent >= priceSettings.earlyBirdDiscount.daysBeforeEvent) {
-      return priceSettings.earlyBirdDiscount.discountPercent;
+  // Get complete pricing breakdown using new utility functions
+  const getPricingBreakdown = () => {
+    if (selectedSeats.length === 0) {
+      return {
+        basePrice: priceSettings.defaultSeatPrice || 0,
+        quantity: 0,
+        baseAmount: 0,
+        discounts: {
+          earlyBird: { percent: 0, applied: false, discount: null, daysUntil: 0 },
+          bulk: { percent: 0, applied: false, discount: null },
+          best: { percent: 0, type: 'none', discount: null }
+        },
+        discountAmount: 0,
+        discountedAmount: 0,
+        taxRate: priceSettings.taxRate || 0,
+        taxAmount: 0,
+        totalAmount: 0
+      };
     }
     
-    return 0;
-  };
-  
-  // Calculate bulk discount
-  const getBulkDiscount = () => {
-    const seatCount = selectedSeats.length;
-    
-    // Find the highest applicable bulk discount
-    const applicableDiscounts = priceSettings.bulkDiscounts
-      .filter(discount => discount.isActive && seatCount >= discount.minSeats)
-      .sort((a, b) => b.discountPercent - a.discountPercent); // Sort by highest discount first
-    
-    return applicableDiscounts.length > 0 ? applicableDiscounts[0].discountPercent : 0;
-  };
-  
-  // Calculate base amount with seasonal pricing
-  const getBaseAmount = () => {
-    const basePrice = priceSettings.defaultSeatPrice;
+    const basePrice = priceSettings.defaultSeatPrice || 0;
     const seasonalMultiplier = getSeasonalMultiplier();
-    return selectedSeats.length * basePrice * seasonalMultiplier;
-  };
-  
-  // Calculate total discount percentage (early bird + bulk, but not compounded)
-  const getTotalDiscountPercent = () => {
-    const earlyBirdDiscount = getEarlyBirdDiscount();
-    const bulkDiscount = getBulkDiscount();
+    const adjustedBasePrice = basePrice * seasonalMultiplier;
     
-    // Apply the higher discount, not both (to prevent over-discounting)
-    return Math.max(earlyBirdDiscount, bulkDiscount);
+    return calculatePriceBreakdown({
+      basePrice: adjustedBasePrice,
+      quantity: selectedSeats.length,
+      selectedDate,
+      earlyBirdDiscounts: priceSettings.earlyBirdDiscounts || [],
+      bulkDiscounts: priceSettings.bulkDiscounts || [],
+      quantityKey: 'minSeats',
+      taxRate: priceSettings.taxRate || 0
+    });
   };
   
-  // Calculate discounted amount
+  // Individual helper functions using the breakdown
+  const getEarlyBirdDiscount = () => {
+    return getPricingBreakdown().discounts.earlyBird.percent;
+  };
+  
+  const getBulkDiscount = () => {
+    return getPricingBreakdown().discounts.bulk.percent;
+  };
+  
+  const getBaseAmount = () => {
+    return getPricingBreakdown().baseAmount;
+  };
+  
+  const getTotalDiscountPercent = () => {
+    return getPricingBreakdown().discounts.best.percent;
+  };
+  
   const getDiscountedAmount = () => {
-    const baseAmount = getBaseAmount();
-    const discountPercent = getTotalDiscountPercent();
-    const discountAmount = (baseAmount * discountPercent) / 100;
-    return baseAmount - discountAmount;
+    return getPricingBreakdown().discountedAmount;
   };
   
-  // Calculate tax amount
   const getTaxAmount = () => {
-    const discountedAmount = getDiscountedAmount();
-    return (discountedAmount * priceSettings.taxRate) / 100;
+    return getPricingBreakdown().taxAmount;
   };
   
-  // Calculate final total amount
   const getTotalAmount = () => {
-    const discountedAmount = getDiscountedAmount();
-    const taxAmount = getTaxAmount();
-    return Math.round(discountedAmount + taxAmount);
+    return getPricingBreakdown().totalAmount;
   };
 
-  // Calculate total discount amount
   const getDiscountAmount = () => {
-    const baseAmount = getBaseAmount();
-    const discountedAmount = getDiscountedAmount();
-    return Math.round(baseAmount - discountedAmount);
+    return getPricingBreakdown().discountAmount;
   };
   
   // Get next milestone discount information
   const getNextMilestone = () => {
-    const seatCount = selectedSeats.length;
-    
-    if (seatCount < 2 || !priceSettings.bulkDiscounts?.length) return null;
-    
-    // Get active bulk discounts sorted by minimum seats
-    const activeBulkDiscounts = priceSettings.bulkDiscounts
-      .filter(discount => discount.isActive)
-      .sort((a, b) => a.minSeats - b.minSeats);
-    
-    if (activeBulkDiscounts.length === 0) return null;
-    
-    // Find the next milestone
-    const nextMilestone = activeBulkDiscounts.find(discount => seatCount < discount.minSeats);
-    
-    if (nextMilestone) {
-      const seatsNeeded = nextMilestone.minSeats - seatCount;
-      return {
-        seatsNeeded,
-        discountPercent: nextMilestone.discountPercent,
-        minSeats: nextMilestone.minSeats
-      };
-    }
-    
-    return null;
+    return getNextBulkMilestone(
+      selectedSeats.length,
+      priceSettings.bulkDiscounts || [],
+      'minSeats'
+    );
   };
   
   // Get current discount info for display
@@ -247,45 +223,17 @@ export const BookingProvider = ({ children }) => {
     return null;
   };
 
-  // Get detailed pricing breakdown
-  const getPricingBreakdown = () => {
-    const basePrice = priceSettings.defaultSeatPrice;
-    const seatCount = selectedSeats.length;
+  // Get enhanced pricing breakdown for display
+  const getEnhancedPricingBreakdown = () => {
+    const breakdown = getPricingBreakdown();
     const seasonalMultiplier = getSeasonalMultiplier();
-    const baseAmount = getBaseAmount();
-    const earlyBirdDiscount = getEarlyBirdDiscount();
-    const bulkDiscount = getBulkDiscount();
-    const totalDiscountPercent = getTotalDiscountPercent();
-    const discountAmount = getDiscountAmount();
-    const discountedAmount = getDiscountedAmount();
-    const taxAmount = getTaxAmount();
-    const totalAmount = getTotalAmount();
     
     return {
-      basePrice,
-      seatCount,
+      ...breakdown,
       seasonalMultiplier,
-      baseAmount,
-      earlyBirdDiscount,
-      bulkDiscount,
-      totalDiscountPercent,
-      discountAmount,
-      discountedAmount,
-      taxRate: priceSettings.taxRate,
-      taxAmount,
-      totalAmount,
-      // Discount details for display
+      // Enhanced discount details for display
       discounts: {
-        earlyBird: {
-          applied: earlyBirdDiscount > 0,
-          percent: earlyBirdDiscount,
-          daysBeforeEvent: priceSettings.earlyBirdDiscount.daysBeforeEvent
-        },
-        bulk: {
-          applied: bulkDiscount > 0,
-          percent: bulkDiscount,
-          minSeats: priceSettings.bulkDiscounts.find(d => d.isActive && seatCount >= d.minSeats)?.minSeats
-        },
+        ...breakdown.discounts,
         seasonal: {
           applied: seasonalMultiplier !== 1,
           multiplier: seasonalMultiplier,

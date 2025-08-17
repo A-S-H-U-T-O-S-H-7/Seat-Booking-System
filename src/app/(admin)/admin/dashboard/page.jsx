@@ -33,6 +33,7 @@ import ShowBookingManagement from '@/components/admin/show-bookings/ShowBookingM
 import UserManagement from '@/components/admin/UserManagement';
 import AdminManagement from '@/components/admin/AdminManagement';
 import PriceSettings from '@/components/admin/PriceSettings';
+import SystemSettings from '@/components/admin/SystemSettings';
 import OverviewStats from '@/components/admin/OverviewStats';
 import ActivityLogs from '@/components/admin/ActivityLogs';
 
@@ -135,6 +136,12 @@ export default function AdminDashboard() {
       permission: 'manage_pricing'
     },
     {
+      id: 'system-settings',
+      name: 'System Settings',
+      icon: Cog6ToothIcon,
+      permission: 'manage_settings'
+    },
+    {
       id: 'admins',
       name: 'Admin Management',
       icon: UserPlusIcon,
@@ -170,6 +177,8 @@ export default function AdminDashboard() {
         return <UserManagement />;
       case 'pricing':
         return <PriceSettings />;
+      case 'system-settings':
+        return <SystemSettings />;
       case 'admins':
         return <AdminManagement />;
       case 'logs':

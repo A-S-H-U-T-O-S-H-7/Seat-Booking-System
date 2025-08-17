@@ -1,27 +1,111 @@
 "use client";
+import { useState, useEffect } from 'react';
 import { format } from "date-fns";
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function SelectShift({ selectedDate, selectedShift, onShiftSelect }) {
-  const shifts = [
-    { 
-      id: "morning", 
-      label: "Morning Session", 
-      time: "9:00 AM - 12:00 PM",
-      description: "Start your day with divine blessings",
-      icon: "🌅"
-    },
-    { 
-      id: "evening", 
-      label: "Evening Session", 
-      time: "4:00 PM - 10:00 PM",
-      description: "Evening spiritual experience",
-      icon: "🌆"
-    }
-  ];
+  const [shifts, setShifts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Listen to shift settings changes
+  useEffect(() => {
+    const shiftRef = doc(db, 'settings', 'shifts');
+    
+    const unsubscribe = onSnapshot(shiftRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Only show active shifts
+        const activeShifts = data.shifts?.filter(shift => shift.isActive) || [];
+        setShifts(activeShifts);
+      } else {
+        // Default shifts if none exist
+        const defaultShifts = [
+          { 
+            id: "morning", 
+            label: "Morning Session", 
+            time: "9:00 AM - 12:00 PM",
+            timeFrom: "09:00",
+            timeTo: "12:00",
+            description: "Start your day with divine blessings",
+            icon: "🌅",
+            isActive: true
+          },
+          { 
+            id: "evening", 
+            label: "Evening Session", 
+            time: "4:00 PM - 10:00 PM",
+            timeFrom: "16:00",
+            timeTo: "22:00",
+            description: "Evening spiritual experience",
+            icon: "🌆",
+            isActive: true
+          }
+        ];
+        setShifts(defaultShifts);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Error listening to shift settings:', error);
+      // Set default shifts on error
+      const defaultShifts = [
+        { 
+          id: "morning", 
+          label: "Morning Session", 
+          time: "9:00 AM - 12:00 PM",
+          timeFrom: "09:00",
+          timeTo: "12:00",
+          description: "Start your day with divine blessings",
+          icon: "🌅",
+          isActive: true
+        },
+        { 
+          id: "evening", 
+          label: "Evening Session", 
+          time: "4:00 PM - 10:00 PM",
+          timeFrom: "16:00",
+          timeTo: "22:00",
+          description: "Evening spiritual experience",
+          icon: "🌆",
+          isActive: true
+        }
+      ];
+      setShifts(defaultShifts);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleShiftClick = (shiftId) => {
     onShiftSelect(shiftId);
   };
+
+  const formatTime = (timeString) => {
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (shifts.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-4xl mb-4">🕐</div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No Shifts Available</h3>
+        <p className="text-gray-600">Please check back later or contact support.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

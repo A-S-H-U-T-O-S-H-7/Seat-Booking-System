@@ -4,7 +4,9 @@ import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, doc, updateDoc, getDoc, where } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
+import { useAdmin } from '@/context/AdminContext';
 import adminLogger from '@/lib/adminLogger';
+import { cancelBooking } from '@/utils/cancellationUtils';
 
 import StallBookingFilters from './StallBookingFilters';
 import StallBookingTable from './StallBookingTable';
@@ -14,6 +16,7 @@ import Pagination from './Pagination';
 
 export default function StallBookingManagement() {
   const { isDarkMode } = useTheme();
+  const { adminUser, hasPermission } = useAdmin();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -148,41 +151,64 @@ export default function StallBookingManagement() {
   };
 
   const handleStatusUpdate = async (bookingId, newStatus, reason = '') => {
+    if (!hasPermission('manage_bookings')) {
+      toast.error('You do not have permission to manage bookings');
+      return;
+    }
+
     setIsUpdating(true);
     try {
-      const bookingRef = doc(db, 'stallBookings', bookingId);
-      const updates = {
-        status: newStatus,
-        updatedAt: new Date()
-      };
-
-      if (newStatus === 'cancelled' && reason) {
-        updates.cancellationReason = reason;
-        updates.cancellationDate = new Date();
-      }
-
-      await updateDoc(bookingRef, updates);
-
-      // Log the action
-      await adminLogger.logBookingActivity(
-        { uid: 'admin', name: 'Admin', role: 'admin' },
-        'update',
-        bookingId,
-        `Changed status to ${newStatus}` + (reason ? ` with reason: ${reason}` : '')
-      );
-
-      // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, ...updates }
-          : booking
-      ));
-
-      toast.success(`Booking ${newStatus} successfully`);
-      
-      // If cancelling, should also free up the stalls
       if (newStatus === 'cancelled') {
-        await handleStallRelease(bookingId);
+        // Use the new cancellation utility
+        const bookingData = bookings.find(b => b.id === bookingId);
+        if (bookingData) {
+          const result = await cancelBooking(
+            bookingData,
+            reason,
+            { ...adminUser, isAdmin: true },
+            true // Release stalls
+          );
+          
+          if (result.success) {
+            toast.success(result.message);
+            // Update local state
+            setBookings(prev => prev.map(booking => 
+              booking.id === bookingId 
+                ? { ...booking, status: 'cancelled', cancellationReason: reason, cancellationDate: new Date() }
+                : booking
+            ));
+          } else {
+            toast.error(result.error || 'Failed to cancel booking');
+          }
+        }
+      } else {
+        // Handle other status updates normally
+        const bookingRef = doc(db, 'stallBookings', bookingId);
+        const updates = {
+          status: newStatus,
+          updatedAt: new Date()
+        };
+
+        await updateDoc(bookingRef, updates);
+
+        // Log the action
+        if (adminUser) {
+          await adminLogger.logBookingActivity(
+            adminUser,
+            'update',
+            bookingId,
+            `Changed status to ${newStatus}` + (reason ? ` with reason: ${reason}` : '')
+          );
+        }
+
+        // Update local state
+        setBookings(prev => prev.map(booking => 
+          booking.id === bookingId 
+            ? { ...booking, ...updates }
+            : booking
+        ));
+
+        toast.success(`Booking ${newStatus} successfully`);
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
@@ -192,29 +218,10 @@ export default function StallBookingManagement() {
     }
   };
 
+  // This function is now handled by the cancellation utilities
   const handleStallRelease = async (bookingId) => {
-    try {
-      const booking = bookings.find(b => b.id === bookingId);
-      if (!booking || !booking.stallIds || booking.stallIds.length === 0) {
-        console.error('No stalls found for release:', bookingId);
-        return;
-      }
-
-      // Implementation for stall release logic
-      console.log('Releasing stalls:', booking.stallIds, 'for booking:', bookingId);
-      toast.success(`Released ${booking.stallIds.length} stalls back to availability`);
-
-      // Log the stall release
-      await adminLogger.logBookingActivity(
-        { uid: 'admin', name: 'Admin', role: 'admin' },
-        'update',
-        bookingId,
-        `Released ${booking.stallIds.length} stalls`
-      );
-    } catch (error) {
-      console.error('Error releasing stalls:', error);
-      toast.error('Failed to release stalls');
-    }
+    // Legacy function - stall release is now handled in cancelBooking utility
+    console.log('Stall release handled by cancellation utility for booking:', bookingId);
   };
 
   const handleCancellationRequest = async (bookingId, action) => {

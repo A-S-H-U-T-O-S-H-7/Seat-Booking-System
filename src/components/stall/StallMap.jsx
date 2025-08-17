@@ -4,33 +4,53 @@ import { Store, ShoppingBag } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { useStallBooking } from '@/context/StallBookingContext';
 
-const StallMap = ({ selectedStalls, onStallsSelect }) => {
+const StallMap = () => {
   const [stallAvailability, setStallAvailability] = useState({});
+  const [stallSettings, setStallSettings] = useState(null);
   const [loading, setLoading] = useState(false);
   
-  const priceSettings = { defaultStallPrice: 5000 };
+  // Use StallBookingContext for real-time pricing and stall selection
+  const {
+    selectedStalls,
+    priceSettings,
+    toggleStall,
+    getTotalAmount,
+    getDiscountAmount,
+    getBaseAmount,
+    getEarlyBirdDiscount,
+    getBulkDiscount,
+    getPricingBreakdown,
+    getNextMilestone
+  } = useStallBooking();
   
-  const toggleStall = (stallId) => {
-    onStallsSelect(prev => 
-      prev.includes(stallId) 
-        ? prev.filter(id => id !== stallId)
-        : [...prev, stallId]
-    );
-  };
-  
-  const getTotalAmount = () => {
-    return selectedStalls.length * priceSettings.defaultStallPrice;
-  };
-  
-  // Generate 70 stalls in a normal grid layout
+  // Generate stalls based on actual settings from admin
   const generateStalls = () => {
-    const stalls = []; 
+    // If we have stall settings with actual stalls array, use that
+    if (stallSettings?.stalls && stallSettings.stalls.length > 0) {
+      return stallSettings.stalls
+        .filter(stall => stall.isActive) // Only show active stalls
+        .map(stall => ({
+          id: stall.id,
+          number: parseInt(stall.id.replace('S', '')),
+          name: stall.name,
+          size: stall.size,
+          price: stall.price
+        }));
+    }
     
-    for (let i = 1; i <= 70; i++) {
+    // Fallback: generate based on totalStalls if stalls array is not available
+    const stalls = [];
+    const totalStalls = stallSettings?.totalStalls || 70;
+    
+    for (let i = 1; i <= totalStalls; i++) {
       stalls.push({
         id: `S${i}`,
-        number: i
+        number: i,
+        name: `Stall S${i}`,
+        size: '10x10 ft',
+        price: stallSettings?.defaultPrice || 5000
       });
     }
     
@@ -39,10 +59,38 @@ const StallMap = ({ selectedStalls, onStallsSelect }) => {
 
   const allStalls = generateStalls();
 
-  // Real-time stall availability listener from Firebase
+  // Real-time stall settings listener from Firebase
   useEffect(() => {
     setLoading(true);
     
+    console.log('StallMap: Setting up real-time listener for stall settings');
+    const stallSettingsRef = doc(db, 'settings', 'stalls');
+    
+    const unsubscribe = onSnapshot(
+      stallSettingsRef,
+      (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          console.log('StallMap: Stall settings updated:', data);
+          setStallSettings(data);
+        } else {
+          console.log('StallMap: No stall settings found, using defaults');
+          setStallSettings(null);
+        }
+        setLoading(false); // Set loading to false after data is loaded
+      },
+      (error) => {
+        console.error('StallMap: Error listening to stall settings:', error);
+        toast.error('Failed to load stall settings');
+        setLoading(false); // Set loading to false on error too
+      }
+    );
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Real-time stall availability listener from Firebase
+  useEffect(() => {
     const availabilityRef = doc(db, 'stallAvailability', 'current');
     
     const unsubscribe = onSnapshot(availabilityRef, (doc) => {
@@ -59,13 +107,10 @@ const StallMap = ({ selectedStalls, onStallsSelect }) => {
       } catch (error) {
         console.error('Error processing stall availability:', error);
         toast.error('Failed to load stall availability');
-      } finally {
-        setLoading(false);
       }
     }, (error) => {
       console.error('Error listening to stall availability:', error);
       toast.error('Failed to load stall availability');
-      setLoading(false);
     });
 
     // Cleanup subscription on unmount
@@ -159,7 +204,9 @@ const StallMap = ({ selectedStalls, onStallsSelect }) => {
       <div className="text-center mb-4">
         <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md border border-gray-200">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Choose Your Stalls</h2>
-          <p className="text-sm sm:text-base text-gray-600 mb-3">Select multiple locations for your business (Nov 15-20, 2025)</p>
+          <p className="text-sm sm:text-base text-gray-600 mb-3">Select multiple locations for your business ({stallSettings?.eventDates?.startDate && stallSettings?.eventDates?.endDate 
+            ? `${stallSettings.eventDates.startDate} to ${stallSettings.eventDates.endDate}` 
+            : 'Nov 15-20, 2025'})</p>
           
           <div className="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
             <div className="flex items-center gap-1 bg-green-50 text-green-700 px-3 py-2 rounded-full">
@@ -172,7 +219,7 @@ const StallMap = ({ selectedStalls, onStallsSelect }) => {
             </div>
             <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-3 py-2 rounded-full">
               <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span>70 Total Stalls</span>
+              <span>{stallSettings?.totalStalls || 70} Total Stalls</span>
             </div>
           </div>
         </div>
@@ -282,21 +329,70 @@ const StallMap = ({ selectedStalls, onStallsSelect }) => {
               </div>
               
               <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-blue-600">
-                <span className="flex items-center gap-1">📅 Nov 15-20, 2025</span>
+                <span className="flex items-center gap-1">📅 {stallSettings?.eventDates?.startDate && stallSettings?.eventDates?.endDate 
+                  ? `${stallSettings.eventDates.startDate} to ${stallSettings.eventDates.endDate}` 
+                  : 'Nov 15-20, 2025'}</span>
                 <span className="flex items-center gap-1">🔌 Power included</span>
                 <span className="flex items-center gap-1">🚿 Water access</span>
               </div>
             </div>
             
-            <div className="text-center sm:text-right bg-blue-50 rounded-lg p-2 border border-blue-200 w-full sm:w-auto">
-              <div className="text-2xl sm:text-3xl font-bold text-blue-700">
+            <div className="text-center sm:text-right bg-blue-50 rounded-lg p-2 border border-blue-200 w-full sm:w-auto min-w-[200px]">
+              {/* Current Total */}
+              <div className="text-xl sm:text-2xl font-bold text-blue-700 mb-1">
                 ₹{getTotalAmount().toLocaleString()}
               </div>
-              <div className="text-sm text-blue-600">
-                {selectedStalls.length} × ₹{priceSettings.defaultStallPrice.toLocaleString()}
+              
+              {/* Base calculation - Compact */}
+              {getDiscountAmount() > 0 ? (
+                <div className="text-xs text-gray-600 space-y-0.5 mb-1">
+                  <div className="line-through">
+                    ₹{getBaseAmount().toLocaleString()}
+                  </div>
+                  <div className="text-green-600 font-medium">
+                    -₹{getDiscountAmount().toLocaleString()}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-600 mb-1">
+                  {selectedStalls.length} × ₹{priceSettings.defaultStallPrice.toLocaleString()}
+                </div>
+              )}
+              
+              {/* Discount Badges - Compact */}
+              <div className="space-y-0.5">
+                {getEarlyBirdDiscount() > 0 && (
+                  <div className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                    🎉 {getEarlyBirdDiscount()}% Early Bird!
+                  </div>
+                )}
+                
+                {getBulkDiscount() > 0 && (
+                  <div className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                    🎯 {getBulkDiscount()}% Bulk!
+                  </div>
+                )}
+                
+                {/* Next Milestone - Compact */}
+                {(() => {
+                  const milestone = getNextMilestone();
+                  if (milestone) {
+                    return (
+                      <div className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                        Add {milestone.quantityNeeded} more for {milestone.discountPercent}% discount
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
-              <div className="text-sm text-green-600 font-medium mt-2">✨ Multiple stalls selected</div>
-             
+              
+              {/* Status indicator - Compact */}
+              {selectedStalls.length > 0 && (
+                <div className="text-xs text-green-600 font-medium mt-1">
+                  {selectedStalls.length === 1 ? '🏪 Single' : '✨ Multiple'}
+                </div>
+              )}
             </div>
           </div>
         </div>

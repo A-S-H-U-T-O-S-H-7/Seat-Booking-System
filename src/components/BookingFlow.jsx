@@ -151,13 +151,13 @@ const BookingFlow = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
-      <div className="container mx-auto px-1 py-8">
+      <div className="container mx-auto px-1  py-8">
         <div className={`${getContainerMaxWidth()} mx-auto`}>
           {/* Progress Steps */}
           <div className="mb-8"> 
             {/* Mobile Progress */}
             <div className="block md:hidden">
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="bg-gradient-to-br from-blue-50/30 to-blue-50 rounded-xl p-4 shadow-sm border border-blue-200">
                 <div className="text-center mb-3">
                   <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full mb-2 shadow-md">
                     {(() => {
@@ -184,7 +184,7 @@ const BookingFlow = () => {
             
             {/* Desktop Progress */}
             <div className="hidden md:block">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="bg-gradient-to-br from-blue-50/30 to-blue-50 rounded-2xl p-6 shadow-sm border border-blue-200">
                 <div className="flex items-center justify-between relative px-6">
                   {/* Progress Line - Fixed positioning */}
                   <div className="absolute top-6 left-12 right-12 h-0.5 bg-gray-200">
@@ -233,7 +233,7 @@ const BookingFlow = () => {
           </div>
 
           {/* Step Content */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-2 mb-8">
+          <div className="bg-white  rounded-2xl shadow-sm border border-orange-200 p-2 md:p-2 mb-8">
             {renderStepContent()}
           </div>
 

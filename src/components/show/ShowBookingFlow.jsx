@@ -57,13 +57,28 @@ const ShowBookingFlow = () => {
           console.log('Step 2 validation:', { selectedSeats, seatsSelected });
           return seatsSelected;
         case 3:
+          // Proper validation functions
+          const validateName = (name) => name && name.trim().length >= 3;
+          const validateEmail = (email) => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+          };
+          const validatePhone = (phone) => {
+            const phoneRegex = /^[6-9]\d{9}$/;
+            return phoneRegex.test(phone);
+          };
+          const validateAadhar = (aadhar) => {
+            const aadharRegex = /^\d{12}$/;
+            return aadharRegex.test(aadhar);
+          };
+          const validateAddress = (address) => address && address.trim().length >= 5;
+          
           const detailsComplete = (
-            userDetails.name &&
-            userDetails.email &&
-            userDetails.phone &&
-            userDetails.aadhar &&
-            userDetails.address &&
-            userDetails.emergencyContact
+            validateName(userDetails.name) &&
+            validateEmail(userDetails.email) &&
+            validatePhone(userDetails.phone) &&
+            validateAadhar(userDetails.aadhar) &&
+            validateAddress(userDetails.address)
           );
           console.log('Step 3 validation:', { userDetails, detailsComplete });
           return detailsComplete;
@@ -114,11 +129,40 @@ const ShowBookingFlow = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <div className="container mx-auto px-2 py-8">
         <div className={`${getContainerMaxWidth()} mx-auto`}>
+
+          <div className="text-center mb-8">
+            <div className="relative bg-gradient-to-br from-pink-200 via-white to-fuchsia-200 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/60 overflow-hidden">
+              {/* Background Decoration */}
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
+              
+              <div className="relative z-10">
+                {/* Main Icon */}
+                <div className="inline-flex items-center justify-center w-16 h-16 ">
+                  <img src="/show.png" alt="Show" className="w-12 h-12 object-contain" />
+                </div>
+                
+                {/* Title */}
+                <h1 className="text-4xl md:text-5xl font-bold mb-3">
+                  <span className="bg-gradient-to-r from-rose-900 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">
+                    Book Your Show
+                  </span>
+                </h1>
+                
+                {/* Subtitle */}
+                <p className="text-lg md:text-xl text-gray-600 font-medium mb-6 max-w-2xl mx-auto">
+  ✨ Reserve your seat for an evening of culture and celebration 🎶🎉
+                                     </p>                
+              </div>
+            </div>
+          </div>
+
           {/* Progress Steps */}
           <div className="mb-8">
             {/* Mobile */}
             <div className="block md:hidden">
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50 rounded-xl p-4 shadow-sm border border-gray-200">
                 <div className="text-center mb-3">
                   <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full mb-2 shadow-md">
                     {(() => {
@@ -153,7 +197,7 @@ const ShowBookingFlow = () => {
 
             {/* Desktop */}
             <div className="hidden md:block">
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+              <div className="bg-gradient-to-br from-cyan-50 via-teal-50 to-emerald-50 rounded-2xl p-6 shadow-sm border border-gray-200">
                 <div className="flex items-center justify-between relative px-6">
                   {/* Progress Line */}
                   <div className="absolute top-6 left-12 right-12 h-0.5 bg-gray-300">
@@ -223,9 +267,9 @@ const ShowBookingFlow = () => {
               </div>
             </div>
           </div>
-
+ 
           {/* Step Content */}
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-3 md:p-4 mb-8">
+          <div className="bg-white rounded-3xl shadow-xl border border-rose-200 p-3 md:p-4 mb-8">
             {renderStepContent()}
           </div>
 

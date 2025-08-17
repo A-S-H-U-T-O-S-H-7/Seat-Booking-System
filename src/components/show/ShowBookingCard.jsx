@@ -1,8 +1,13 @@
 "use client";
 import { format, differenceInDays } from 'date-fns';
 import { useState } from 'react';
+import { cancelBooking } from '@/utils/cancellationUtils';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const ShowBookingCard = ({ booking, onCancel }) => {
+  const { user } = useAuth();
+  const [isCancelling, setIsCancelling] = useState(false);
   const canCancelBooking = (eventDate) => {
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
@@ -148,10 +153,35 @@ const ShowBookingCard = ({ booking, onCancel }) => {
               {booking.showDetails?.date && canCancelBooking(booking.showDetails.date) ? (
                 <div className="text-center">
                   <button
-                    onClick={() => onCancel(booking)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[100px]"
+                    onClick={async () => {
+                      if (window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+                        setIsCancelling(true);
+                        try {
+                          const result = await cancelBooking(
+                            booking,
+                            'User requested cancellation',
+                            { uid: user?.uid, name: user?.displayName, email: user?.email, isAdmin: false },
+                            true // Release seats
+                          );
+                          
+                          if (result.success) {
+                            toast.success('Booking cancelled successfully');
+                            if (onCancel) onCancel(booking); // Notify parent to refresh
+                          } else {
+                            toast.error(result.error || 'Failed to cancel booking');
+                          }
+                        } catch (error) {
+                          toast.error('Error cancelling booking');
+                          console.error('Cancellation error:', error);
+                        } finally {
+                          setIsCancelling(false);
+                        }
+                      }
+                    }}
+                    disabled={isCancelling}
+                    className={`${isCancelling ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'} bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[100px]`}
                   >
-                    Cancel Booking
+                    {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
                   </button>
                   <p className="text-xs text-green-600 mt-1 font-medium">
                     ✓ Free cancellation
