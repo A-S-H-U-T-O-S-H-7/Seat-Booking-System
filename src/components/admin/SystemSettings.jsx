@@ -1295,6 +1295,530 @@ const SystemSettings = () => {
               </div>
             </div>
 
+            {/* Show Seat Layout Management */}
+            <div className={`rounded-lg border p-6 ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 flex items-center ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
+                <Cog6ToothIcon className="w-5 h-5 mr-2" />
+                Show Seat Layout Configuration
+              </h3>
+
+              {/* Premium Blocks Configuration */}
+              <div className={`mb-6 p-4 rounded-md ${
+                isDarkMode ? 'bg-gray-600' : 'bg-white'
+              }`}>
+                <h4 className={`text-sm font-medium mb-3 flex items-center ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  ⭐ Premium Blocks (VIP Seating)
+                </h4>
+                
+                <div className="space-y-3">
+                  {showSettings.seatLayout.premiumBlocks.map((block, index) => (
+                    <div key={block.id} className={`flex items-center space-x-4 p-4 rounded-md border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                    } ${!block.isActive ? 'opacity-60' : ''}`}>
+                      <button
+                        onClick={() => {
+                          const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
+                          updatedBlocks[index].isActive = !updatedBlocks[index].isActive;
+                          setShowSettings({
+                            ...showSettings,
+                            seatLayout: {
+                              ...showSettings.seatLayout,
+                              premiumBlocks: updatedBlocks
+                            }
+                          });
+                        }}
+                        className={`p-1 rounded ${
+                          block.isActive 
+                            ? 'text-green-600 hover:bg-green-100' 
+                            : 'text-gray-400 hover:bg-gray-200'
+                        }`}
+                        title={block.isActive ? 'Disable block' : 'Enable block'}
+                      >
+                        {block.isActive ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
+                      </button>
+
+                      <div className="flex-1">
+                        <div className={`text-sm font-medium mb-1 ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {block.name} ({block.id})
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              Max Rows
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="20"
+                              value={block.maxRows}
+                              onChange={(e) => {
+                                const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
+                                updatedBlocks[index].maxRows = parseInt(e.target.value) || 1;
+                                setShowSettings({
+                                  ...showSettings,
+                                  seatLayout: {
+                                    ...showSettings.seatLayout,
+                                    premiumBlocks: updatedBlocks
+                                  }
+                                });
+                              }}
+                              className={`w-full px-2 py-1 text-sm rounded border ${
+                                isDarkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              Pairs Per Row
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="15"
+                              value={block.maxPairsPerRow}
+                              onChange={(e) => {
+                                const updatedBlocks = [...showSettings.seatLayout.premiumBlocks];
+                                updatedBlocks[index].maxPairsPerRow = parseInt(e.target.value) || 1;
+                                setShowSettings({
+                                  ...showSettings,
+                                  seatLayout: {
+                                    ...showSettings.seatLayout,
+                                    premiumBlocks: updatedBlocks
+                                  }
+                                });
+                              }}
+                              className={`w-full px-2 py-1 text-sm rounded border ${
+                                isDarkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              Total Seats
+                            </label>
+                            <div className={`px-2 py-1 text-sm rounded border bg-gray-100 border-gray-300 ${
+                              isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'text-gray-600'
+                            }`}>
+                              {block.maxRows * block.maxPairsPerRow * 2}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Regular Blocks Configuration */}
+              <div className={`mb-6 p-4 rounded-md ${
+                isDarkMode ? 'bg-gray-600' : 'bg-white'
+              }`}>
+                <h4 className={`text-sm font-medium mb-3 flex items-center ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  🎫 Regular Blocks (Standard Seating)
+                </h4>
+                
+                <div className="space-y-3">
+                  {showSettings.seatLayout.regularBlocks.map((block, index) => (
+                    <div key={block.id} className={`flex items-center space-x-4 p-4 rounded-md border ${
+                      isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+                    } ${!block.isActive ? 'opacity-60' : ''}`}>
+                      <button
+                        onClick={() => {
+                          const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
+                          updatedBlocks[index].isActive = !updatedBlocks[index].isActive;
+                          setShowSettings({
+                            ...showSettings,
+                            seatLayout: {
+                              ...showSettings.seatLayout,
+                              regularBlocks: updatedBlocks
+                            }
+                          });
+                        }}
+                        className={`p-1 rounded ${
+                          block.isActive 
+                            ? 'text-green-600 hover:bg-green-100' 
+                            : 'text-gray-400 hover:bg-gray-200'
+                        }`}
+                        title={block.isActive ? 'Disable block' : 'Enable block'}
+                      >
+                        {block.isActive ? <EyeIcon className="w-4 h-4" /> : <EyeSlashIcon className="w-4 h-4" />}
+                      </button>
+
+                      <div className="flex-1">
+                        <div className={`text-sm font-medium mb-1 ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {block.name} ({block.id})
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              Max Rows
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="50"
+                              value={block.maxRows}
+                              onChange={(e) => {
+                                const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
+                                updatedBlocks[index].maxRows = parseInt(e.target.value) || 1;
+                                setShowSettings({
+                                  ...showSettings,
+                                  seatLayout: {
+                                    ...showSettings.seatLayout,
+                                    regularBlocks: updatedBlocks
+                                  }
+                                });
+                              }}
+                              className={`w-full px-2 py-1 text-sm rounded border ${
+                                isDarkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              Seats Per Row
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="25"
+                              value={block.maxSeatsPerRow}
+                              onChange={(e) => {
+                                const updatedBlocks = [...showSettings.seatLayout.regularBlocks];
+                                updatedBlocks[index].maxSeatsPerRow = parseInt(e.target.value) || 1;
+                                setShowSettings({
+                                  ...showSettings,
+                                  seatLayout: {
+                                    ...showSettings.seatLayout,
+                                    regularBlocks: updatedBlocks
+                                  }
+                                });
+                              }}
+                              className={`w-full px-2 py-1 text-sm rounded border ${
+                                isDarkMode ? 'bg-gray-600 border-gray-500 text-white' : 'bg-white border-gray-300'
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <label className={`block text-xs font-medium mb-1 ${
+                              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>
+                              Total Seats
+                            </label>
+                            <div className={`px-2 py-1 text-sm rounded border bg-gray-100 border-gray-300 ${
+                              isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'text-gray-600'
+                            }`}>
+                              {block.maxRows * block.maxSeatsPerRow}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add New Block Section */}
+              <div className={`mb-6 p-4 rounded-md border-t ${
+                isDarkMode ? 'border-gray-600' : 'border-gray-300'
+              }`}>
+                <h4 className={`text-sm font-medium mb-3 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  Add New Block
+                </h4>
+                
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Block Type
+                      </label>
+                      <select
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white' 
+                            : 'bg-white border-gray-300 text-gray-900'
+                        }`}
+                        id="newShowBlockType"
+                        onChange={() => {
+                          const typeSelect = document.getElementById('newShowBlockType');
+                          const seatsLabel = document.getElementById('newShowBlockSeatsLabel');
+                          const seatsInput = document.getElementById('newShowBlockSeats');
+                          
+                          if (typeSelect.value === 'premium') {
+                            seatsLabel.textContent = 'Pairs Per Row';
+                            seatsInput.placeholder = '7';
+                          } else {
+                            seatsLabel.textContent = 'Seats Per Row';
+                            seatsInput.placeholder = '15';
+                          }
+                        }}
+                      >
+                        <option value="premium">Premium Block (Pair Seating)</option>
+                        <option value="regular">Regular Block (Single Seating)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Block ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g., E"
+                        maxLength="1"
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        id="newShowBlockId"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Block Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Block Name"
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        id="newShowBlockName"
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        Max Rows
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        placeholder="8"
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        id="newShowBlockRows"
+                      />
+                    </div>
+                    <div>
+                      <label className={`block text-xs font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        <span id="newShowBlockSeatsLabel">Pairs Per Row</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="25"
+                        placeholder="7"
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                          isDarkMode 
+                            ? 'bg-gray-600 border-gray-500 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        id="newShowBlockSeats"
+                      />
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      const form = {
+                        type: document.getElementById('newShowBlockType').value,
+                        id: document.getElementById('newShowBlockId').value.trim().toUpperCase(),
+                        name: document.getElementById('newShowBlockName').value.trim(),
+                        rows: parseInt(document.getElementById('newShowBlockRows').value) || 8,
+                        seats: parseInt(document.getElementById('newShowBlockSeats').value) || 7
+                      };
+                      
+                      if (!form.id || !form.name) {
+                        toast.error('Please fill in all required fields');
+                        return;
+                      }
+                      
+                      // Check if block ID already exists
+                      const allBlocks = [...showSettings.seatLayout.premiumBlocks, ...showSettings.seatLayout.regularBlocks];
+                      if (allBlocks.some(block => block.id === form.id)) {
+                        toast.error('Block ID already exists');
+                        return;
+                      }
+                      
+                      const newBlock = {
+                        id: form.id,
+                        name: form.name,
+                        isActive: true
+                      };
+                      
+                      if (form.type === 'premium') {
+                        newBlock.maxRows = form.rows;
+                        newBlock.maxPairsPerRow = form.seats;
+                        newBlock.price = 1000; // Default price
+                        
+                        setShowSettings({
+                          ...showSettings,
+                          seatLayout: {
+                            ...showSettings.seatLayout,
+                            premiumBlocks: [...showSettings.seatLayout.premiumBlocks, newBlock]
+                          }
+                        });
+                      } else {
+                        newBlock.maxRows = form.rows;
+                        newBlock.maxSeatsPerRow = form.seats;
+                        newBlock.price = 500; // Default price
+                        
+                        setShowSettings({
+                          ...showSettings,
+                          seatLayout: {
+                            ...showSettings.seatLayout,
+                            regularBlocks: [...showSettings.seatLayout.regularBlocks, newBlock]
+                          }
+                        });
+                      }
+                      
+                      // Clear form
+                      document.getElementById('newShowBlockType').selectedIndex = 0;
+                      document.getElementById('newShowBlockId').value = '';
+                      document.getElementById('newShowBlockName').value = '';
+                      document.getElementById('newShowBlockRows').value = '';
+                      document.getElementById('newShowBlockSeats').value = '';
+                      
+                      toast.success(`${form.type === 'premium' ? 'Premium' : 'Regular'} block ${form.id} added successfully!`);
+                    }}
+                    className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
+                  >
+                    <PlusIcon className="w-4 h-4 mr-2" />
+                    Add Block
+                  </button>
+                </div>
+              </div>
+
+              {/* Layout Summary */}
+              <div className={`p-4 rounded-md border ${
+                isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+              }`}>
+                <h4 className={`text-lg font-semibold mb-4 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
+                  🎭 Show Layout Summary
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className={`p-4 rounded-lg text-center ${
+                    isDarkMode ? 'bg-amber-900/30 border border-amber-700' : 'bg-amber-50 border border-amber-200'
+                  }`}>
+                    <div className={`text-3xl font-bold mb-1 ${
+                      isDarkMode ? 'text-amber-400' : 'text-amber-600'
+                    }`}>
+                      {showSettings.seatLayout.premiumBlocks.filter(b => b.isActive).length}
+                    </div>
+                    <div className={`text-sm font-medium ${
+                      isDarkMode ? 'text-amber-300' : 'text-amber-700'
+                    }`}>Premium Blocks</div>
+                  </div>
+                  <div className={`p-4 rounded-lg text-center ${
+                    isDarkMode ? 'bg-green-900/30 border border-green-700' : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <div className={`text-3xl font-bold mb-1 ${
+                      isDarkMode ? 'text-green-400' : 'text-green-600'
+                    }`}>
+                      {showSettings.seatLayout.regularBlocks.filter(b => b.isActive).length}
+                    </div>
+                    <div className={`text-sm font-medium ${
+                      isDarkMode ? 'text-green-300' : 'text-green-700'
+                    }`}>Regular Blocks</div>
+                  </div>
+                  <div className={`p-4 rounded-lg text-center ${
+                    isDarkMode ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-200'
+                  }`}>
+                    <div className={`text-3xl font-bold mb-1 ${
+                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                    }`}>
+                      {showSettings.seatLayout.premiumBlocks
+                        .filter(b => b.isActive)
+                        .reduce((sum, b) => sum + (b.maxRows * b.maxPairsPerRow * 2), 0)}
+                    </div>
+                    <div className={`text-sm font-medium ${
+                      isDarkMode ? 'text-blue-300' : 'text-blue-700'
+                    }`}>Premium Seats</div>
+                  </div>
+                  <div className={`p-4 rounded-lg text-center ${
+                    isDarkMode ? 'bg-purple-900/30 border border-purple-700' : 'bg-purple-50 border border-purple-200'
+                  }`}>
+                    <div className={`text-3xl font-bold mb-1 ${
+                      isDarkMode ? 'text-purple-400' : 'text-purple-600'
+                    }`}>
+                      {showSettings.seatLayout.regularBlocks
+                        .filter(b => b.isActive)
+                        .reduce((sum, b) => sum + (b.maxRows * b.maxSeatsPerRow), 0)}
+                    </div>
+                    <div className={`text-sm font-medium ${
+                      isDarkMode ? 'text-purple-300' : 'text-purple-700'
+                    }`}>Regular Seats</div>
+                  </div>
+                </div>
+                
+                <div className={`mt-4 p-3 rounded-md ${
+                  isDarkMode 
+                    ? 'bg-blue-900 bg-opacity-30 border border-blue-700' 
+                    : 'bg-blue-50 border border-blue-200'
+                }`}>
+                  <p className={`text-sm font-medium ${
+                    isDarkMode ? 'text-blue-300' : 'text-blue-800'
+                  }`}>
+                    🎫 Total Show Capacity: {(
+                      showSettings.seatLayout.premiumBlocks
+                        .filter(b => b.isActive)
+                        .reduce((sum, b) => sum + (b.maxRows * b.maxPairsPerRow * 2), 0) +
+                      showSettings.seatLayout.regularBlocks
+                        .filter(b => b.isActive)
+                        .reduce((sum, b) => sum + (b.maxRows * b.maxSeatsPerRow), 0)
+                    )} seats
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Show Timing Management */}
             <div className={`rounded-lg border p-6 ${
               isDarkMode 

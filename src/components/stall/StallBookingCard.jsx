@@ -32,6 +32,31 @@ const StallBookingCard = ({ booking, onCancel }) => {
   const eventStartDate = booking.eventDetails?.startDate || new Date('2025-11-15');
   const eventEndDate = booking.eventDetails?.endDate || new Date('2025-11-20');
 
+
+  const handleCancelBooking = async () => {
+    setIsCancelling(true);
+    try {
+      const result = await cancelBooking(
+        booking,
+        'User requested cancellation - 15+ days before event',
+        { uid: user?.uid, name: user?.displayName || user?.email, email: user?.email, isAdmin: false },
+        true // Release stalls back to availability
+      );
+      
+      if (result.success) {
+        toast.success('✅ Stall booking cancelled successfully! Your refund will be processed within 5-7 business days.');
+        if (onCancel) onCancel(booking); // Notify parent to refresh
+      } else {
+        toast.error(result.error || 'Failed to cancel stall booking. Please try again.');
+      }
+    } catch (error) {
+      toast.error('Error cancelling stall booking. Please contact support.');
+      console.error('Stall cancellation error:', error);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <div 
       key={booking.id} 
@@ -146,28 +171,20 @@ const StallBookingCard = ({ booking, onCancel }) => {
                 <div className="text-center">
                   <button
                     onClick={async () => {
-                      if (window.confirm('Are you sure you want to cancel this stall booking? This action cannot be undone.')) {
-                        setIsCancelling(true);
-                        try {
-                          const result = await cancelBooking(
-                            booking,
-                            'User requested cancellation',
-                            { uid: user?.uid, name: user?.displayName, email: user?.email, isAdmin: false },
-                            true // Release stalls
-                          );
-                          
-                          if (result.success) {
-                            toast.success('Stall booking cancelled successfully');
-                            if (onCancel) onCancel(booking); // Notify parent to refresh
-                          } else {
-                            toast.error(result.error || 'Failed to cancel stall booking');
-                          }
-                        } catch (error) {
-                          toast.error('Error cancelling stall booking');
-                          console.error('Stall cancellation error:', error);
-                        } finally {
-                          setIsCancelling(false);
-                        }
+                      const daysUntilEvent = differenceInDays(eventStartDate, new Date());
+                      
+                      if (daysUntilEvent < 15) {
+                        toast.error('Cancellation is only allowed 15+ days before the event start date');
+                        return;
+                      }
+                      
+                      const stallList = booking.stallIds?.length > 0 
+                        ? booking.stallIds.slice(0, 5).join(', ') + (booking.stallIds.length > 5 ? ` +${booking.stallIds.length - 5} more` : '')
+                        : booking.stallId || 'N/A';
+                      
+                      // Simple confirmation dialog
+                      if (window.confirm('Are you sure you want to cancel this booking?')) {
+                        await handleCancelBooking();
                       }
                     }}
                     disabled={isCancelling}
@@ -176,7 +193,7 @@ const StallBookingCard = ({ booking, onCancel }) => {
                     {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
                   </button>
                   <p className="text-xs text-green-600 mt-1 font-medium">
-                    ✓ Free cancellation
+                    ✓ Free cancellation ({differenceInDays(eventStartDate, new Date())} days left)
                   </p>
                 </div>
               ) : (
@@ -188,7 +205,7 @@ const StallBookingCard = ({ booking, onCancel }) => {
                     Cannot Cancel
                   </button>
                   <p className="text-xs text-red-500 mt-1">
-                    Only {differenceInDays(eventStartDate, new Date())} days left
+                    ❌ Only {differenceInDays(eventStartDate, new Date())} days left (15+ required)
                   </p>
                 </div>
               )}

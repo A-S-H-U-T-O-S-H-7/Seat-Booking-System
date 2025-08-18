@@ -17,6 +17,8 @@ import CancellationModal from './CancellationModal';
 import Pagination from './Pagination';
 
 export default function BookingManagement() {
+  console.log('🎯 ===== HAVAN BOOKING MANAGEMENT COMPONENT LOADED =====');
+  console.log('🎯 This is the admin Havan Booking Management component');
   const { isDarkMode } = useTheme();
   const { adminUser } = useAdmin();
   const [bookings, setBookings] = useState([]);
@@ -153,12 +155,20 @@ export default function BookingManagement() {
   };
 
   const handleStatusUpdate = async (bookingId, newStatus, reason = '') => {
+    console.log('🚀 handleStatusUpdate called with:', { bookingId, newStatus, reason });
     setIsUpdating(true);
     try {
       if (newStatus === 'cancelled') {
         // Use the new cancellation utility
         const bookingData = bookings.find(b => b.id === bookingId);
         if (bookingData) {
+          console.log('Cancelling Havan booking with data:', {
+            id: bookingData.id,
+            seats: bookingData.seats || bookingData.eventDetails?.seats || [],
+            eventDate: bookingData.eventDate || bookingData.eventDetails?.date,
+            shift: bookingData.shift || bookingData.eventDetails?.shift
+          });
+          
           const result = await cancelBooking(
             bookingData,
             reason,
@@ -167,7 +177,13 @@ export default function BookingManagement() {
           );
           
           if (result.success) {
-            toast.success(result.message);
+            const seatCount = bookingData.seatCount || bookingData.seats?.length || 0;
+            const successMsg = seatCount > 0 
+              ? `${result.message}. ${seatCount} seats have been released and are now available for booking.`
+              : result.message;
+            
+            toast.success(successMsg, { duration: 6000 });
+            
             // Update local state
             setBookings(prev => prev.map(booking => 
               booking.id === bookingId 
@@ -175,8 +191,11 @@ export default function BookingManagement() {
                 : booking
             ));
           } else {
+            console.error('Cancellation failed:', result.error);
             toast.error(result.error || 'Failed to cancel booking');
           }
+        } else {
+          toast.error('Booking data not found');
         }
       } else {
         // Handle other status updates normally
@@ -212,6 +231,7 @@ export default function BookingManagement() {
   };
 
   const handleCancellationRequest = async (bookingId, action) => {
+    console.log('🚀 handleCancellationRequest called with:', { bookingId, action });
     setIsUpdating(true);
     try {
       const bookingRef = doc(db, 'bookings', bookingId);

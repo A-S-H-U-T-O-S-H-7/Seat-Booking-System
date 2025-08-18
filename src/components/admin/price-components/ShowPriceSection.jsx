@@ -4,6 +4,8 @@ import EarlyBirdDiscounts from './EarlyBirdDiscounts';
 import BulkBookingDiscounts from './BulkBookingDiscounts';
 
 export default function ShowPriceSection({ settings, onUpdate, isDarkMode }) {
+  // State to track Block A Premium price for synced display
+  const blockAPremiumPrice = settings.seatTypes?.blockA?.price || '';
   // Seat Type price handlers
   const handleSeatTypeChange = (seatType, field, value) => {
     const updatedSeatTypes = { ...settings.seatTypes };
@@ -96,18 +98,29 @@ export default function ShowPriceSection({ settings, onUpdate, isDarkMode }) {
               </label>
               <input
                 type="number"
-                value={settings.seatTypes?.[seatType.key]?.price || ''}
-                onChange={(e) => handleSeatTypeChange(seatType.key, 'price', e.target.value)}
+                value={
+                  seatType.key === 'blockB' 
+                    ? blockAPremiumPrice // Block B shows Block A's price
+                    : settings.seatTypes?.[seatType.key]?.price || ''
+                }
+                onChange={(e) => {
+                  if (seatType.key !== 'blockB') { // Block B is not editable
+                    handleSeatTypeChange(seatType.key, 'price', e.target.value)
+                  }
+                }}
+                readOnly={seatType.key === 'blockB'}
+                disabled={seatType.key === 'blockB'}
                 placeholder={`Enter ${seatType.label.toLowerCase()} price`}
                 className={`w-full px-3 py-2 text-sm rounded-lg border transition-colors focus:ring-2 focus:border-transparent ${
-                  seatType.color === 'purple' ? 'focus:ring-purple-500' :
-                  seatType.color === 'blue' ? 'focus:ring-blue-500' :
-                  seatType.color === 'green' ? 'focus:ring-green-500' :
-                  'focus:ring-yellow-500'
-                } ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                  seatType.key === 'blockB' 
+                    ? 'cursor-not-allowed ' + (isDarkMode ? 'bg-gray-600 border-gray-500 text-gray-300' : 'bg-gray-100 border-gray-300 text-gray-600')
+                    : (seatType.color === 'purple' ? 'focus:ring-purple-500' :
+                       seatType.color === 'blue' ? 'focus:ring-blue-500' :
+                       seatType.color === 'green' ? 'focus:ring-green-500' :
+                       'focus:ring-yellow-500') + ' ' + 
+                      (isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500')
                 }`}
               />
             </div>

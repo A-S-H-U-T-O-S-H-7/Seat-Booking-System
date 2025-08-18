@@ -305,7 +305,7 @@
     }
 
     return (
-      <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border overflow-hidden`}>
+      <div className={`relative ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border overflow-hidden`}>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className={isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50/50'}>
@@ -435,8 +435,14 @@
                     <div className="space-y-2">
                       {getStatusBadge(booking.status)}
                       {booking.cancellationReason && (
-                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} max-w-32`}>
-                          <span className="font-medium">Reason:</span> {booking.cancellationReason}
+                        <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} max-w-48 break-words`}>
+                          <span className="font-medium">Reason:</span> 
+                          <span className="block mt-1" title={booking.cancellationReason}>
+                            {booking.cancellationReason.length > 50 
+                              ? `${booking.cancellationReason.substring(0, 50)}...` 
+                              : booking.cancellationReason
+                            }
+                          </span>
                         </div>
                       )}
                     </div>
@@ -452,12 +458,21 @@
         
         {/* Loading overlay */}
         {isUpdating && (
-          <div className="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-sm flex items-center justify-center">
-            <div className="flex items-center space-x-3 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-lg">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
-              <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Updating...
-              </span>
+          <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className={`flex items-center space-x-3 px-6 py-4 rounded-xl shadow-2xl border ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700 text-white' 
+                : 'bg-white border-gray-200 text-gray-900'
+            }`}>
+              <div className="animate-spin rounded-full h-6 w-6 border-3 border-blue-500 border-t-transparent"></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">
+                  Processing...
+                </span>
+                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Please wait while we update the stall booking
+                </span>
+              </div>
             </div>
           </div>
         )}

@@ -1017,6 +1017,25 @@ export default function ShowSeatManagement() {
         </div>
       )}
 
+      {/* Recently Released Seats Info */}
+      <div className={`mb-4 p-3 rounded-lg border ${
+        isDarkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'
+      }`}>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+          <span className={`text-sm font-semibold ${
+            isDarkMode ? 'text-green-300' : 'text-green-800'
+          }`}>
+            Recently Released Seats
+          </span>
+        </div>
+        <p className={`text-xs ${
+          isDarkMode ? 'text-green-400' : 'text-green-700'
+        }`}>
+          Seats with green pulsing animation were recently released from cancelled bookings and are now available for new reservations.
+        </p>
+      </div>
+
       {/* Seats Display */}
       {!selectedDate ? (
         <div className={`text-center py-8 md:py-12 rounded-xl border ${
@@ -1078,6 +1097,10 @@ export default function ShowSeatManagement() {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 md:w-4 md:h-4 rounded bg-purple-500"></div>
             <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 md:w-4 md:h-4 rounded bg-green-400 animate-pulse"></div>
+            <span className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Recently Released</span>
           </div>
         </div>
       </div>

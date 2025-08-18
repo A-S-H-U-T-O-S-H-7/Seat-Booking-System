@@ -22,8 +22,6 @@ const ProfilePage = () => {
   const [stallBookings, setStallBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingBooking, setCancellingBooking] = useState(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [bookingToCancel, setBookingToCancel] = useState(null);
   const [activeTab, setActiveTab] = useState('havan');
 
   const { getShiftLabel, getShiftTime } = useShifts();
@@ -315,139 +313,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleCancelBooking = async (booking) => {
-    // Determine event date based on booking type
-    let eventDate;
-    if (booking.type === 'show') {
-      eventDate = booking.showDetails.date;
-    } else if (booking.type === 'stall') {
-      eventDate = booking.eventDetails.startDate;
-    } else {
-      eventDate = booking.eventDetails.date;
-    }
-    
-    const today = new Date();
-    const daysUntilEvent = differenceInDays(eventDate, today);
-    
-    if (daysUntilEvent < 15) {
-      toast.error('Cancellation is only allowed 15+ days before the event');
-      return;
-    }
-
-    // Show confirmation modal
-    setBookingToCancel(booking);
-    setShowCancelModal(true);
-  };
-
-  const confirmCancelBooking = async () => {
-    if (!bookingToCancel) return;
-
-    setCancellingBooking(bookingToCancel.id);
-    setShowCancelModal(false);
-    
-    try {
-      if (bookingToCancel.type === 'show') {
-        // Handle show booking cancellation
-        const bookingRef = doc(db, 'showBookings', bookingToCancel.id);
-        await updateDoc(bookingRef, {
-          status: 'cancelled',
-          cancelledAt: serverTimestamp(),
-          cancelledBy: 'user',
-          updatedAt: serverTimestamp()
-        });
-        
-        toast.success('Show booking cancelled successfully. Refund will be processed within 5-7 business days.');
-        fetchUserShowBookings(); // Refresh show bookings
-      } else if (bookingToCancel.type === 'stall') {
-        // Handle stall booking cancellation with stall release
-        await runTransaction(db, async (transaction) => {
-          // Update booking status
-          const bookingRef = doc(db, 'stallBookings', bookingToCancel.id);
-          transaction.update(bookingRef, {
-            status: 'cancelled',
-            cancelledAt: serverTimestamp(),
-            cancelledBy: 'user',
-            updatedAt: serverTimestamp()
-          });
-
-          // Release stalls from availability
-          const availabilityRef = doc(db, 'stallAvailability', 'current');
-          const availabilityDoc = await transaction.get(availabilityRef);
-          
-          if (availabilityDoc.exists()) {
-            const currentAvailability = availabilityDoc.data().stalls || {};
-            const updatedAvailability = { ...currentAvailability };
-            
-            // Release all stalls associated with this booking
-            const stallsToRelease = bookingToCancel.stallIds || [bookingToCancel.stallId];
-            stallsToRelease.forEach(stallId => {
-              if (updatedAvailability[stallId] && updatedAvailability[stallId].bookingId === bookingToCancel.bookingId) {
-                delete updatedAvailability[stallId];
-              }
-            });
-
-            transaction.update(availabilityRef, {
-              stalls: updatedAvailability,
-              updatedAt: serverTimestamp()
-            });
-          }
-        });
-        
-        toast.success('Stall booking cancelled successfully. Refund will be processed within 5-7 business days.');
-        fetchUserStallBookings(); // Refresh stall bookings
-      } else {
-        // Handle regular havan booking cancellation
-        await runTransaction(db, async (transaction) => {
-          // First, do all the reads
-          const eventDate = bookingToCancel.eventDetails?.date || bookingToCancel.eventDate;
-          const eventShift = bookingToCancel.eventDetails?.shift || bookingToCancel.shift;
-          
-          if (!eventDate || !eventShift) {
-            throw new Error('Missing event date or shift information');
-          }
-          
-          const dateKey = eventDate.toISOString().split('T')[0];
-          const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${eventShift}`);
-          const availabilityDoc = await transaction.get(availabilityRef);
-          
-          // Then do all the writes
-          // Update booking status
-          const bookingRef = doc(db, 'bookings', bookingToCancel.id);
-          transaction.update(bookingRef, {
-            status: 'cancelled',
-            cancelledAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
-
-          // Release seats
-          if (availabilityDoc.exists()) {
-            const currentAvailability = availabilityDoc.data().seats || {};
-            const updatedAvailability = { ...currentAvailability };
-            
-            const seatsToRelease = bookingToCancel.eventDetails?.seats || bookingToCancel.seats || [];
-            seatsToRelease.forEach(seatId => {
-              delete updatedAvailability[seatId];
-            });
-
-            transaction.update(availabilityRef, {
-              seats: updatedAvailability,
-              updatedAt: serverTimestamp()
-            });
-          }
-        });
-
-        toast.success('Booking cancelled successfully. Refund will be processed within 5-7 business days.');
-        fetchUserBookings(); // Refresh bookings
-      }
-      
-    } catch (error) {
-      console.error('Cancellation failed:', error);
-      toast.error('Failed to cancel booking. Please try again.');
-    } finally {
-      setCancellingBooking(null);
-      setBookingToCancel(null);
-    }
-  };
 
   const canCancelBooking = (eventDate) => {
     const today = new Date();
@@ -552,24 +417,32 @@ const ProfilePage = () => {
                   <div className="text-center">
                     <button
                       onClick={async () => {
-                        if (window.confirm('Are you sure you want to cancel this Havan booking? This action cannot be undone.')) {
+                        const eventDate = booking.eventDetails?.date;
+                        const daysUntilEvent = eventDate ? differenceInDays(eventDate, new Date()) : 0;
+                        
+                        if (daysUntilEvent < 15) {
+                          toast.error('Cancellation is only allowed 15+ days before the event date');
+                          return;
+                        }
+                        
+                        if (window.confirm(`Are you sure you want to cancel this Havan booking?\n\nBooking Details:\n• Date: ${eventDate ? format(eventDate, 'MMMM dd, yyyy') : 'N/A'}\n• Seats: ${(booking.eventDetails?.seats || []).join(', ')}\n• Amount: ₹${booking.payment?.amount || 0}\n\nThis action cannot be undone and a full refund will be processed within 5-7 business days.`)) {
                           setCancellingBooking(booking.id);
                           try {
                             const result = await cancelBooking(
                               booking,
-                              'User requested cancellation',
-                              { uid: user?.uid, name: user?.displayName, email: user?.email, isAdmin: false },
-                              true // Release seats
+                              'User requested cancellation - 15+ days before event',
+                              { uid: user?.uid, name: user?.displayName || user?.email, email: user?.email, isAdmin: false },
+                              true // Release seats back to availability
                             );
                             
                             if (result.success) {
-                              toast.success('Havan booking cancelled successfully');
-                              fetchUserBookings(); // Refresh bookings
+                              toast.success('✅ Havan booking cancelled successfully! Your refund will be processed within 5-7 business days.');
+                              fetchUserBookings(); // Refresh bookings to show updated status
                             } else {
-                              toast.error(result.error || 'Failed to cancel Havan booking');
+                              toast.error(result.error || 'Failed to cancel Havan booking. Please try again.');
                             }
                           } catch (error) {
-                            toast.error('Error cancelling Havan booking');
+                            toast.error('Error cancelling Havan booking. Please contact support.');
                             console.error('Havan cancellation error:', error);
                           } finally {
                             setCancellingBooking(null);
@@ -582,7 +455,7 @@ const ProfilePage = () => {
                       {cancellingBooking === booking.id ? 'Cancelling...' : 'Cancel Booking'}
                     </button>
                     <p className="text-xs text-green-600 mt-1 font-medium">
-                      ✓ Free cancellation
+                      ✓ Free cancellation ({booking.eventDetails?.date ? differenceInDays(booking.eventDetails.date, new Date()) : 0} days left)
                     </p>
                   </div>
                 ) : (
@@ -594,7 +467,7 @@ const ProfilePage = () => {
                       Cannot Cancel
                     </button>
                     <p className="text-xs text-red-500 mt-1">
-                      Only {booking.eventDetails?.date ? differenceInDays(booking.eventDetails.date, new Date()) : 0} days left
+                      ❌ Only {booking.eventDetails?.date ? differenceInDays(booking.eventDetails.date, new Date()) : 0} days left (15+ required)
                     </p>
                   </div>
                 )}
@@ -893,95 +766,6 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Cancel Confirmation Modal */}
-        {showCancelModal && bookingToCancel && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100]">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
-              <div className="p-6">
-                {/* Modal Header */}
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                </div>
-                
-                <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
-                  Cancel {bookingToCancel.type === 'show' ? 'Show' : 'Havan'} Booking?
-                </h3>
-                
-                <p className="text-sm text-gray-600 text-center mb-6">
-                  Are you sure you want to cancel your booking for <strong>
-                    {bookingToCancel.type === 'show' 
-                      ? format(bookingToCancel.showDetails.date, 'MMMM dd, yyyy')
-                      : format(bookingToCancel.eventDetails.date, 'MMMM dd, yyyy')
-                    }
-                  </strong>? This action cannot be undone.
-                </p>
-
-                {/* Booking Details Summary */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6 text-sm">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="font-medium text-gray-700">Booking ID:</span>
-                      <p className="text-gray-900">{bookingToCancel.id || bookingToCancel.bookingId || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Amount:</span>
-                      <p className="text-gray-900 font-semibold">₹{bookingToCancel.payment?.amount || bookingToCancel.showDetails?.totalAmount || bookingToCancel.eventDetails?.totalAmount || 0}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-medium text-gray-700">
-                        {bookingToCancel.type === 'show' ? 'Seats' : 'Seats'}:
-                      </span>
-                      <p className="text-gray-900">
-                        {bookingToCancel.type === 'show' 
-                          ? `${bookingToCancel.showDetails?.selectedSeats?.length || 0} seats`
-                          : bookingToCancel.eventDetails.seats.join(', ')
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Refund Notice */}
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="ml-2">
-                      <p className="text-sm font-medium text-green-800">Full Refund Available</p>
-                      <p className="text-xs text-green-600 mt-1">
-                        Your refund will be processed within 5-7 business days.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Modal Actions */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowCancelModal(false);
-                      setBookingToCancel(null);
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-                  >
-                    Keep Booking
-                  </button>
-                  <button
-                    onClick={confirmCancelBooking}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
-                  >
-                    Cancel Booking
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </ProtectedRoute>
   );

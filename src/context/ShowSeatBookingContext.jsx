@@ -94,17 +94,21 @@ const ACTIONS = {
 };
 
 // Helper function to get seat price based on seat type
+// This needs to be inside the provider to access current state
+let currentPriceSettings = null;
+
 const getSeatPrice = (seatId) => {
   // Convert to string to handle cases where seatId might be a number or object
   const seatStr = String(seatId);
   let price = 0;
   
   if (seatStr.startsWith('A-') || seatStr.startsWith('B-')) {
-    price = SHOW_SEAT_TYPES.VIP.price; // VIP seats
+    // Use dynamic pricing from current settings
+    price = currentPriceSettings?.seatTypes?.VIP?.price || SHOW_SEAT_TYPES.VIP.price; // VIP seats
   } else if (seatStr.startsWith('C-')) {
-    price = SHOW_SEAT_TYPES.REGULAR_C.price; // Block C
+    price = currentPriceSettings?.seatTypes?.REGULAR_C?.price || SHOW_SEAT_TYPES.REGULAR_C.price; // Block C
   } else if (seatStr.startsWith('D-')) {
-    price = SHOW_SEAT_TYPES.REGULAR_D.price; // Block D
+    price = currentPriceSettings?.seatTypes?.REGULAR_D?.price || SHOW_SEAT_TYPES.REGULAR_D.price; // Block D
   } else {
     price = 500; // Default fallback
   }
@@ -282,6 +286,28 @@ const showSeatBookingReducer = (state, action) => {
 export const ShowSeatBookingProvider = ({ children }) => {
   const [state, dispatch] = useReducer(showSeatBookingReducer, initialState);
   const { user } = useAuth();
+  
+  // Update the global reference when state changes
+  currentPriceSettings = state.priceSettings;
+  
+  // Create context-aware getSeatPrice function
+  const getSeatPriceWithContext = (seatId) => {
+    const seatStr = String(seatId);
+    let price = 0;
+    
+    if (seatStr.startsWith('A-') || seatStr.startsWith('B-')) {
+      // Both A and B use Block A price (sync functionality)
+      price = state.priceSettings?.seatTypes?.VIP?.price || 1200;
+    } else if (seatStr.startsWith('C-')) {
+      price = state.priceSettings?.seatTypes?.REGULAR_C?.price || 600;
+    } else if (seatStr.startsWith('D-')) {
+      price = state.priceSettings?.seatTypes?.REGULAR_D?.price || 400;
+    } else {
+      price = 500; // Default fallback
+    }
+    
+    return Number(price) || 500;
+  };
 
   // Real-time sync with admin pricing settings for shows
   useEffect(() => {
@@ -293,9 +319,9 @@ export const ShowSeatBookingProvider = ({ children }) => {
         const data = docSnap.data();
         const newPriceSettings = {
           seatTypes: {
-            VIP: { price: data.seatTypes?.blockA?.price || data.seatTypes?.blockB?.price || 1000 },
-            REGULAR_C: { price: data.seatTypes?.blockC?.price || 1000 },
-            REGULAR_D: { price: data.seatTypes?.blockD?.price || 500 }
+            VIP: { price: data.seatTypes?.blockA?.price || 1200 }, // Both A and B use Block A price
+            REGULAR_C: { price: data.seatTypes?.blockC?.price || 600 },
+            REGULAR_D: { price: data.seatTypes?.blockD?.price || 400 }
           },
           earlyBirdDiscounts: data.earlyBirdDiscounts || [],
           bulkBookingDiscounts: data.bulkBookingDiscounts || [],
@@ -465,7 +491,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
   const getPricingBreakdown = () => {
     // Get the base price for each selected seat and sum them
     const baseAmount = state.selectedSeats.reduce((sum, seatId) => {
-      return sum + getSeatPrice(seatId);
+      return sum + getSeatPriceWithContext(seatId);
     }, 0);
     
     const quantity = state.selectedSeats.length;
@@ -513,7 +539,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
   
   const getBaseAmount = () => {
     return state.selectedSeats.reduce((sum, seatId) => {
-      return sum + getSeatPrice(seatId);
+      return sum + getSeatPriceWithContext(seatId);
     }, 0);
   };
   
@@ -612,7 +638,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
         },
         seats: state.selectedSeats.map(seatId => ({
           seatId: seatId,
-          price: getSeatPrice(seatId),
+          price: getSeatPriceWithContext(seatId),
           section: seatId.split('-')[0],
           row: seatId.split('-')[1],
           pairLetter: seatId.split('-')[2]?.charAt(0),
@@ -689,7 +715,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
     getSeatStatus,
     isSeatSelected,
     isSeatAvailable,
-    getSeatPrice,
+    getSeatPrice: getSeatPriceWithContext,
     // Pricing calculation functions
     getPricingBreakdown,
     getBaseAmount,
@@ -698,7 +724,9 @@ export const ShowSeatBookingProvider = ({ children }) => {
     getTotalAmount,
     getEarlyBirdDiscount,
     getBulkDiscount,
-    getNextMilestone
+    getNextMilestone,
+    // Export pricing settings for components
+    priceSettings: state.priceSettings
   };
 
   return (

@@ -154,21 +154,34 @@ const ShowBookingCard = ({ booking, onCancel }) => {
                 <div className="text-center">
                   <button
                     onClick={async () => {
-                      if (window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+                      if (window.confirm('Are you sure you want to cancel this booking?')) {
                         setIsCancelling(true);
                         try {
+                          // Prepare booking data for cancellation with proper show structure
+                          const bookingForCancellation = {
+                            ...booking,
+                            // Ensure we have the proper structure for show bookings
+                            showDetails: {
+                              ...booking.showDetails,
+                              selectedSeats: booking.showDetails?.selectedSeats || [],
+                              date: booking.showDetails?.date || booking.eventDate,
+                              time: booking.showDetails?.time,
+                              shift: booking.showDetails?.shift
+                            }
+                          };
+                          
                           const result = await cancelBooking(
-                            booking,
-                            'User requested cancellation',
-                            { uid: user?.uid, name: user?.displayName, email: user?.email, isAdmin: false },
+                            bookingForCancellation,
+                            'User requested cancellation - 15+ days before event',
+                            { uid: user?.uid, name: user?.displayName || user?.email, email: user?.email, isAdmin: false },
                             true // Release seats
                           );
                           
                           if (result.success) {
-                            toast.success('Booking cancelled successfully');
+                            toast.success('Show booking cancelled successfully! Seats have been released.');
                             if (onCancel) onCancel(booking); // Notify parent to refresh
                           } else {
-                            toast.error(result.error || 'Failed to cancel booking');
+                            toast.error(result.error || 'Failed to cancel show booking');
                           }
                         } catch (error) {
                           toast.error('Error cancelling booking');

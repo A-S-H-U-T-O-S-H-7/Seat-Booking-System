@@ -62,9 +62,9 @@ export const createCancellationRecord = async (bookingData, reason, cancelledBy,
       // Cancellation metadata
       cancelledBy: {
         type: cancelledBy.isAdmin ? 'admin' : 'user',
-        uid: cancelledBy.uid,
-        name: cancelledBy.name || cancelledBy.email,
-        email: cancelledBy.email
+        uid: cancelledBy.uid || null,
+        name: cancelledBy.name || cancelledBy.email || 'Unknown',
+        email: cancelledBy.email || null
       },
       cancelledAt: serverTimestamp(),
       createdAt: serverTimestamp(),
@@ -93,14 +93,13 @@ export const createCancellationRecord = async (bookingData, reason, cancelledBy,
 export const cancelBooking = async (bookingData, reason, cancelledBy, releaseSeats = true) => {
   try {
     const bookingType = getBookingType(bookingData);
-    const collection_name = COLLECTIONS[bookingType];
     
-    if (!collection_name) {
+    if (!COLLECTIONS[bookingType]) {
       throw new Error(`Unknown booking type: ${bookingType}`);
     }
 
     // Update booking status
-    const bookingRef = doc(db, collection_name, bookingData.id);
+    const bookingRef = doc(db, COLLECTIONS[bookingType], bookingData.id);
     const updates = {
       status: 'cancelled',
       cancellationReason: reason,
@@ -190,7 +189,8 @@ export const releaseBookingItems = async (bookingData, bookingType) => {
  */
 const releaseHavanSeats = async (bookingData) => {
   try {
-    const seats = bookingData.eventDetails?.seats || bookingData.seats || bookingData.selectedSeats || [];
+    const seats = bookingData.eventDetails?.seats || bookingData.seats || bookingData.selectedSeats || bookingData.seatNumbers || [];
+    
     if (seats.length === 0) {
       return { success: true, message: 'No seats to release' };
     }
@@ -203,9 +203,30 @@ const releaseHavanSeats = async (bookingData) => {
       throw new Error('No event date or shift found for havan booking');
     }
 
-    // Use the correct format with shift
-    const dateKey = formatDateKey(new Date(eventDate));
-    const docKey = `${dateKey}_${eventShift}`;
+    // Handle different date formats properly
+    let dateFormatted;
+    
+    if (eventDate && typeof eventDate === 'object' && eventDate.toDate) {
+      // Firestore Timestamp
+      dateFormatted = formatDateKey(eventDate.toDate());
+    } else if (eventDate instanceof Date) {
+      // JavaScript Date object
+      dateFormatted = formatDateKey(eventDate);
+    } else if (typeof eventDate === 'string') {
+      // String date
+      const parsedDate = new Date(eventDate);
+      if (isNaN(parsedDate.getTime())) {
+        throw new Error(`Invalid date string: ${eventDate}`);
+      }
+      dateFormatted = formatDateKey(parsedDate);
+    } else if (typeof eventDate === 'number') {
+      // Unix timestamp
+      dateFormatted = formatDateKey(new Date(eventDate));
+    } else {
+      throw new Error(`Unknown date format: ${typeof eventDate}`);
+    }
+    
+    const docKey = `${dateFormatted}_${eventShift}`;
     const availabilityRef = doc(db, 'seatAvailability', docKey);
     const availabilityDoc = await getDoc(availabilityRef);
 
@@ -214,24 +235,30 @@ const releaseHavanSeats = async (bookingData) => {
       const updatedSeats = { ...currentSeats };
 
       // Remove the seats from availability (make them available again)
+      let releasedCount = 0;
       seats.forEach(seatId => {
-        // Delete the seat record to make it available
-        delete updatedSeats[seatId];
+        if (updatedSeats[seatId]) {
+          delete updatedSeats[seatId];
+          releasedCount++;
+        }
       });
 
       await updateDoc(availabilityRef, {
         seats: updatedSeats,
-        lastUpdated: serverTimestamp()
+        lastUpdated: serverTimestamp(),
+        lastOperation: 'seat_release_from_cancellation'
       });
 
       return {
         success: true,
-        message: `Released ${seats.length} havan seats`,
-        releasedItems: seats
+        message: `Released ${releasedCount} havan seats`,
+        releasedItems: seats,
+        releasedCount,
+        docKey
       };
     }
 
-    return { success: true, message: 'No availability document found' };
+    return { success: true, message: 'No availability document found', docKey };
   } catch (error) {
     console.error('Error releasing havan seats:', error);
     return { success: false, error: error.message };
@@ -248,33 +275,36 @@ const releaseStalls = async (bookingData) => {
       return { success: true, message: 'No stalls to release' };
     }
 
-    // Update each stall's availability
-    const updates = stallIds.map(async (stallId) => {
-      try {
-        const stallRef = doc(db, 'stalls', stallId);
-        await updateDoc(stallRef, {
-          isBooked: false,
-          bookingId: null,
-          userId: null,
-          releasedAt: serverTimestamp(),
-          lastUpdated: serverTimestamp()
-        });
-        return stallId;
-      } catch (error) {
-        console.error(`Error releasing stall ${stallId}:`, error);
-        return null;
-      }
-    });
-
-    const releasedStalls = await Promise.all(updates);
-    const successfulReleases = releasedStalls.filter(Boolean);
-
-    return {
-      success: true,
-      message: `Released ${successfulReleases.length} stalls`,
-      releasedItems: successfulReleases
-    };
+    // Update stall availability in the stallAvailability collection
+    const availabilityRef = doc(db, 'stallAvailability', 'current');
+    const availabilityDoc = await getDoc(availabilityRef);
+    
+    if (availabilityDoc.exists()) {
+      const currentAvailability = availabilityDoc.data().stalls || {};
+      const updatedAvailability = { ...currentAvailability };
+      
+      // Remove stalls from availability to make them available again
+      stallIds.forEach(stallId => {
+        if (updatedAvailability[stallId] && updatedAvailability[stallId].bookingId === bookingData.bookingId) {
+          delete updatedAvailability[stallId];
+        }
+      });
+      
+      await updateDoc(availabilityRef, {
+        stalls: updatedAvailability,
+        lastUpdated: serverTimestamp()
+      });
+      
+      return {
+        success: true,
+        message: `Released ${stallIds.length} stalls`,
+        releasedItems: stallIds
+      };
+    }
+    
+    return { success: true, message: 'No stall availability document found' };
   } catch (error) {
+    console.error('Error releasing stalls:', error);
     return { success: false, error: error.message };
   }
 };
@@ -286,50 +316,115 @@ const releaseShowSeats = async (bookingData) => {
   try {
     const seats = bookingData.showDetails?.selectedSeats || [];
     if (seats.length === 0) {
+      console.log('No show seats to release for booking:', bookingData.id);
       return { success: true, message: 'No show seats to release' };
     }
 
-    // Get show date
-    const showDate = bookingData.showDetails?.date;
+    // Get show date - try multiple possible date fields
+    const showDate = bookingData.showDetails?.date || 
+                    bookingData.eventDate || 
+                    bookingData.showDetails?.eventDate;
+    
     if (!showDate) {
-      throw new Error('No show date found');
+      console.error('No show date found in booking data:', bookingData);
+      throw new Error('No show date found for show booking');
     }
 
-    const dateKey = formatDateKey(new Date(showDate));
+    // Ensure we format the date properly
+    let dateKey;
+    try {
+      const dateObj = new Date(showDate);
+      if (isNaN(dateObj.getTime())) {
+        throw new Error('Invalid show date format');
+      }
+      dateKey = formatDateKey(dateObj);
+    } catch (dateError) {
+      console.error('Error formatting show date:', showDate, dateError);
+      throw new Error('Invalid show date format');
+    }
+
+    console.log(`Releasing ${seats.length} show seats for date: ${dateKey}`);
+    
     const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
     const availabilityDoc = await getDoc(availabilityRef);
 
     if (availabilityDoc.exists()) {
       const currentSeats = availabilityDoc.data().seats || {};
       const updatedSeats = { ...currentSeats };
+      let releasedCount = 0;
 
       seats.forEach(seatId => {
-        if (updatedSeats[seatId]) {
-          updatedSeats[seatId] = {
-            ...updatedSeats[seatId],
+        const seatKey = String(seatId); // Ensure string format
+        
+        if (updatedSeats[seatKey]) {
+          // Only release if this booking owns the seat
+          if (updatedSeats[seatKey].bookingId === bookingData.id || 
+              updatedSeats[seatKey].bookingId === bookingData.bookingId) {
+            
+            // Clear booking data and mark as released
+            updatedSeats[seatKey] = {
+              ...updatedSeats[seatKey],
+              booked: false,
+              blocked: false,
+              bookingId: null,
+              userId: null,
+              userEmail: null,
+              userName: null,
+              userPhone: null,
+              releasedAt: serverTimestamp(),
+              releasedFrom: 'cancellation',
+              originalBookingId: bookingData.id || bookingData.bookingId
+            };
+            releasedCount++;
+            console.log(`Released seat: ${seatKey}`);
+          } else {
+            console.warn(`Seat ${seatKey} not owned by booking ${bookingData.id}, skipping release`);
+          }
+        } else {
+          console.warn(`Seat ${seatKey} not found in availability data`);
+          // Create the seat entry as available
+          updatedSeats[seatKey] = {
             booked: false,
+            blocked: false,
             bookingId: null,
             userId: null,
-            releasedAt: serverTimestamp()
+            releasedAt: serverTimestamp(),
+            releasedFrom: 'cancellation'
           };
+          releasedCount++;
         }
       });
 
       await updateDoc(availabilityRef, {
         seats: updatedSeats,
-        lastUpdated: serverTimestamp()
+        lastUpdated: serverTimestamp(),
+        lastOperation: 'seat_release'
       });
 
+      console.log(`Successfully released ${releasedCount} show seats`);
+      
       return {
         success: true,
-        message: `Released ${seats.length} show seats`,
+        message: `Released ${releasedCount} show seats for ${dateKey}`,
+        releasedItems: seats,
+        releasedCount,
+        dateKey
+      };
+    } else {
+      console.log(`No availability document found for date: ${dateKey}`);
+      return { 
+        success: true, 
+        message: `No show availability document found for date: ${dateKey}`,
         releasedItems: seats
       };
     }
-
-    return { success: true, message: 'No show availability document found' };
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error('Error releasing show seats:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      details: `Failed to release show seats: ${error.message}`
+    };
   }
 };
 
@@ -440,10 +535,10 @@ const getBookingAmount = (bookingData) => {
 
 const getUserDetails = (bookingData) => {
   return {
-    uid: bookingData.userId || bookingData.userUid,
-    name: bookingData.customerDetails?.name || bookingData.userDetails?.name || bookingData.vendorDetails?.name,
-    email: bookingData.customerDetails?.email || bookingData.userDetails?.email || bookingData.vendorDetails?.email || bookingData.userEmail,
-    phone: bookingData.customerDetails?.phone || bookingData.userDetails?.phone || bookingData.vendorDetails?.phone
+    uid: bookingData.userId || bookingData.userUid || null,
+    name: bookingData.customerDetails?.name || bookingData.userDetails?.name || bookingData.vendorDetails?.name || 'Unknown User',
+    email: bookingData.customerDetails?.email || bookingData.userDetails?.email || bookingData.vendorDetails?.email || bookingData.userEmail || 'No Email',
+    phone: bookingData.customerDetails?.phone || bookingData.userDetails?.phone || bookingData.vendorDetails?.phone || null
   };
 };
 
@@ -453,22 +548,25 @@ const getEventDetails = (bookingData) => {
   switch (bookingType) {
     case BOOKING_TYPES.SHOW:
       return {
-        date: bookingData.showDetails?.date,
-        time: bookingData.showDetails?.time,
-        shift: bookingData.showDetails?.shift
+        date: bookingData.showDetails?.date || null,
+        time: bookingData.showDetails?.time || null,
+        shift: bookingData.showDetails?.shift || null
       };
     case BOOKING_TYPES.HAVAN:
       return {
-        date: bookingData.eventDetails?.date || bookingData.eventDate,
-        shift: bookingData.eventDetails?.shift || bookingData.shift
+        date: bookingData.eventDetails?.date || bookingData.eventDate || null,
+        shift: bookingData.eventDetails?.shift || bookingData.shift || null
       };
     case BOOKING_TYPES.STALL:
       return {
-        startDate: bookingData.eventDetails?.startDate,
-        endDate: bookingData.eventDetails?.endDate
+        startDate: bookingData.eventDetails?.startDate || null,
+        endDate: bookingData.eventDetails?.endDate || null
       };
     default:
-      return {};
+      return {
+        date: null,
+        shift: null
+      };
   }
 };
 

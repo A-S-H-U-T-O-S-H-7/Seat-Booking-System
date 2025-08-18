@@ -50,6 +50,8 @@ export default function CancellationModal({
     if (!finalReason.trim()) {
       return;
     }
+    console.log('🚀 CancellationModal handleConfirm called with reason:', finalReason);
+    console.log('📋 Booking being cancelled:', booking?.id);
     onConfirm(finalReason);
   };
 
@@ -93,7 +95,8 @@ export default function CancellationModal({
                       This action cannot be undone and will:
                     </p>
                     <ul className={`text-xs space-y-1 ${isDarkMode ? 'text-red-200' : 'text-red-800'}`}>
-                      <li>• Release reserved seats</li>
+                      <li>• Release {booking.seatCount || booking.seats?.length || 0} reserved Havan seats</li>
+                      <li>• Make seats available for booking again</li>
                       <li>• Update status to "Cancelled"</li>
                       <li>• May require refund processing</li>
                     </ul>

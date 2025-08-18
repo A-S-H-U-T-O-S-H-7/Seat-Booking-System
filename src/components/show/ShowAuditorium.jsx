@@ -18,32 +18,26 @@ export default function ShowAuditorium() {
     getBaseAmount,
     getEarlyBirdDiscount,
     getBulkDiscount,
-    getNextMilestone
+    getNextMilestone,
+    priceSettings
   } = useShowSeatBooking();
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showSettings, setShowSettings] = useState({
     seatLayout: {
       premiumBlocks: [
-        { id: 'A', name: 'Block A', maxRows: 8, maxPairsPerRow: 7, price: 1000, isActive: true },
-        { id: 'B', name: 'Block B', maxRows: 8, maxPairsPerRow: 7, price: 1000, isActive: true }
+        { id: 'A', name: 'Block A', maxRows: 8, maxPairsPerRow: 7, price: 1200, isActive: true },
+        { id: 'B', name: 'Block B', maxRows: 8, maxPairsPerRow: 7, price: 1200, isActive: true }
       ],
       regularBlocks: [
-        { id: 'C', name: 'Block C', maxRows: 25, maxSeatsPerRow: 15, price: 1000, isActive: true },
-        { id: 'D', name: 'Block D', maxRows: 25, maxSeatsPerRow: 15, price: 500, isActive: true }
+        { id: 'C', name: 'Block C', maxRows: 25, maxSeatsPerRow: 15, price: 600, isActive: true },
+        { id: 'D', name: 'Block D', maxRows: 25, maxSeatsPerRow: 15, price: 400, isActive: true }
       ]
-    }
-  });
-  const [pricingSettings, setPricingSettings] = useState({
-    seatTypes: {
-      blockA: { price: 1000 },
-      blockB: { price: 1000 },
-      blockC: { price: 1000 },
-      blockD: { price: 500 }
     }
   });
   const [loading, setLoading] = useState(true);
 
-  // Fetch show settings and pricing from Firebase on component mount
+  // Fetch show settings from Firebase on component mount
+  // Pricing is handled by the context with real-time sync
   useEffect(() => {
     const fetchShowSettings = async () => {
       try {
@@ -57,34 +51,40 @@ export default function ShowAuditorium() {
       } catch (error) {
         console.error('Error fetching show settings:', error);
         toast.error('Failed to load show settings, using defaults');
-      }
-    };
-    
-    const fetchPricingSettings = async () => {
-      try {
-        const pricingRef = doc(db, 'settings', 'showPricing');
-        const pricingSnap = await getDoc(pricingRef);
-        
-        if (pricingSnap.exists()) {
-          const data = pricingSnap.data();
-          setPricingSettings(data);
-        }
-      } catch (error) {
-        console.error('Error fetching pricing settings:', error);
       } finally {
         setLoading(false);
       }
     };
     
     fetchShowSettings();
-    fetchPricingSettings();
   }, []);
+
+  // Re-generate seats when pricing settings change to ensure price sync
+  useEffect(() => {
+    // This will trigger re-render when context priceSettings change
+    // ensuring all seat prices are updated with the latest settings
+  }, [priceSettings]);
 
   // Helper function to get price for a specific block
   const getPriceForBlock = (blockId) => {
-    const blockKey = `block${blockId}`;
-    return pricingSettings?.seatTypes?.[blockKey]?.price || 
-           (blockId === 'A' || blockId === 'B' ? 1000 : blockId === 'C' ? 1000 : 500);
+    // Use pricing settings from context, which has real-time sync
+    const contextPricing = priceSettings?.seatTypes;
+    
+    if (blockId === 'A' || blockId === 'B') {
+      // Both Block A and B use VIP pricing (which is synced to Block A in context)
+      return contextPricing?.VIP?.price || 1200;
+    }
+    
+    if (blockId === 'C') {
+      return contextPricing?.REGULAR_C?.price || 600;
+    }
+    
+    if (blockId === 'D') {
+      return contextPricing?.REGULAR_D?.price || 400;
+    }
+    
+    // Fallback
+    return 500;
   };
 
   // Generate dynamic seat layout based on show settings
@@ -160,18 +160,29 @@ export default function ShowAuditorium() {
     return seats;
   };
 
-  // Get seats with availability data
+  // Get seats with availability data and handle cancellation status
   const baseSeats = generateSeatLayout();
   const allSeats = Object.keys(baseSeats).reduce((acc, seatId) => {
     const baseSeat = baseSeats[seatId];
     const availabilityData = seatAvailability[seatId] || {};
     
+    // Check if seat was recently released from cancellation
+    const wasReleased = availabilityData.releasedAt && 
+                       (!availabilityData.booked && !availabilityData.blocked);
+    
     acc[seatId] = {
       ...baseSeat,
+      // Update price with current dynamic pricing
+      price: getPriceForBlock(baseSeat.section),
       isBooked: !!availabilityData.booked,
       isBlocked: !!availabilityData.blocked,
       isAvailable: isSeatAvailable(seatId),
-      isSelected: selectedSeats.includes(seatId)
+      isSelected: selectedSeats.includes(seatId),
+      wasReleased: wasReleased,
+      // Additional booking info for better UX
+      bookingId: availabilityData.bookingId,
+      userId: availabilityData.userId,
+      releasedAt: availabilityData.releasedAt
     };
     return acc;
   }, {});
@@ -202,6 +213,23 @@ export default function ShowAuditorium() {
     if (seat.isBlocked) return 'bg-gray-600 cursor-not-allowed';
     if (seat.isSelected) return 'bg-blue-600 text-white';
     
+    // Special styling for recently released seats (brief highlight)
+    if (seat.wasReleased) {
+      const releaseTime = seat.releasedAt?.toDate ? seat.releasedAt.toDate() : null;
+      const isRecent = releaseTime && (Date.now() - releaseTime.getTime()) < 30000; // 30 seconds
+      if (isRecent) {
+        if (seat.section === 'A' || seat.section === 'B') {
+          return 'bg-gradient-to-br from-green-300 to-emerald-400 animate-pulse';
+        }
+        if (seat.section === 'C') {
+          return 'bg-green-400 animate-pulse';
+        }
+        if (seat.section === 'D') {
+          return 'bg-green-300 animate-pulse';
+        }
+      }
+    }
+    
     if (seat.section === 'A' || seat.section === 'B') {
       return 'bg-gradient-to-br from-amber-300 to-yellow-400';
     }
@@ -222,8 +250,20 @@ export default function ShowAuditorium() {
     }
 
     if (seat.isBlocked) {
-      toast.error('This seat is not available');
+      toast.error('This seat is blocked and not available');
       return;
+    }
+
+    // Show confirmation for recently released seats
+    if (seat.wasReleased) {
+      const releaseTime = seat.releasedAt?.toDate ? seat.releasedAt.toDate() : null;
+      const isRecent = releaseTime && (Date.now() - releaseTime.getTime()) < 30000; // 30 seconds
+      if (isRecent) {
+        toast.success('This seat was recently released and is now available!', {
+          duration: 2000,
+          icon: '✨'
+        });
+      }
     }
 
     // Toggle selection by calling context function

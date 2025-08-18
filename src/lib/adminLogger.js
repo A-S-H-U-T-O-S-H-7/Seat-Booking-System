@@ -112,6 +112,13 @@ class AdminLogger {
    * Log booking-related activities
    */
   async logBookingActivity(adminUser, action, bookingId, details = null, ipAddress = null, userAgent = null) {
+    if (action === 'cancel') {
+      console.log('🔍 ADMIN LOGGER: Cancel action detected!');
+      console.log('🔍 Called from:', new Error().stack);
+      console.log('🔍 Admin user:', adminUser);
+      console.log('🔍 Booking ID:', bookingId);
+      console.log('🔍 Details:', details);
+    }
     return this.log({
       adminId: adminUser.uid,
       adminName: adminUser.name,
