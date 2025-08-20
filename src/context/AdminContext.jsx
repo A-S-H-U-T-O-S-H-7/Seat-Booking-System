@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
@@ -26,8 +26,34 @@ export function AdminProvider({ children }) {
 
   if (user) {
     try {
-      // Check if user is admin
-      const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      // First try to check by UID
+      let adminDoc = await getDoc(doc(db, 'admins', user.uid));
+      let adminDocId = user.uid;
+      
+      // If not found by UID, try to find by email (for newly created admins)
+      if (!adminDoc.exists() && user.email) {
+        const emailBasedId = user.email.replace(/[.@]/g, '_');
+        const emailAdminDoc = await getDoc(doc(db, 'admins', emailBasedId));
+        
+        if (emailAdminDoc.exists()) {
+          // Admin record found by email - we need to migrate it to use the UID
+          const emailAdminData = emailAdminDoc.data();
+          
+          // Create new admin record with proper UID
+          await setDoc(doc(db, 'admins', user.uid), {
+            ...emailAdminData,
+            setupCompleted: true,
+            lastLogin: new Date()
+          });
+          
+          // Delete the old email-based record
+          await deleteDoc(doc(db, 'admins', emailBasedId));
+          
+          // Update our references
+          adminDoc = await getDoc(doc(db, 'admins', user.uid));
+          adminDocId = user.uid;
+        }
+      }
       
       if (adminDoc.exists()) {
         const data = adminDoc.data();
@@ -45,7 +71,7 @@ export function AdminProvider({ children }) {
         setAdminData(data);
         
         // Set up real-time listener for admin data updates
-        const adminRef = doc(db, 'admins', user.uid);
+        const adminRef = doc(db, 'admins', adminDocId);
         adminUnsubscribe = onSnapshot(adminRef, (doc) => {
           if (doc.exists()) {
             const updatedData = doc.data();

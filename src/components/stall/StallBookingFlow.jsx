@@ -16,6 +16,7 @@ const StallBookingFlow = () => {
     phone: '',
     aadhar: ''
   });
+  const [isVendorDetailsValid, setIsVendorDetailsValid] = useState(false);
   
   const {
     selectedStalls,
@@ -51,8 +52,7 @@ const StallBookingFlow = () => {
       case 1:
         return selectedStalls && selectedStalls.length > 0;
       case 2:
-        return vendorDetails.businessType && vendorDetails.ownerName && 
-               vendorDetails.email && vendorDetails.address && vendorDetails.phone && vendorDetails.aadhar;
+        return isVendorDetailsValid;
       case 3:
         return true;
       default:
@@ -84,6 +84,7 @@ const StallBookingFlow = () => {
           <VendorDetails 
             details={vendorDetails}
             onDetailsChange={setVendorDetails}
+            onValidationChange={setIsVendorDetailsValid}
           />
         );
       

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { ChevronDown, Info } from 'lucide-react';
 
 export default function ShowAuditorium() {
   const { 
@@ -635,7 +636,7 @@ export default function ShowAuditorium() {
 
       {/* Selection Summary */}
       {selectedSeats.length > 0 && (
-        <div className="mt-3 md:mt-4 p-3 md:p-4 rounded-xl border-2 shadow-lg sticky bottom-4 z-10 bg-white border-gray-200">
+        <div className="mt-3 md:mt-4 p-1 md:p-2 rounded-xl border-2 shadow-lg sticky bottom-4 z-10 bg-white border-gray-200">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Left Side - Selected Seats */}
             <div className="flex-1">
@@ -655,7 +656,7 @@ export default function ShowAuditorium() {
                   return (
                     <span 
                       key={seatId} 
-                      className={`px-3 py-2 rounded-full text-sm font-medium inline-flex items-center gap-1 ${
+                      className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center gap-1 ${
                         isVIP 
                           ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
                           : seat.section === 'C'
@@ -671,7 +672,7 @@ export default function ShowAuditorium() {
             </div>
             
             {/* Right Side - Pricing */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 min-w-[240px]">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-1 border border-blue-200 min-w-[240px]">
               {/* Total Amount */}
               <div className="text-right mb-2">
                 <div className="text-2xl font-bold text-blue-700">
@@ -724,6 +725,32 @@ export default function ShowAuditorium() {
                 }
                 </div>
               </div>
+            </div>
+          </div>
+          
+          {/* Scroll Down Section */}
+          <div className=" mt-1 flex justify-end border-gray-200">
+            <div className="flex  max-w-[230px] items-center gap-2 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+              <div className="flex items-center gap-1">
+                <Info className="h-3 w-3 text-rose-500 flex-shrink-0" />
+                <span className="text-rose-800 text-xs font-medium">
+                  Scroll down to proceed next
+                </span>
+              </div>
+              <button 
+                onClick={() => {
+                  window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                  });
+                }}
+                className="relative focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-1 rounded-full transition-transform hover:scale-110"
+                aria-label="Scroll to bottom of page"
+              >
+                <div className="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center animate-pulse shadow-lg cursor-pointer">
+                  <ChevronDown className="w-5 h-5 text-white animate-bounce" />
+                </div>
+              </button>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useBooking } from '@/context/BookingContext';
 import { formatDateKey } from '@/utils/dateUtils';
-import { Info } from 'lucide-react';
+import { Info, ChevronDown } from 'lucide-react';
 
 const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = [] }) => {
   const [seatAvailability, setSeatAvailability] = useState({});
@@ -13,6 +13,13 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
   const [layoutSettings, setLayoutSettings] = useState({
     blocks: []
   });
+
+  const scrollToBottom = () => {
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: 'smooth'
+  });
+};
   
   // Get pricing information from booking context
   const { priceSettings, getTotalAmount, getCurrentDiscountInfo, getNextMilestone } = useBooking();
@@ -385,86 +392,94 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
         )}
       </div>
 
-      {/* Selected seats summary - Responsive */}
+      {/* Selected seats summary - Compact Design */}
       {selectedSeats.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 p-3 sm:p-4 md:p-6 rounded-xl sticky bottom-4 z-10 shadow-lg">
-          <div className="flex flex-col gap-3">
-            {/* Header and seats */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h4 className="font-semibold text-sm sm:text-base mb-2 text-blue-800">
-                  Selected Seats ({selectedSeats.length})
-                </h4>
-                <div className="flex flex-wrap gap-1 sm:gap-2 mb-2 sm:mb-0">
-                  {selectedSeats.slice(0, 6).map(seatId => (
-                    <span key={seatId} className="bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
+        <div className="bg-blue-50 border border-blue-200 p-2 sm:p-3 rounded-xl sticky bottom-4 z-10 shadow-lg">
+          <div className="flex flex-col gap-2">
+            {/* Header and seats in one row for better space utilization */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center justify-between sm:justify-start gap-3 mb-1">
+                  <h4 className="font-semibold text-sm text-blue-800">
+                    Selected Seats ({selectedSeats.length})
+                  </h4>
+                  <div className="text-blue-700 sm:hidden">
+                    <p className="font-bold text-base">₹{getTotalAmount()}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1 mb-1 sm:mb-0">
+                  {selectedSeats.slice(0, 8).map(seatId => (
+                    <span key={seatId} className="bg-blue-500 text-white px-1.5 py-0.5 rounded text-xs font-medium">
                       {seatId}
                     </span>
                   ))}
-                  {selectedSeats.length > 6 && (
-                    <span className="bg-blue-400 text-white px-2 py-1 rounded-lg text-xs font-medium">
-                      +{selectedSeats.length - 6} more
+                  {selectedSeats.length > 8 && (
+                    <span className="bg-blue-400 text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                      +{selectedSeats.length - 8}
                     </span>
                   )}
                 </div>
               </div>
-              <div className="text-blue-700 text-right sm:text-left">
-                <p className="font-bold text-lg sm:text-xl">₹{getTotalAmount()}</p>
-                <p className="text-xs sm:text-sm opacity-75">₹{priceSettings.defaultSeatPrice} per seat</p>
+              <div className="text-blue-700 hidden sm:block text-right flex-shrink-0">
+                <p className="font-bold text-lg">₹{getTotalAmount()}</p>
+                <p className="text-xs opacity-75">₹{priceSettings.defaultSeatPrice}/seat</p>
               </div>
             </div>
             
-            {/* Current Discount Info */}
-            {(() => {
-              const currentDiscount = getCurrentDiscountInfo();
-              if (currentDiscount) {
-                return (
-                  <div className=" max-w-md ">
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-600 font-bold text-xs">🎉</span>
+            {/* Discount and milestone info in compact horizontal layout */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              {/* Current Discount Info */}
+              {(() => {
+                const currentDiscount = getCurrentDiscountInfo();
+                if (currentDiscount) {
+                  return (
+                    <div className="flex items-center gap-1">
+                      <span className="text-green-600 text-xs">🎉</span>
                       <span className="text-green-800 text-xs font-medium">
                         {currentDiscount.percent}% {currentDiscount.label} Applied!
                       </span>
                     </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-            
-            {/* Next Milestone */}
-            {(() => {
-              const nextMilestone = getNextMilestone();
-              if (nextMilestone) {
-                return (
-                  <div className="max-w-md ">
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-600 font-bold text-xs">🎯</span>
+                  );
+                }
+                return null;
+              })()}
+              
+              {/* Next Milestone */}
+              {(() => {
+                const nextMilestone = getNextMilestone();
+                if (nextMilestone) {
+                  return (
+                    <div className="flex items-center gap-1">
+                      <span className="text-orange-600 text-xs">🎯</span>
                       <span className="text-orange-800 text-xs font-medium">
-                        Book {nextMilestone.seatsNeeded} more seat{nextMilestone.seatsNeeded > 1 ? 's' : ''} to get {nextMilestone.discountPercent}% discount!
+                        Book {nextMilestone.seatsNeeded} more for {nextMilestone.discountPercent}% off!
                       </span>
                     </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
+                  );
+                }
+                return null;
+              })()}
 
-      <div className="bg-rose-50 border border-rose-200 rounded-lg p-2  w-full shadow-sm">
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <Info className="h-5 w-5 text-rose-500 mt-0.5" />
-          </div>
-          <div className="flex-1">
-            <p className="text-rose-800 text-sm font-medium">
-              Please scroll down to proceed to the next step
-            </p>
-          </div>
-        </div>
+              {/* Scroll notice - more compact with blinking arrow */}
+              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+      <div className="flex items-center gap-1">
+        <Info className="h-3 w-3 text-rose-500 flex-shrink-0" />
+        <span className="text-rose-800 text-xs font-medium">
+          Scroll down to proceed next
+        </span>
       </div>
-
-
-     </div>
+      <button 
+        onClick={scrollToBottom}
+        className="relative focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-1 rounded-full transition-transform hover:scale-110"
+        aria-label="Scroll to bottom of page"
+      >
+        <div className="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center animate-pulse shadow-lg cursor-pointer">
+          <ChevronDown className="w-5 h-5 text-white animate-bounce" />
+        </div>
+      </button>
+    </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

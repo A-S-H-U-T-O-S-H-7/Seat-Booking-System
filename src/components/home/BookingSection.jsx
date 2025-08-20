@@ -11,28 +11,28 @@ function BookingSection({ user }) {
               Choose Your Booking Type
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8">
               {/* Havan Seat Booking */}
               <Link
                 href="/booking/havan"
-                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+                className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <img 
                       src="havanicon.png" 
                       alt="Havan icon" 
-                      className="w-6 h-6 object-contain"
+                      className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 object-contain"
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-orange-600 transition-colors duration-300">
-                      Book Havan Seat
+                    <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-800 group-hover:text-orange-600 transition-colors duration-300 leading-tight">
+                      Havan Seat
                     </h3>
-                    <p className="text-sm text-gray-600">Sacred ceremony</p>
+                    <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Sacred ceremony</p>
                   </div>
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
                   Secure your seat for the sacred Havan ceremony. Choose from multiple sessions and seating arrangements.
                 </p>
               </Link>
@@ -40,24 +40,24 @@ function BookingSection({ user }) {
               {/* Stall Booking */}
               <Link
                 href="/booking/stall"
-                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+                className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <img 
                       src="stall.png" 
                       alt="Stall icon" 
-                      className="w-10 h-10 object-contain"
+                      className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300">
-                      Book Your Stall
+                    <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-300 leading-tight">
+                      Your Stall
                     </h3>
-                    <p className="text-sm text-gray-600">Vendor space</p>
+                    <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Vendor space</p>
                   </div>
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
                   Reserve a stall for your business. 5-day booking with prime locations available.
                 </p>
               </Link>
@@ -65,24 +65,24 @@ function BookingSection({ user }) {
               {/* Show Seat Booking */}
               <Link
                 href="/booking/show"
-                className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
+                className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                     <img 
                       src="show.png" 
                       alt="Show icon" 
-                      className="w-10 h-10 object-contain"
+                      className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
-                      Book Show Seat
+                    <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300 leading-tight">
+                      Show Seat
                     </h3>
-                    <p className="text-sm text-gray-600">Entertainment</p>
+                    <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Entertainment</p>
                   </div>
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
                   Book seats for cultural shows and performances.
                 </p>
               </Link>

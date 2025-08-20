@@ -1,22 +1,116 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, MapPin, Building, CreditCard } from 'lucide-react';
-
+import { User, Mail, Phone, MapPin, Building, CreditCard, AlertCircle } from 'lucide-react';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 
-const VendorDetails = ({ details, onDetailsChange }) => {
+const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
   const [errors, setErrors] = useState({});
+  const [userDataLoaded, setUserDataLoaded] = useState(false);
   const { user } = useAuth();
 
-  // Auto-populate email when component mounts or user changes
+  // Auto-fill user data from previous bookings or saved profile
   useEffect(() => {
-    if (user?.email && (!details.email || details.email === '')) {
-      onDetailsChange({
-        ...details,
-        email: user.email
-      });
+    if (user?.uid && !userDataLoaded) {
+      loadUserData();
     }
-  }, [user?.email, details.email, onDetailsChange]); // Include all dependencies
+  }, [user, userDataLoaded]);
+
+  // Pre-fill email from user account if not already filled
+  useEffect(() => {
+    if (user?.email && !details.email) {
+      onDetailsChange(prev => ({
+        ...prev,
+        email: user.email
+      }));
+    }
+  }, [user, details.email, onDetailsChange]);
+
+  // Validate form and notify parent component
+  useEffect(() => {
+    const isValid = validateForm();
+    if (onValidationChange) {
+      onValidationChange(isValid);
+    }
+  }, [details, onValidationChange]);
+
+  const loadUserData = async () => {
+    try {
+      const profile = {
+        businessType: details.businessType || '',
+        ownerName: details.ownerName || '',
+        email: details.email || user?.email || '',
+        phone: details.phone || '',
+        aadhar: details.aadhar || '',
+        address: details.address || ''
+      };
+
+      // First check userProfiles collection for manually saved data
+      const userProfileRef = doc(db, 'userProfiles', user.uid);
+      const userProfileDoc = await getDoc(userProfileRef);
+      
+      if (userProfileDoc.exists()) {
+        const savedProfile = userProfileDoc.data();
+        if (savedProfile.ownerName && !profile.ownerName) profile.ownerName = savedProfile.ownerName;
+        if (savedProfile.name && !profile.ownerName) profile.ownerName = savedProfile.name;
+        if (savedProfile.email && !profile.email) profile.email = savedProfile.email;
+        if (savedProfile.phone && !profile.phone) profile.phone = savedProfile.phone;
+        if (savedProfile.aadhar && !profile.aadhar) profile.aadhar = savedProfile.aadhar;
+        if (savedProfile.address && !profile.address) profile.address = savedProfile.address;
+        if (savedProfile.businessType && !profile.businessType) profile.businessType = savedProfile.businessType;
+      }
+
+      // If we don't have complete data, check stallBookings collection
+      if (!profile.ownerName || !profile.phone || !profile.aadhar || !profile.address || !profile.businessType) {
+        const q = query(
+          collection(db, 'stallBookings'),
+          where('userId', '==', user.uid)
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        snapshot.forEach((doc) => {
+          if (profile.ownerName && profile.phone && profile.aadhar && profile.address && profile.businessType) return;
+          
+          const data = doc.data();
+          const vendorDetails = data.vendorDetails || data.userDetails;
+          
+          if (vendorDetails) {
+            if (!profile.ownerName && vendorDetails.ownerName?.trim()) {
+              profile.ownerName = vendorDetails.ownerName.trim();
+            }
+            if (!profile.phone && vendorDetails.phone?.trim()) {
+              profile.phone = vendorDetails.phone.trim();
+            }
+            if (!profile.email && vendorDetails.email?.trim()) {
+              profile.email = vendorDetails.email.trim();
+            }
+            if (!profile.aadhar && vendorDetails.aadhar?.trim()) {
+              profile.aadhar = vendorDetails.aadhar.trim();
+            }
+            if (!profile.address && vendorDetails.address?.trim()) {
+              profile.address = vendorDetails.address.trim();
+            }
+            if (!profile.businessType && vendorDetails.businessType?.trim()) {
+              profile.businessType = vendorDetails.businessType.trim();
+            }
+          }
+        });
+      }
+
+      // Update the form with found data
+      onDetailsChange(prev => ({
+        ...prev,
+        ...profile
+      }));
+      
+      setUserDataLoaded(true);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      setUserDataLoaded(true);
+    }
+  };
 
   const businessTypes = [
     'Food & Beverages', 'Clothing & Textiles', 'Handicrafts & Art',
@@ -26,16 +120,79 @@ const VendorDetails = ({ details, onDetailsChange }) => {
   ];
 
   const handleInputChange = (field, value) => {
-    onDetailsChange({
-      ...details,
-      [field]: value
-    });
+    // Format input for phone and aadhar
+    if (field === 'phone') {
+      value = value.replace(/\D/g, '').slice(0, 10);
+    } else if (field === 'aadhar') {
+      value = value.replace(/\D/g, '').slice(0, 12);
+    }
 
+    onDetailsChange(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Clear error for this field when user starts typing
     if (errors[field]) {
-      setErrors({
-        ...errors,
-        [field]: ''
-      });
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const validateBusinessType = (businessType) => {
+    return businessType && businessType.trim() !== '';
+  };
+
+  const validateOwnerName = (ownerName) => {
+    return ownerName && ownerName.trim().length >= 3;
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validateAadhar = (aadhar) => {
+    const cleanAadhar = aadhar.replace(/\s/g, '');
+    const aadharRegex = /^\d{12}$/;
+    return aadharRegex.test(cleanAadhar);
+  };
+
+  const validateAddress = (address) => {
+    return address && address.trim().length >= 5;
+  };
+
+  const validateForm = () => {
+    return (
+      validateBusinessType(details.businessType) &&
+      validateOwnerName(details.ownerName) &&
+      validateEmail(details.email) &&
+      validatePhone(details.phone) &&
+      validateAadhar(details.aadhar) &&
+      validateAddress(details.address)
+    );
+  };
+
+  const getFieldError = (field) => {
+    switch (field) {
+      case 'businessType':
+        return details.businessType && !validateBusinessType(details.businessType) ? 'Please select a business type' : '';
+      case 'ownerName':
+        return details.ownerName && !validateOwnerName(details.ownerName) ? 'Name must be at least 3 characters long' : '';
+      case 'email':
+        return details.email && !validateEmail(details.email) ? 'Please enter a valid email address' : '';
+      case 'phone':
+        return details.phone && !validatePhone(details.phone) ? 'Please enter a valid 10-digit mobile number starting with 6-9' : '';
+      case 'aadhar':
+        return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number' : '';
+      case 'address':
+        return details.address && !validateAddress(details.address) ? 'Address must be at least 5 characters long' : '';
+      default:
+        return '';
     }
   };
 
@@ -65,13 +222,21 @@ const VendorDetails = ({ details, onDetailsChange }) => {
               <select
                 value={details.businessType || ''}
                 onChange={(e) => handleInputChange('businessType', e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors hover:border-gray-400 placeholder:text-gray-500 text-gray-700"
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-gray-500 text-gray-700 ${
+                  getFieldError('businessType') ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
               >
                 <option value="">Select business type</option>
                 {businessTypes.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
+              {getFieldError('businessType') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('businessType')}
+                </p>
+              )}
             </div>
 
             {/* Contact Person Name */}
@@ -84,9 +249,18 @@ const VendorDetails = ({ details, onDetailsChange }) => {
                 type="text"
                 value={details.ownerName || ''}
                 onChange={(e) => handleInputChange('ownerName', e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors hover:border-gray-400 placeholder:text-gray-500 text-gray-700"
-                placeholder="Your full name"
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors placeholder:text-gray-500 text-gray-700 ${
+                  getFieldError('ownerName') ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                placeholder="Your full name (minimum 3 characters)"
+                required
               />
+              {getFieldError('ownerName') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('ownerName')}
+                </p>
+              )}
             </div>
 
             {/* Mobile */}
@@ -99,10 +273,19 @@ const VendorDetails = ({ details, onDetailsChange }) => {
                 type="tel"
                 value={details.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, ''))}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors hover:border-gray-400 placeholder:text-gray-500 text-gray-700"
-                placeholder="Your Mobile Number"
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors placeholder:text-gray-500 text-gray-700 ${
+                  getFieldError('phone') ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                placeholder="Enter 10-digit mobile number"
                 maxLength={10}
+                required
               />
+              {getFieldError('phone') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('phone')}
+                </p>
+              )}
             </div>
 
             {/* Email - spans 2 columns on large screens */}
@@ -118,11 +301,18 @@ const VendorDetails = ({ details, onDetailsChange }) => {
                 type="email"
                 value={details.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors placeholder:text-gray-500 text-gray-700 ${
-                  user?.email && details.email === user.email ? 'bg-blue-50 border-blue-200' : 'border-gray-300 hover:border-gray-400'
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors placeholder:text-gray-500 text-gray-700 ${
+                  getFieldError('email') ? 'border-red-300 bg-red-50' : user?.email && details.email === user.email ? 'bg-blue-50 border-blue-200' : 'border-gray-300 hover:border-gray-400'
                 }`}
                 placeholder="your.email@example.com"
+                required
               />
+              {getFieldError('email') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('email')}
+                </p>
+              )}
             </div>
 
             {/* Aadhar Number */}
@@ -144,10 +334,19 @@ const VendorDetails = ({ details, onDetailsChange }) => {
                   }
                   handleInputChange('aadhar', value);
                 }}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors hover:border-gray-400 placeholder:text-gray-500 text-gray-700"
-                placeholder="Enter Your Aadhar Number"
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder:text-gray-500 text-gray-700 ${
+                  getFieldError('aadhar') ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                placeholder="Enter 12-digit Aadhar number"
                 maxLength={14}
+                required
               />
+              {getFieldError('aadhar') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('aadhar')}
+                </p>
+              )}
             </div>
 
             {/* Address - Full width */}
@@ -159,10 +358,19 @@ const VendorDetails = ({ details, onDetailsChange }) => {
               <textarea
                 value={details.address || ''}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none hover:border-gray-400 placeholder:text-gray-500 text-gray-700"
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors resize-none placeholder:text-gray-500 text-gray-700 ${
+                  getFieldError('address') ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
                 rows={2}
-                placeholder="Enter complete address with city, state and pincode"
+                placeholder="Enter complete address (minimum 5 characters)"
+                required
               />
+              {getFieldError('address') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('address')}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -182,6 +390,28 @@ const VendorDetails = ({ details, onDetailsChange }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Export validation function for use by parent components
+VendorDetails.validateForm = (details) => {
+  const validateBusinessType = (businessType) => businessType && businessType.trim() !== '';
+  const validateOwnerName = (ownerName) => ownerName && ownerName.trim().length >= 3;
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
+  const validateAadhar = (aadhar) => {
+    const cleanAadhar = aadhar.replace(/\s/g, '');
+    return /^\d{12}$/.test(cleanAadhar);
+  };
+  const validateAddress = (address) => address && address.trim().length >= 5;
+
+  return (
+    validateBusinessType(details.businessType) &&
+    validateOwnerName(details.ownerName) &&
+    validateEmail(details.email) &&
+    validatePhone(details.phone) &&
+    validateAadhar(details.aadhar) &&
+    validateAddress(details.address)
   );
 };
 

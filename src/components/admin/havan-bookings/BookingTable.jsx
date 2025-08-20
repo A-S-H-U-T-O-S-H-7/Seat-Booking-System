@@ -196,32 +196,18 @@ export default function BookingTable({
         )}
 
         {booking.status === 'confirmed' && (
-          <>
-            <button
-              onClick={() => onAdjustPrice(booking)}
-              disabled={isUpdating}
-              className={`${baseButtonClass} ${
-                isDarkMode 
-                  ? 'bg-blue-700 hover:bg-blue-600 text-blue-100 border border-blue-600' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600'
-              }`}
-              title="Adjust Price"
-            >
-              <PencilIcon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onCancel(booking)}
-              disabled={isUpdating}
-              className={`${baseButtonClass} ${
-                isDarkMode 
-                  ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
-                  : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
-              }`}
-              title="Cancel Booking"
-            >
-              <XCircleIcon className="h-4 w-4" />
-            </button>
-          </>
+          <button
+            onClick={() => onCancel(booking)}
+            disabled={isUpdating}
+            className={`${baseButtonClass} ${
+              isDarkMode 
+                ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
+                : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
+            }`}
+            title="Cancel Booking"
+          >
+            <XCircleIcon className="h-4 w-4" />
+          </button>
         )}
 
         {booking.status === 'cancellation-requested' && (

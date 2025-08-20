@@ -4,6 +4,8 @@ import { auth } from "@/lib/firebase";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
@@ -33,13 +35,21 @@ export const AuthProvider = ({ children }) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
+  // Google Sign In
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('profile');
+    return signInWithPopup(auth, provider);
+  };
+
   // Logout
   const logout = () => {
     return signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, signup, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, signup, login, signInWithGoogle, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

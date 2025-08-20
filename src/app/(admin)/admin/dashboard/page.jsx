@@ -18,7 +18,8 @@ import {
   ClockIcon,
   SunIcon,
   MoonIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  BanknotesIcon
 } from '@heroicons/react/24/outline';
 
 // Import admin components
@@ -35,6 +36,7 @@ import PriceSettings from '@/components/admin/PriceSettings';
 import SystemSettings from '@/components/admin/SystemSettings';
 import OverviewStats from '@/components/admin/OverviewStats';
 import ActivityLogs from '@/components/admin/ActivityLogs';
+import CancellationRefundManagement from '@/components/admin/cancellation-refunds/CancellationRefundManagement';
 
 export default function AdminDashboard() {
   const { adminUser, loading, logout, hasPermission } = useAdmin();
@@ -78,7 +80,7 @@ export default function AdminDashboard() {
       id: 'overview',
       name: 'Overview',
       icon: ChartBarIcon,
-      permission: null
+      permission: 'view_overview' // Now requires permission
     },
     {
       id: 'seats',
@@ -96,25 +98,31 @@ export default function AdminDashboard() {
       id: 'show-seats',
       name: 'Show Seats',
       icon: CalendarDaysIcon,
-      permission: 'view_bookings'
+      permission: 'manage_show_seats' // Separate permission
     },
     {
       id: 'bookings',
       name: 'Havan Bookings',
       icon: UsersIcon,
-      permission: 'view_bookings'
+      permission: 'view_havan_bookings' // Separate permission
     },
     {
       id: 'stall-bookings',
       name: 'Stall Bookings',
       icon: UsersIcon,
-      permission: 'view_bookings'
+      permission: 'view_stall_bookings' // Separate permission
     },
     {
       id: 'show-bookings',
       name: 'Show Bookings',
       icon: UsersIcon,
-      permission: 'view_bookings'
+      permission: 'view_show_bookings' // Separate permission
+    },
+    {
+      id: 'cancellations',
+      name: 'Cancellation & Refunds',
+      icon: BanknotesIcon,
+      permission: 'manage_cancellations'
     },
     {
       id: 'users',
@@ -164,6 +172,8 @@ export default function AdminDashboard() {
         return <StallBookingManagement />;
       case 'show-bookings':
         return <ShowBookingManagement />;
+      case 'cancellations':
+        return <CancellationRefundManagement />;
       case 'users':
         return <UserManagement />;
       case 'pricing':
@@ -209,12 +219,23 @@ export default function AdminDashboard() {
           </div>
 
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto admin-sidebar-nav">
-            {navigationItems.map((item) => {
-              if (item.permission && !hasPermission(item.permission)) {
-                return null;
+            {(() => {
+              const visibleItems = navigationItems.filter(item => 
+                !item.permission || hasPermission(item.permission)
+              );
+              
+              // If no visible items, show a message
+              if (visibleItems.length === 0) {
+                return (
+                  <div className={`text-center p-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <ExclamationTriangleIcon className="w-8 h-8 mx-auto mb-2" />
+                    <p className="text-sm">No permissions assigned</p>
+                    <p className="text-xs mt-1">Contact your Super Admin</p>
+                  </div>
+                );
               }
               
-              return (
+              return visibleItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => {
@@ -236,8 +257,8 @@ export default function AdminDashboard() {
                   <item.icon className="w-5 h-5 mr-3" />
                   {item.name}
                 </button>
-              );
-            })}
+              ));
+            })()} 
           </nav>
 
           {/* Theme toggle */}

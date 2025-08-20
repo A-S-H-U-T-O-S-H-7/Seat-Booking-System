@@ -33,16 +33,30 @@ export default function AdminManagement() {
   const [editingAdmin, setEditingAdmin] = useState(null);
 
   const availablePermissions = [
-    { id: 'view_events', name: 'View Events' },
-    { id: 'manage_seats', name: 'Manage Seats' },
-    { id: 'manage_stalls', name: 'Manage Stalls' },
-    { id: 'view_bookings', name: 'View Bookings' },
-    { id: 'manage_bookings', name: 'Manage Bookings' },
-    { id: 'view_users', name: 'View Users' },
-    { id: 'manage_users', name: 'Manage Users' },
-    { id: 'manage_pricing', name: 'Manage Pricing' },
-    { id: 'manage_admins', name: 'Manage Admins' },
-    { id: 'view_reports', name: 'View Reports' }
+    // Based on actual dashboard navigation items - each section gets its own permission
+    
+    // Overview (always visible, but we can add permission for it)
+    { id: 'view_overview', name: 'Overview Dashboard' },
+    
+    // Core Management
+    { id: 'manage_seats', name: 'Havan Seats' },
+    { id: 'manage_stalls', name: 'Stall Seats' },
+    { id: 'manage_show_seats', name: 'Show Seats' },
+    
+    // Booking Management - Separate permission for each booking type
+    { id: 'view_havan_bookings', name: 'Havan Bookings' },
+    { id: 'view_stall_bookings', name: 'Stall Bookings' },
+    { id: 'view_show_bookings', name: 'Show Bookings' },
+    
+    // Cancellation & Refund Management
+    { id: 'manage_cancellations', name: 'Cancellation & Refunds' },
+    
+    // User & System Management
+    { id: 'view_users', name: 'User Management' },
+    { id: 'manage_pricing', name: 'Price Settings' },
+    { id: 'manage_settings', name: 'System Settings' },
+    { id: 'manage_admins', name: 'Admin Management' },
+    { id: 'view_logs', name: 'Activity Logs' }
   ];
 
   const roles = [
@@ -83,8 +97,9 @@ export default function AdminManagement() {
 
     setIsUpdating(true);
     try {
-      // Generate admin ID (in a real app, this would be the user's Firebase Auth UID)
-      const adminId = `admin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // For now, create admin with email-based ID since we don't have Firebase Auth UID yet
+      // In production, you would create the Firebase Auth account first
+      const adminId = newAdmin.email.replace(/[.@]/g, '_');
       
       const adminData = {
         name: newAdmin.name,
@@ -93,7 +108,9 @@ export default function AdminManagement() {
         permissions: newAdmin.role === 'super_admin' ? [] : newAdmin.permissions,
         createdAt: new Date(),
         createdBy: adminUser.uid,
-        isActive: true
+        isActive: true,
+        // Add flag to indicate this admin needs to complete setup
+        setupCompleted: false
       };
 
       await setDoc(doc(db, 'admins', adminId), adminData);
@@ -101,7 +118,9 @@ export default function AdminManagement() {
       setAdmins(prev => [...prev, { id: adminId, ...adminData }]);
       setShowAddModal(false);
       setNewAdmin({ name: '', email: '', role: 'admin', permissions: [] });
-      toast.success('Admin added successfully');
+      toast.success(
+        'Admin added successfully! They need to create their account first, then contact you to link their account.'
+      );
     } catch (error) {
       console.error('Error adding admin:', error);
       toast.error('Failed to add admin');
@@ -423,20 +442,41 @@ export default function AdminManagement() {
                 {newAdmin.role !== 'super_admin' && (
                   <div>
                     <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                      Permissions
+                      Page Access Permissions
                     </label>
-                    <div className={`border rounded-md p-3 max-h-32 overflow-y-auto space-y-2 ${isDarkMode ? 'border-gray-600 bg-gray-700/50' : 'border-gray-300 bg-gray-50'}`}>
-                      {availablePermissions.map(permission => (
-                        <label key={permission.id} className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={newAdmin.permissions.includes(permission.id)}
-                            onChange={() => handleTogglePermission(permission.id, true)}
-                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded transition-colors"
-                          />
-                          <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{permission.name}</span>
-                        </label>
-                      ))}
+                    <div className={`border rounded-md p-4 max-h-64 overflow-y-auto space-y-4 ${isDarkMode ? 'border-gray-600 bg-gray-700/50' : 'border-gray-300 bg-gray-50'}`}>
+                      {/* Quick Select All/None */}
+                      <div className="flex gap-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+                        <button
+                          type="button"
+                          onClick={() => setNewAdmin({...newAdmin, permissions: availablePermissions.map(p => p.id)})}
+                          className={`px-2 py-1 text-xs rounded ${isDarkMode ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}
+                        >
+                          Select All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewAdmin({...newAdmin, permissions: []})}
+                          className={`px-2 py-1 text-xs rounded ${isDarkMode ? 'bg-gray-600 text-white hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                      
+                      {/* All Permissions */}
+                      <div className="space-y-2">
+                        {availablePermissions.map(permission => (
+                          <label key={permission.id} className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={newAdmin.permissions.includes(permission.id)}
+                              onChange={() => handleTogglePermission(permission.id, true)}
+                              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded transition-colors"
+                            />
+                            <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{permission.name}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}

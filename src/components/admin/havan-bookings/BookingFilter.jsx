@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -9,15 +10,40 @@ export default function BookingFilters({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
-  dateFilter,
-  setDateFilter,
+  bookingDateFilter,
+  setBookingDateFilter,
+  eventDateFilter,
+  setEventDateFilter,
   onSearch,
   loading,
   isDarkMode
 }) {
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, [setSearchTerm]);
+
+  const handleStatusChange = useCallback((e) => {
+    setStatusFilter(e.target.value);
+  }, [setStatusFilter]);
+
+  const handleBookingDateChange = useCallback((e) => {
+    setBookingDateFilter(e.target.value);
+  }, [setBookingDateFilter]);
+
+  const handleEventDateChange = useCallback((e) => {
+    setEventDateFilter(e.target.value);
+  }, [setEventDateFilter]);
+
+  const handleClearFilters = useCallback(() => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setBookingDateFilter('');
+    setEventDateFilter('');
+  }, [setSearchTerm, setStatusFilter, setBookingDateFilter, setEventDateFilter]);
+
   return (
     <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-6`}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Search */}
         <div>
           <label className={`block text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -28,8 +54,8 @@ export default function BookingFilters({
             <input
               type="text"
               placeholder="Search by name, email, or booking ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchTerm || ''}
+              onChange={handleSearchChange}
               className={`block w-full h-12 pl-4 pr-10 rounded-lg shadow-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                 isDarkMode 
                   ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
@@ -47,8 +73,8 @@ export default function BookingFilters({
             Filter by Status
           </label>
           <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            value={statusFilter || 'all'}
+            onChange={handleStatusChange}
             className={`block w-full h-12 px-4 rounded-lg shadow-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
               isDarkMode 
                 ? 'bg-gray-700 border-gray-600 text-white' 
@@ -58,39 +84,49 @@ export default function BookingFilters({
             <option value="all">🔍 All Status</option>
             <option value="confirmed">✅ Confirmed</option>
             <option value="cancelled">❌ Cancelled</option>
-                      </select>
+          </select>
         </div>
 
-        {/* Date Filter */}
+        {/* Booking Date Filter */}
         <div>
           <label className={`block text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
             <CalendarDaysIcon className="w-5 h-5 inline mr-2" />
-            Filter by Date
+            Booking Date
           </label>
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
+          <input
+            type="date"
+            value={bookingDateFilter || ''}
+            onChange={handleBookingDateChange}
             className={`block w-full h-12 px-4 rounded-lg shadow-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
               isDarkMode 
                 ? 'bg-gray-700 border-gray-600 text-white' 
                 : 'bg-white border-gray-300 text-gray-900'
             }`}
-          >
-            <option value="all">📅 All Time</option>
-            <option value="today">🌅 Today</option>
-            <option value="week">📊 Last Week</option>
-            <option value="month">🗓️ Last Month</option>
-          </select>
+          />
+        </div>
+
+        {/* Event Date Filter */}
+        <div>
+          <label className={`block text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <CalendarDaysIcon className="w-5 h-5 inline mr-2" />
+            Event Date
+          </label>
+          <input
+            type="date"
+            value={eventDateFilter || ''}
+            onChange={handleEventDateChange}
+            className={`block w-full h-12 px-4 rounded-lg shadow-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600 text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
         </div>
 
         {/* Clear Filters Button */}
         <div className="flex items-end">
           <button
-            onClick={() => {
-              setSearchTerm('');
-              setStatusFilter('all');
-              setDateFilter('all');
-            }}
+            onClick={handleClearFilters}
             disabled={loading}
             className={`w-full h-12 inline-flex items-center justify-center px-6 py-3 border text-sm font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
               isDarkMode 

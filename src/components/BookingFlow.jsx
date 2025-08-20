@@ -17,6 +17,7 @@ const BookingFlow = () => {
     address: '',
     aadhar: ''
   });
+  const [isCustomerDetailsValid, setIsCustomerDetailsValid] = useState(false);
   
   const {
     selectedDate,
@@ -75,7 +76,7 @@ const BookingFlow = () => {
       case 3:
         return selectedSeats.length > 0;
       case 4:
-  return customerDetails.name && customerDetails.email && customerDetails.phone && customerDetails.aadhar;
+        return isCustomerDetailsValid;
       case 5:
         return true;
       default:
@@ -130,12 +131,13 @@ const BookingFlow = () => {
         );
 
       case 4:
-  return (
-    <CustomerDetails 
-      details={customerDetails}
-      onDetailsChange={setCustomerDetails}
-    />
-  );
+        return (
+          <CustomerDetails 
+            details={customerDetails}
+            onDetailsChange={setCustomerDetails}
+            onValidationChange={setIsCustomerDetailsValid}
+          />
+        );
       
       case 5:
   return (

@@ -9,10 +9,12 @@ import ShowPaymentProcess from "./ShowPaymentProcess";
 
 const ShowBookingFlow = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isUserDetailsValid, setIsUserDetailsValid] = useState(false);
   const {
     selectedDate,
     selectedSeats,
     bookingData,
+    updateUserDetails,
   } = useShowSeatBooking();
 
   const userDetails = bookingData.userDetails || {};
@@ -57,31 +59,9 @@ const ShowBookingFlow = () => {
           console.log('Step 2 validation:', { selectedSeats, seatsSelected });
           return seatsSelected;
         case 3:
-          // Proper validation functions
-          const validateName = (name) => name && name.trim().length >= 3;
-          const validateEmail = (email) => {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
-          };
-          const validatePhone = (phone) => {
-            const phoneRegex = /^[6-9]\d{9}$/;
-            return phoneRegex.test(phone);
-          };
-          const validateAadhar = (aadhar) => {
-            const aadharRegex = /^\d{12}$/;
-            return aadharRegex.test(aadhar);
-          };
-          const validateAddress = (address) => address && address.trim().length >= 5;
-          
-          const detailsComplete = (
-            validateName(userDetails.name) &&
-            validateEmail(userDetails.email) &&
-            validatePhone(userDetails.phone) &&
-            validateAadhar(userDetails.aadhar) &&
-            validateAddress(userDetails.address)
-          );
-          console.log('Step 3 validation:', { userDetails, detailsComplete });
-          return detailsComplete;
+          // Use validation state from ShowUserDetails component
+          console.log('Step 3 validation:', { userDetails, isUserDetailsValid });
+          return isUserDetailsValid;
         case 4:
           console.log('Step 4 validation: always true');
           return true; // On payment step, can proceed
@@ -117,7 +97,13 @@ const ShowBookingFlow = () => {
       case 2:
         return <ShowSeatSelection />;
       case 3:
-        return <ShowUserDetails />;
+        return (
+          <ShowUserDetails 
+            details={userDetails}
+            onDetailsChange={updateUserDetails}
+            onValidationChange={setIsUserDetailsValid}
+          />
+        );
       case 4:
         return <ShowPaymentProcess />;
       default:

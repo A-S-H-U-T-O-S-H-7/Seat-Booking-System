@@ -1,12 +1,23 @@
 "use client";
 import { useAuth } from '@/context/AuthContext';
-import { Calendar, Clock, Info, Mail, Phone, RefreshCw, User } from 'lucide-react';
-import { useEffect } from 'react';
+import { Calendar, Clock, Info, Mail, Phone, RefreshCw, User, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-const CustomerDetails = ({ details, onDetailsChange }) => {
+const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
   const { user } = useAuth();
+  const [errors, setErrors] = useState({});
+  const [userDataLoaded, setUserDataLoaded] = useState(false);
 
-  // Pre-fill email from user account
+  // Auto-fill user data from previous bookings or saved profile
+  useEffect(() => {
+    if (user?.uid && !userDataLoaded) {
+      loadUserData();
+    }
+  }, [user, userDataLoaded]);
+
+  // Pre-fill email from user account if not already filled
   useEffect(() => {
     if (user?.email && !details.email) {
       onDetailsChange(prev => ({
@@ -16,16 +27,112 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
     }
   }, [user, details.email, onDetailsChange]);
 
+  // Validate form and notify parent component
+  useEffect(() => {
+    const isValid = validateForm();
+    if (onValidationChange) {
+      onValidationChange(isValid);
+    }
+  }, [details, onValidationChange]);
+
+  const loadUserData = async () => {
+    try {
+      const profile = {
+        name: details.name || '',
+        email: details.email || user?.email || '',
+        phone: details.phone || '',
+        aadhar: details.aadhar || '',
+        address: details.address || ''
+      };
+
+      // First check userProfiles collection for manually saved data
+      const userProfileRef = doc(db, 'userProfiles', user.uid);
+      const userProfileDoc = await getDoc(userProfileRef);
+      
+      if (userProfileDoc.exists()) {
+        const savedProfile = userProfileDoc.data();
+        if (savedProfile.name && !profile.name) profile.name = savedProfile.name;
+        if (savedProfile.email && !profile.email) profile.email = savedProfile.email;
+        if (savedProfile.phone && !profile.phone) profile.phone = savedProfile.phone;
+        if (savedProfile.aadhar && !profile.aadhar) profile.aadhar = savedProfile.aadhar;
+        if (savedProfile.address && !profile.address) profile.address = savedProfile.address;
+      }
+
+      // If we don't have complete data, check booking collections
+      if (!profile.name || !profile.phone || !profile.aadhar || !profile.address) {
+        const bookingCollections = ['bookings', 'showBookings', 'stallBookings'];
+        
+        for (const collectionName of bookingCollections) {
+          if (profile.name && profile.phone && profile.aadhar && profile.address) break;
+          
+          const q = query(
+            collection(db, collectionName),
+            where('userId', '==', user.uid)
+          );
+          
+          const snapshot = await getDocs(q);
+          
+          snapshot.forEach((doc) => {
+            if (profile.name && profile.phone && profile.aadhar && profile.address) return;
+            
+            const data = doc.data();
+            const customerDetails = data.customerDetails || data.userDetails;
+            
+            if (customerDetails) {
+              if (!profile.name && customerDetails.name?.trim()) {
+                profile.name = customerDetails.name.trim();
+              }
+              if (!profile.phone && customerDetails.phone?.trim()) {
+                profile.phone = customerDetails.phone.trim();
+              }
+              if (!profile.email && customerDetails.email?.trim()) {
+                profile.email = customerDetails.email.trim();
+              }
+              if (!profile.aadhar && customerDetails.aadhar?.trim()) {
+                profile.aadhar = customerDetails.aadhar.trim();
+              }
+              if (!profile.address && customerDetails.address?.trim()) {
+                profile.address = customerDetails.address.trim();
+              }
+            }
+          });
+        }
+      }
+
+      // Update the form with found data
+      onDetailsChange(prev => ({
+        ...prev,
+        ...profile
+      }));
+      
+      setUserDataLoaded(true);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      setUserDataLoaded(true);
+    }
+  };
+
   const handleChange = (field, value) => {
+    // Format input for phone and aadhar
+    if (field === 'phone') {
+      value = value.replace(/\D/g, '').slice(0, 10);
+    } else if (field === 'aadhar') {
+      value = value.replace(/\D/g, '').slice(0, 12);
+    }
+
     onDetailsChange(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
-  const validatePhone = (phone) => {
-    const phoneRegex = /^[6-9]\d{9}$/;
-    return phoneRegex.test(phone);
+  const validateName = (name) => {
+    return name && name.trim().length >= 3;
   };
 
   const validateEmail = (email) => {
@@ -33,10 +140,46 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
     return emailRegex.test(email);
   };
 
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/;
+    return phoneRegex.test(phone);
+  };
+
   const validateAadhar = (aadhar) => {
-  const aadharRegex = /^\d{12}$/;
-  return aadharRegex.test(aadhar);
-};
+    const aadharRegex = /^\d{12}$/;
+    return aadharRegex.test(aadhar);
+  };
+
+  const validateAddress = (address) => {
+    return address && address.trim().length >= 5;
+  };
+
+  const validateForm = () => {
+    return (
+      validateName(details.name) &&
+      validateEmail(details.email) &&
+      validatePhone(details.phone) &&
+      validateAadhar(details.aadhar) &&
+      validateAddress(details.address)
+    );
+  };
+
+  const getFieldError = (field) => {
+    switch (field) {
+      case 'name':
+        return details.name && !validateName(details.name) ? 'Name must be at least 3 characters long' : '';
+      case 'email':
+        return details.email && !validateEmail(details.email) ? 'Please enter a valid email address' : '';
+      case 'phone':
+        return details.phone && !validatePhone(details.phone) ? 'Please enter a valid 10-digit mobile number' : '';
+      case 'aadhar':
+        return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number' : '';
+      case 'address':
+        return details.address && !validateAddress(details.address) ? 'Address must be at least 5 characters long' : '';
+      default:
+        return '';
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 px-2 md:p-4">
@@ -52,12 +195,20 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
           </label>
             <input
               type="text"
-              value={details.name}
+              value={details.name || ''}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500"
-              placeholder="Enter your full name"
+              className={`w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 ${
+                getFieldError('name') ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
+              placeholder="Enter your full name (minimum 3 characters)"
               required
             />
+            {getFieldError('name') && (
+              <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {getFieldError('name')}
+              </p>
+            )}
         </div>
 
         {/* Email */}
@@ -67,14 +218,19 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
           </label>
           <input
             type="email"
-            value={details.email}
+            value={details.email || ''}
             onChange={(e) => handleChange('email', e.target.value)}
-            className="w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500"
+            className={`w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 ${
+              getFieldError('email') ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
             placeholder="Enter your email"
             required
           />
-          {details.email && !validateEmail(details.email) && (
-            <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>
+          {getFieldError('email') && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {getFieldError('email')}
+            </p>
           )}
         </div>
 
@@ -85,15 +241,20 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
           </label>
           <input
             type="tel"
-            value={details.phone}
-            onChange={(e) => handleChange('phone', e.target.value.replace(/\D/g, ''))}
+            value={details.phone || ''}
+            onChange={(e) => handleChange('phone', e.target.value)}
             maxLength="10"
-            className="w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500"
+            className={`w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 ${
+              getFieldError('phone') ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
             placeholder="Enter 10-digit mobile number"
             required
           />
-          {details.phone && !validatePhone(details.phone) && (
-            <p className="text-red-500 text-xs mt-1">Please enter a valid 10-digit mobile number</p>
+          {getFieldError('phone') && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {getFieldError('phone')}
+            </p>
           )}
         </div>
 
@@ -104,30 +265,44 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
   </label>
   <input
     type="text"
-    value={details.aadhar}
-    onChange={(e) => handleChange('aadhar', e.target.value.replace(/\D/g, ''))}
+    value={details.aadhar || ''}
+    onChange={(e) => handleChange('aadhar', e.target.value)}
     maxLength="12"
-    className="w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500"
+    className={`w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 ${
+      getFieldError('aadhar') ? 'border-red-300 bg-red-50' : 'border-gray-200'
+    }`}
     placeholder="Enter 12-digit Aadhar number"
     required
   />
-  {details.aadhar && !validateAadhar(details.aadhar) && (
-    <p className="text-red-500 text-xs mt-1">Please enter a valid 12-digit Aadhar number</p>
+  {getFieldError('aadhar') && (
+    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+      <AlertCircle className="w-3 h-3" />
+      {getFieldError('aadhar')}
+    </p>
   )}
 </div>
 
         {/* Address */}
-        <div >
+        <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Address
+            Address *
           </label>
           <textarea
-            value={details.address}
+            value={details.address || ''}
             onChange={(e) => handleChange('address', e.target.value)}
             rows="3"
-            className="w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 resize-none"
-            placeholder="Enter your complete address"
+            className={`w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 resize-none ${
+              getFieldError('address') ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
+            placeholder="Enter your complete address (minimum 5 characters)"
+            required
           />
+          {getFieldError('address') && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              {getFieldError('address')}
+            </p>
+          )}
         </div>
       </div>
 
@@ -223,6 +398,23 @@ const CustomerDetails = ({ details, onDetailsChange }) => {
       </div>
     </div>
     </div>
+  );
+};
+
+// Export validation function for use by parent components
+CustomerDetails.validateForm = (details) => {
+  const validateName = (name) => name && name.trim().length >= 3;
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
+  const validateAadhar = (aadhar) => /^\d{12}$/.test(aadhar);
+  const validateAddress = (address) => address && address.trim().length >= 5;
+
+  return (
+    validateName(details.name) &&
+    validateEmail(details.email) &&
+    validatePhone(details.phone) &&
+    validateAadhar(details.aadhar) &&
+    validateAddress(details.address)
   );
 };
 

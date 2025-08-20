@@ -479,6 +479,10 @@ export const ShowSeatBookingProvider = ({ children }) => {
     dispatch({ type: ACTIONS.SET_BOOKING_DATA, payload: data });
   };
 
+  const updateUserDetails = (userDetails) => {
+    dispatch({ type: ACTIONS.SET_BOOKING_DATA, payload: { userDetails } });
+  };
+
   const clearSelection = () => {
     dispatch({ type: ACTIONS.CLEAR_SELECTION });
   };
@@ -709,6 +713,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
     setDateAndShift,
     setCurrentStep,
     setBookingData,
+    updateUserDetails,
     clearSelection,
     resetBooking,
     processBooking,

@@ -32,10 +32,62 @@ export default function SeatManagement() {
     blocks: []
   });
   const [shifts, setShifts] = useState([]);
+  const [dateSettings, setDateSettings] = useState({
+    startDate: '',
+    endDate: '',
+    isActive: false
+  });
+  const [dateInitialized, setDateInitialized] = useState(false);
+
+  // Listen to date range settings changes and set default date
+  useEffect(() => {
+    const dateRef = doc(db, 'settings', 'dateRange');
+    
+    const unsubscribe = onSnapshot(dateRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setDateSettings(data);
+        
+        // If event dates are configured and this is the first load,
+        // set the selected date to the event start date
+        if (!dateInitialized && data.isActive && data.startDate) {
+          const eventStartDate = new Date(data.startDate);
+          console.log('SeatManagement: Setting default date to event start date:', eventStartDate);
+          setSelectedDate(eventStartDate);
+          setDateInitialized(true);
+        }
+      } else {
+        // Default settings if none exist
+        setDateSettings({
+          startDate: '',
+          endDate: '',
+          isActive: false
+        });
+        if (!dateInitialized) {
+          setDateInitialized(true);
+        }
+      }
+    }, (error) => {
+      console.error('Error listening to date settings:', error);
+      setDateSettings({
+        startDate: '',
+        endDate: '',
+        isActive: false
+      });
+      if (!dateInitialized) {
+        setDateInitialized(true);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [dateInitialized]);
 
   useEffect(() => {
-    fetchSeatAvailability();
-  }, [selectedDate, selectedShift]);
+    // Only fetch seat availability after date is initialized
+    if (dateInitialized) {
+      fetchSeatAvailability();
+    }
+  }, [selectedDate, selectedShift, dateInitialized]);
 
   // Listen for layout settings changes
   useEffect(() => {

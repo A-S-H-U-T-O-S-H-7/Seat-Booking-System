@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
 import { 
   doc, getDoc, setDoc, updateDoc, 
@@ -150,16 +151,14 @@ export default function ShowSeatManagement() {
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-  });
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('grid');
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [filterStatus, setFilterStatus] = useState('all');
   const [isUpdating, setIsUpdating] = useState(false);
   const [showUserDetails, setShowUserDetails] = useState(null);
   const [dateLoading, setDateLoading] = useState(false);
+  const [dateInitialized, setDateInitialized] = useState(false);
 
   // Check permissions early
   if (!hasPermission('view_bookings') && !hasPermission('manage_shows')) {
@@ -172,7 +171,7 @@ export default function ShowSeatManagement() {
     );
   }
 
-  // Real-time listener for show settings from Firebase
+  // Real-time listener for show settings from Firebase with default date setup
   useEffect(() => {
     const showSettingsRef = doc(db, 'settings', 'shows');
     
@@ -182,18 +181,48 @@ export default function ShowSeatManagement() {
         if (doc.exists()) {
           const data = doc.data();
           setShowSettings(data);
+          
+          // Set default date to show event start date if available and not already initialized
+          if (!dateInitialized && data.eventDates) {
+            let defaultDate = null;
+            
+            // Check for specific start and end dates first
+            if (data.eventDates.startDate && data.eventDates.endDate) {
+              const eventStartDate = new Date(data.eventDates.startDate);
+              defaultDate = eventStartDate;
+              console.log('ShowSeatManagement: Setting default date to show event start date:', defaultDate);
+            }
+            // Fallback to tomorrow + dayCount logic if no specific dates
+            else if (data.eventDates.enabled || data.eventDates.isActive) {
+              const tomorrow = new Date();
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              defaultDate = tomorrow;
+              console.log('ShowSeatManagement: Setting default date to tomorrow (fallback):', defaultDate);
+            }
+            
+            if (defaultDate) {
+              setSelectedDate(defaultDate);
+            }
+            setDateInitialized(true);
+          }
         } else {
           setShowSettings(null);
+          if (!dateInitialized) {
+            setDateInitialized(true);
+          }
         }
       },
       (error) => {
         console.error('Error listening to show settings:', error);
         toast.error('Failed to load show settings');
+        if (!dateInitialized) {
+          setDateInitialized(true);
+        }
       }
     );
     
     return () => unsubscribe();
-  }, []);
+  }, [dateInitialized]);
 
   // Initialize seats layout when show settings are loaded
   useEffect(() => {
@@ -218,16 +247,11 @@ export default function ShowSeatManagement() {
     }, { available: 0, booked: 0, blocked: 0 });
   }, [seats]);
 
-  // Handle date change with proper loading state
-  const handleDateChange = useCallback((newDate) => {
-    if (newDate === selectedDate) return;
-    
-    setDateLoading(true);
-    setSelectedDate(newDate);
-    setSelectedSeats([]); // Clear selection when date changes
-    
-    if (!newDate) {
-      // Reset all seats to available when no date is selected
+  // Real-time updates for selected date - only after date is initialized
+  useEffect(() => {
+    if (!dateInitialized) return;
+
+    if (!selectedDate) {
       setSeats(prev => prev.map(seat => ({ 
         ...seat, 
         status: 'available',
@@ -238,62 +262,39 @@ export default function ShowSeatManagement() {
         userName: undefined,
         userPhone: undefined
       })));
-      setDateLoading(false);
+      return;
     }
-  }, [selectedDate]);
 
-  // Real-time updates for selected date
-  useEffect(() => {
-    if (!selectedDate) return;
-    
-    const dateKey = selectedDate;
+    setDateLoading(true);
+    setSelectedSeats([]); // Clear selection when date changes
+
+    const dateKey = format(selectedDate, 'yyyy-MM-dd');
     const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
     
     const unsubscribe = onSnapshot(
       availabilityRef, 
       (doc) => {
         try {
-          if (doc.exists()) {
-            const data = doc.data();
-            const seatAvailability = data.seats || {};
-            
-            setSeats(prev => prev.map(seat => {
-              const availability = seatAvailability[seat.id];
-              
-              let newStatus = 'available';
-              if (availability) {
-                // Check if the seat is blocked or booked
-                if (availability.blocked === true) {
-                  newStatus = 'blocked';
-                } else if (availability.booked === true) {
-                  newStatus = 'booked';
-                }
-              }
-              
-              return {
-                ...seat,
-                status: newStatus,
-                bookingId: availability?.bookingId,
-                userId: availability?.userId,
-                bookedAt: availability?.bookedAt,
-                userEmail: availability?.userEmail,
-                userName: availability?.userName,
-                userPhone: availability?.userPhone
-              };
-            }));
-          } else {
-            // No availability data for this date, all seats are available
-            setSeats(prev => prev.map(seat => ({ 
-              ...seat, 
-              status: 'available',
-              bookingId: undefined,
-              userId: undefined,
-              bookedAt: undefined,
-              userEmail: undefined,
-              userName: undefined,
-              userPhone: undefined
-            })));
-          }
+          const seatAvailability = doc.exists() ? doc.data().seats || {} : {};
+          
+          setSeats(prev => prev.map(seat => {
+            const availability = seatAvailability[seat.id];
+            let newStatus = 'available';
+            if (availability) {
+              if (availability.blocked === true) newStatus = 'blocked';
+              else if (availability.booked === true) newStatus = 'booked';
+            }
+            return {
+              ...seat,
+              status: newStatus,
+              bookingId: availability?.bookingId,
+              userId: availability?.userId,
+              bookedAt: availability?.bookedAt,
+              userEmail: availability?.userEmail,
+              userName: availability?.userName,
+              userPhone: availability?.userPhone
+            };
+          }));
         } catch (error) {
           console.error('Error processing seat availability:', error);
           toast.error('Failed to update seat availability');
@@ -309,7 +310,7 @@ export default function ShowSeatManagement() {
     );
     
     return () => unsubscribe();
-  }, [selectedDate]);
+  }, [selectedDate, dateInitialized]);
 
   const handleSeatClick = useCallback((seat) => {
     if (seat.status === 'booked') {
@@ -341,7 +342,7 @@ export default function ShowSeatManagement() {
     
     try {
       setIsUpdating(true);
-      const dateKey = selectedDate;
+      const dateKey = format(selectedDate, 'yyyy-MM-dd');
       const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
       
       // Get current availability
@@ -832,26 +833,16 @@ export default function ShowSeatManagement() {
             <CalendarDaysIcon className="w-4 h-4 inline mr-2" />
             Event Date
           </label>
-          <div className="relative">
-            <input
-              type="date"
-              value={selectedDate}
-              min="2020-01-01"
-              max="2030-12-31"
-              onChange={(e) => handleDateChange(e.target.value)}
-              disabled={dateLoading}
-              className={`block w-full p-2 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
-              } ${dateLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            />
-            {dateLoading && (
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-              </div>
-            )}
-          </div>
+          <input
+            type="date"
+            value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+            className={`block w-full p-2 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600 text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
+          />
         </div>
 
         {/* View Mode */}

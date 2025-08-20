@@ -1,5 +1,6 @@
 import React from 'react';
 import { Facebook, Twitter, Youtube } from 'lucide-react';
+import Link from 'next/link';
 
 function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,7 +10,7 @@ function Footer() {
       {/* Main Footer Section */}
       <div className="bg-gradient-to-b from-slate-900 to-blue-950 text-gray-300">
       
-        <div className="container mx-auto px-4  md:pt-8">
+        <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-12">
           
           {/* Company Logo and About */}
@@ -132,6 +133,7 @@ function Footer() {
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
 
@@ -139,16 +141,16 @@ function Footer() {
       <div className="bg-slate-950 text-gray-400">
         <div className="container mx-auto">
           {/* Footer Links */}
-          <div className="flex flex-wrap justify-center md:justify-between gap-4 py-4 px-4 border-b border-slate-800 text-sm">
-            <a href="/refund-policy" className="hover:text-teal-300 transition-colors duration-300">
-              Refund Policy
-            </a>
-            <a href="/faqs" className="hover:text-teal-300 transition-colors duration-300">
+            <div className="flex flex-wrap justify-center md:justify-between gap-4 py-4 px-4 border-b border-slate-800 text-sm">
+            <Link href="/privacy-policy" className="hover:text-teal-300 transition-colors duration-300">
+              Privacy Policy
+            </Link>
+            <Link href="/faqs" className="hover:text-teal-300 transition-colors duration-300">
               FAQs
-            </a>
-            <a href="/terms-and-conditions" className="hover:text-teal-300 transition-colors duration-300">
+            </Link>
+            <Link href="/terms-and-conditions" className="hover:text-teal-300 transition-colors duration-300">
               Terms and Conditions
-            </a>
+            </Link>
           </div>
 
           {/* Copyright */}
@@ -164,7 +166,6 @@ function Footer() {
             </p>
           </div>
         </div>
-      </div>
       </div>
     </footer>
   );

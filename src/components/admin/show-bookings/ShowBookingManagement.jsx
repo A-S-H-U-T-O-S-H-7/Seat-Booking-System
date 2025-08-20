@@ -35,6 +35,7 @@ export default function ShowBookingsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedDate, setSelectedDate] = useState(null);
+  const [bookingDate, setBookingDate] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
@@ -48,13 +49,13 @@ export default function ShowBookingsPage() {
     fetchBookings();
   }, [currentPage, statusFilter, dateFilter]);
   
-  // Separate effect for selectedDate to avoid re-fetching data
+  // Separate effect for selectedDate and bookingDate to avoid re-fetching data
   useEffect(() => {
     if (allBookingsData.length > 0) {
       // Apply client-side filtering without re-fetching
       applyClientSideFilters();
     }
-  }, [selectedDate, currentPage, statusFilter, dateFilter, searchTerm, allBookingsData]);
+  }, [selectedDate, bookingDate, currentPage, statusFilter, dateFilter, searchTerm, allBookingsData]);
 
   // Debounced search effect
   useEffect(() => {
@@ -67,14 +68,10 @@ export default function ShowBookingsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter, selectedDate]);
+  }, [statusFilter, dateFilter, selectedDate, bookingDate]);
 
-  // Client-side filtering function that filters by show date instead of booking date
+  // Client-side filtering function that handles both show date and booking date filters
   const applyClientSideFilters = () => {
-    if (!selectedDate) {
-      return;
-    }
-    
     // Start with all available data
     let filteredBookings = [...allBookingsData];
     
@@ -109,7 +106,7 @@ export default function ShowBookingsPage() {
       });
     }
     
-    // Apply specific date filter by SHOW DATE (showDetails.date)
+    // Apply specific show date filter (showDetails.date)
     if (selectedDate) {
       const targetDate = new Date(selectedDate);
       targetDate.setHours(0, 0, 0, 0);
@@ -137,6 +134,30 @@ export default function ShowBookingsPage() {
         showDateObj.setHours(0, 0, 0, 0);
         
         const isMatch = showDateObj >= targetDate && showDateObj < nextDay;
+        
+        return isMatch;
+      });
+    }
+    
+    // Apply specific booking date filter
+    if (bookingDate) {
+      const targetDate = new Date(bookingDate);
+      targetDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      filteredBookings = filteredBookings.filter(booking => {
+        const bookingDateObj = booking.bookingDate || booking.createdAt;
+        
+        if (!bookingDateObj) {
+          return false;
+        }
+        
+        // Normalize booking date to start of day for comparison
+        const normalizedBookingDate = new Date(bookingDateObj);
+        normalizedBookingDate.setHours(0, 0, 0, 0);
+        
+        const isMatch = normalizedBookingDate >= targetDate && normalizedBookingDate < nextDay;
         
         return isMatch;
       });
@@ -453,6 +474,8 @@ export default function ShowBookingsPage() {
         setDateFilter={setDateFilter}
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
+        bookingDate={bookingDate}
+        setBookingDate={setBookingDate}
         onSearch={fetchBookings}
         loading={loading}
         isDarkMode={isDarkMode}

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -95,6 +96,23 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+          
+          {/* Divider */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">or</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Google Sign In */}
+          <div className="mt-6">
+            <GoogleSignInButton text="Sign in with Google" />
+          </div>
           
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
