@@ -327,10 +327,7 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
             <span className="text-xs text-gray-700">Seats reserved for selected date and shift only</span>
           </div>
           
-          <div className="flex items-center gap-2 p-2 bg-white bg-opacity-60 rounded border border-amber-200">
-            <RefreshCw className="w-3 h-3 text-amber-600 flex-shrink-0" />
-            <span className="text-xs text-gray-700">Full refund if canceled 15+ days before event</span>
-          </div>
+          
           
           <div className="flex items-center gap-2 p-2 bg-white bg-opacity-60 rounded border border-amber-200">
             <Mail className="w-3 h-3 text-amber-600 flex-shrink-0" />

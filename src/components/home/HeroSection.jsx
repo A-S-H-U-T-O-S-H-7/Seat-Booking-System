@@ -98,7 +98,7 @@ function HeroSection({ user }) {
                   </p>
                   <div className="w-16 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mx-auto lg:mx-0"></div>
                   <p className="text-base sm:text-lg lg:text-lg text-gray-700 leading-relaxed font-medium">
-                    Book your seats online for a spiritual experience filled with 
+                    Contribute with devotion and reserve your seat for a spiritual experience filled with 
                     <span className="text-orange-600 font-bold"> peace</span>, 
                     <span className="text-yellow-600 font-bold"> blessings</span>, and
                     <span className="text-red-600 font-bold"> divine grace</span>.
@@ -111,7 +111,7 @@ function HeroSection({ user }) {
 {/* Enhanced Animated Action Buttons */}
 <div className="flex justify-center items-center py-8 px-4">
   {user ? (
-    <div className="flex flex-col md:flex-row gap-12 md:gap-20 items-center justify-center w-full max-w-5xl mx-auto">
+    <div className="flex flex-col md:flex-row gap-12 md:gap-20 items-center justify-center w-full max-w-7xl mx-auto">
       
       {/* Havan Booking Circle */}
       <div className="group relative flex items-center justify-center">
@@ -153,7 +153,7 @@ function HeroSection({ user }) {
                           transition-all duration-500 delay-200">
               <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap 
                              drop-shadow-lg flex items-center gap-2">
-                Book Your Havan Seat
+                Pick Your Havan Spot
               </span>
             </div>
           </Link>
@@ -199,7 +199,7 @@ function HeroSection({ user }) {
                           transition-all duration-500 delay-200">
               <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap 
                              drop-shadow-lg flex items-center gap-2">
-                Book Your Stall
+                Pick Your Stall Place
               </span>
             </div>
           </Link>
@@ -222,7 +222,7 @@ function HeroSection({ user }) {
           />
         </div>
         
-        <div className="relative w-16 h-16 group-hover:w-60 group-hover:h-14 transition-all duration-700 ease-out flex items-center justify-center">
+        <div className="relative w-16 h-16 group-hover:w-72 group-hover:h-14 transition-all duration-700 ease-out flex items-center justify-center">
           <Link
             href="/booking/show"
             className="absolute inset-0 rounded-full group-hover:rounded-2xl
@@ -240,11 +240,11 @@ function HeroSection({ user }) {
                           transition-transform duration-1200 ease-out
                           rounded-full group-hover:rounded-2xl"></div>
             
-            <div className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-full h-full pl-16
+            <div className="opacity-0 group-hover:opacity-100 flex items-center justify-center w-full h-full pl-16 pr-4
                           transition-all duration-500 delay-200">
               <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap 
                              drop-shadow-lg flex items-center gap-2">
-                Book Your Show
+                Pick Your Show Spot
               </span>
             </div>
           </Link>

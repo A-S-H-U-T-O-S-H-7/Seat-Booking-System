@@ -46,7 +46,7 @@ const BookingFlow = () => {
     },
     { 
       id: 3, 
-      title: 'Choose Seats', 
+      title: 'Choose Your Spots', 
       subtitle: 'Reserve spots',
       icon: Users,
       component: 'seats' 
@@ -61,7 +61,7 @@ const BookingFlow = () => {
     { 
       id: 5, 
       title: 'Payment', 
-      subtitle: 'Complete booking',
+      subtitle: 'Complete payment',
       icon: CreditCard,
       component: 'payment' 
     }

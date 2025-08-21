@@ -344,9 +344,6 @@ export default function ShowBookingSummary({ onNext, onBack }) {
         }`}>
           <li>• Booking confirmation will be sent to your registered email address</li>
           <li>• Please arrive 30 minutes before the show starts</li>
-          <li>• Cancellation is allowed up to 5 days before the show date</li>
-          <li>• Seats are non-transferable and non-refundable after the cancellation period</li>
-          <li>• VIP sofas accommodate exactly 2 people each</li>
           <li>• Entry is subject to availability and event guidelines</li>
         </ul>
       </div>

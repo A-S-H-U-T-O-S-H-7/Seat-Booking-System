@@ -28,7 +28,7 @@ const ShowBookingFlow = () => {
     },
     {
       id: 2,
-      title: "Choose Seats",
+      title: "Choose Places",
       subtitle: "Reserve spots",
       icon: Users,
     },
@@ -113,11 +113,11 @@ const ShowBookingFlow = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
-      <div className="container mx-auto px-2 py-8">
-        <div className={`${getContainerMaxWidth()} mx-auto`}>
+      <div className="container mx-auto px-2 py-2 md:py-8">
+        <div className={`${getContainerMaxWidth()} pb-5 md:pb-10 mx-auto`}>
 
           <div className="text-center mb-8">
-            <div className="relative bg-gradient-to-br from-pink-200 via-white to-fuchsia-200 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/60 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-pink-200 via-white to-fuchsia-200 backdrop-blur-sm rounded-2xl p-3 md:p-8 shadow-2xl border border-white/60 overflow-hidden">
               {/* Background Decoration */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
@@ -130,9 +130,9 @@ const ShowBookingFlow = () => {
                 </div>
                 
                 {/* Title */}
-                <h1 className="text-4xl md:text-5xl font-bold mb-3">
+                <h1 className="text-3xl md:text-5xl font-bold mb-3">
                   <span className="bg-gradient-to-r from-rose-900 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">
-                    Book Your Show
+                                        Reserve Your Show Place
                   </span>
                 </h1>
                 

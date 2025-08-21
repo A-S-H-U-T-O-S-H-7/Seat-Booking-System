@@ -103,7 +103,7 @@ const StallBookingFlow = () => {
   return (
     <div className="min-h-screen  bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <div className="container  mx-auto px-2 py-4 md:py-8">
-        <div className="max-w-7xl  mx-auto">
+        <div className="max-w-7xl pb-5 md:pb-10 mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="relative bg-gradient-to-br from-purple-200 via-white to-purple-200 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/60 overflow-hidden">
@@ -121,7 +121,7 @@ const StallBookingFlow = () => {
                 {/* Title */}
                 <h1 className="text-4xl md:text-5xl font-bold mb-3">
                   <span className="bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Book Your Stall
+                    Pick Your Stall
                   </span>
                 </h1>
                 

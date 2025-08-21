@@ -161,7 +161,7 @@ const SimpleUserProfile = ({ user }) => {
           {!userProfile?.name && !userProfile?.phone && (
             <div className="mt-1">
               <p className="text-sm text-gray-500">
-                Additional profile information will appear after your first booking
+                Additional profile information will appear after your first reservation
               </p>
             </div>
           )}

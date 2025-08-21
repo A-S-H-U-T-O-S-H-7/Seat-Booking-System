@@ -71,8 +71,8 @@ export default function ShowSeatSelection() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full mb-4 shadow-lg">
           <Users className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Seats</h2>
-        <p className="text-gray-600">Select your preferred seats </p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Places</h2>
+        <p className="text-gray-600">Select your preferred places</p>
       </div>
 
       {/* Show Information */}

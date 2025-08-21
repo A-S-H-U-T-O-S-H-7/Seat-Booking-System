@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { BookingProvider } from '@/context/BookingContext';
 import BookingFlow from '@/components/BookingFlow';
 import Link from 'next/link';
+import Footer from '@/components/home/Footer';
 
 export default function BookingPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function BookingPage() {
   return (
     <ProtectedRoute> 
       <BookingProvider>
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50">
+        <div className=" bg-gradient-to-br from-orange-50 via-white to-amber-50">
 
           <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-orange-200">
           <div className="px-2 sm:px-6 py-3 sm:py-4">
@@ -30,9 +31,9 @@ export default function BookingPage() {
                 />
                 <div>
                   <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 bg-clip-text text-transparent">
-                    Havan Seat Booking
+                    Reserve Your Havan Place 
                   </h1>
-                  <p className="text-xs sm:text-sm text-gray-600">Join the spiritual journey – book your place</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Join the spiritual journey – reserve your place</p>
                 </div>
               </Link>
               <button 
@@ -86,7 +87,7 @@ export default function BookingPage() {
                       <span className="text-2xl hidden">🔥</span>
                     </div>
                     <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-3">
-                      Havan Seat Booking
+                      Reserve Your Havan Place 
                     </h1>
                     <p className="text-gray-700 text-base md:text-lg max-w-2xl mx-auto mb-4">
                       Select your preferred date, shift, and seats for the sacred Havan ceremony
@@ -103,6 +104,7 @@ export default function BookingPage() {
               <BookingFlow />
             </div>
           </div>
+          <Footer/>
         </div>
       </BookingProvider>
     </ProtectedRoute>

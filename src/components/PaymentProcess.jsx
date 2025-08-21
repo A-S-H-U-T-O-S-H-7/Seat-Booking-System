@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { formatDateKey } from '@/utils/dateUtils';
 import { useShifts } from '@/hooks/useShifts';
+import { CheckCircle } from 'lucide-react';
 
 const PaymentProcess = ({ customerDetails }) => {
   const [processing, setProcessing] = useState(false);
@@ -207,120 +208,13 @@ const PaymentProcess = ({ customerDetails }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 flex flex-col justify-center items-center px-2 sm:px-4 py-4 sm:py-8">
-      {/* Debug Overlay */}
-      {showDebugOverlay && debugInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-t-lg">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold flex items-center">
-                  🔍 Payment Debug Information
-                </h2>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">{Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}</div>
-                  <div className="text-sm opacity-90">Auto-redirect in</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6">
-              {/* Status */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-green-800 mb-2">✅ {debugInfo.status}</h3>
-                <p className="text-green-700">Payment request created successfully! Page will redirect to CCAvenue automatically.</p>
-              </div>
-
-              {/* Quick Info */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-blue-800">Payment Type</h4>
-                  <p className="text-blue-600 text-lg">{debugInfo.paymentType}</p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-purple-800">Merchant ID</h4>
-                  <p className="text-purple-600 text-lg font-mono">{debugInfo.merchantId}</p>
-                </div>
-                <div className="bg-indigo-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-indigo-800">Booking ID</h4>
-                  <p className="text-indigo-600 text-lg font-mono">{debugInfo.bookingId}</p>
-                </div>
-              </div>
-
-              {/* Request Data */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">📤 Request Data Sent to API</h3>
-                <pre className="text-sm bg-white p-3 rounded border overflow-x-auto">
-                  {JSON.stringify(debugInfo.requestData, null, 2)}
-                </pre>
-              </div>
-
-              {/* CCAvenue Details */}
-              <div className="bg-orange-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-orange-800 mb-3">🏪 CCAvenue Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Access Code:</span>
-                    <span className="font-mono text-orange-600">{debugInfo.accessCode}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Encrypted Data Length:</span>
-                    <span className="text-orange-600">{debugInfo.encRequestLength} characters</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Encrypted Preview:</span>
-                    <span className="font-mono text-orange-600 text-xs">{debugInfo.encRequestPreview}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Target URL:</span>
-                    <span className="text-orange-600 text-xs break-all">{debugInfo.ccavenueUrl}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => {
-                    window.location.href = '/api/test-ccavenue';
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  🔍 Check Environment Variables
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('Manual redirect triggered');
-                    redirectToCCAvenue(debugInfo.encRequest, debugInfo.accessCode);
-                  }}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  🚀 Redirect Now (Don't Wait)
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDebugOverlay(false);
-                    setProcessing(false);
-                  }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  ❌ Cancel
-                </button>
-              </div>
-
-              <div className="text-xs text-gray-500 border-t pt-4">
-                <p><strong>Debug Timestamp:</strong> {debugInfo.timestamp}</p>
-                <p><strong>Note:</strong> This debug overlay will disappear when redirecting to CCAvenue. Check browser console for detailed logs.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+     
 
       <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl max-w-4xl w-full overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-amber-600 px-4 sm:px-6 py-4 sm:py-5">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white text-center">Complete Your Payment</h2>
-          <p className="text-orange-100 text-center mt-1 sm:mt-2 text-sm sm:text-base">Secure your Havan seats now</p>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white text-center">Complete Your Reservation</h2>
+          <p className="text-orange-100 text-center mt-1 sm:mt-2 text-sm sm:text-base">Your contribution brings hope — in classrooms, homes, and communities😊</p>
         </div>
 
         <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
@@ -330,7 +224,7 @@ const PaymentProcess = ({ customerDetails }) => {
               <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded-full flex items-center justify-center mr-2 sm:mr-3">
                 <span className="text-white font-bold text-sm sm:text-base">📋</span>
               </div>
-              Final Booking Summary
+              Final Summary
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
@@ -338,13 +232,12 @@ const PaymentProcess = ({ customerDetails }) => {
               <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-orange-200">
                 <h4 className="font-semibold text-orange-700 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
                   <span className="text-base sm:text-lg mr-2">👤</span>
-                  Customer Details
+                  Your Details
                 </h4>
                 <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
                   <p><span className="font-medium text-gray-900">Name:</span> {customerDetails.name}</p>
                   <p><span className="font-medium text-gray-900">Email:</span> {customerDetails.email}</p>
                   <p><span className="font-medium text-gray-900">Phone:</span> {customerDetails.phone}</p>
-                  <p><span className="font-medium text-gray-900">Aadhar:</span> {customerDetails.aadhar}</p>
                 </div>
               </div>
 
@@ -357,7 +250,7 @@ const PaymentProcess = ({ customerDetails }) => {
                 <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
                   <p><span className="font-medium text-gray-900">Date:</span> {format(selectedDate, 'EEEE, MMMM dd, yyyy')}</p>
                   <p><span className="font-medium text-gray-900">Shift:</span> {getShiftLabel(selectedShift)} ({getShiftTime(selectedShift)})</p>
-                  <p><span className="font-medium text-gray-900">Seats:</span> {selectedSeats.join(', ')}</p>
+                  <p><span className="font-medium text-gray-900">Seats:</span> <span className="font-bold text-gray-900">{selectedSeats.join(', ')}</span></p>
                   <p><span className="font-medium text-gray-900">Seat Count:</span> {selectedSeats.length} seat{selectedSeats.length > 1 ? 's' : ''}</p>
                 </div>
               </div>
@@ -415,8 +308,12 @@ const PaymentProcess = ({ customerDetails }) => {
                   Creating Booking & Redirecting...
                 </span>
               ) : (
-                <>🚀 Pay ₹{getTotalAmount()} </>
-              )}
+                <span className="flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                  Pay  ₹{getTotalAmount()}
+                </span>
+                
+                 )}
             </button>
 
             <p className="text-xs text-gray-500 text-center mt-2 sm:mt-3">
@@ -424,27 +321,7 @@ const PaymentProcess = ({ customerDetails }) => {
             </p>
           </div>
 
-          {/* Important Notes */}
-          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-r-lg sm:rounded-r-xl p-3 sm:p-4">
-            <h4 className="font-bold text-yellow-800 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
-              <span className="text-lg sm:text-xl mr-2">⚠️</span>
-              Important Information
-            </h4>
-            <ul className="text-xs sm:text-sm text-yellow-700 space-y-1 sm:space-y-2">
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Seats are temporarily blocked for 15 minutes during payment</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Complete payment within 15 minutes to confirm booking</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>You'll receive email confirmation after successful payment</span>
-              </li>
-            </ul>
-          </div>
+          
         </div>
       </div>
     </div>

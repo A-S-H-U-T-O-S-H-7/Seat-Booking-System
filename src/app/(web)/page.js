@@ -5,6 +5,7 @@ import Header from '@/components/home/Header';
 import HeroSection from '@/components/home/HeroSection';
 import BookingSection from '@/components/home/BookingSection';
 import Footer from '@/components/home/Footer';
+import DonationBanner from '@/components/home/DonationBanner';
 
 function HomePage() {
   const { user, logout ,loading} = useAuth();
@@ -34,6 +35,7 @@ function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
       <Header user={user} handleLogout={handleLogout} />
       <HeroSection user={user} />
+      <DonationBanner/>
       <BookingSection user={user} />
       <Footer />
     </div>

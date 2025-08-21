@@ -5,6 +5,7 @@ import StallBookingFlow from '@/components/stall/StallBookingFlow';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+import Footer from '@/components/home/Footer';
 
 export default function StallBookingPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function StallBookingPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen   bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
         {/* Header */}
         <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-blue-100">
           <div className="px-2 sm:px-6 py-3 sm:py-4">
@@ -29,7 +30,7 @@ export default function StallBookingPage() {
                 />
                 <div>
                   <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                    Stall Booking
+                    Pick Your Stall
                   </h1>
                   <p className="text-xs sm:text-sm text-gray-600">Reserve your business space</p>
                 </div>
@@ -50,6 +51,7 @@ export default function StallBookingPage() {
         <StallBookingProvider>
           <StallBookingFlow />
         </StallBookingProvider>
+        <Footer/>
       </div>
     </ProtectedRoute>
   );

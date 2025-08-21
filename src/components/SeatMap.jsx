@@ -181,13 +181,33 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
             { bottom: '10%', right: '25%', transform: 'translate(50%, 50%)' }
           ];
         case 4:
-        default:
-          return [
-            { top: '2px', left: '25%', transform: 'translateX(-50%)' }, // Top S1 (left side)
-            { top: '2px', right: '25%', transform: 'translateX(50%)' }, // Top S2 (right side)
-            { bottom: '2px', left: '25%', transform: 'translateX(-50%)' }, // Bottom S3 (left side)
-            { bottom: '2px', right: '25%', transform: 'translateX(50%)' }  // Bottom S4 (right side)
-          ];
+default:
+  return [
+    { 
+      top: '2px', 
+      left: 'var(--seat-left, 19%)', 
+      transform: 'translateX(-50%)',
+      '--seat-left': '19%' // mobile value
+    },
+    { 
+      top: '2px', 
+      right: 'var(--seat-right, 12%)', 
+      transform: 'translateX(50%)',
+      '--seat-right': '39%' // mobile value
+    },
+    { 
+      bottom: '2px', 
+      left: 'var(--seat-left, 19%)', 
+      transform: 'translateX(-50%)',
+      '--seat-left': '19%' // mobile value
+    },
+    { 
+      bottom: '2px', 
+      right: 'var(--seat-right, 29%)', 
+      transform: 'translateX(50%)',
+      '--seat-right': '39%' // mobile value
+    }
+  ];
         case 5:
           return [
             { top: '0', left: '50%', transform: 'translateX(-50%)' },
@@ -238,9 +258,9 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
         </div>
         
         {/* Seats arranged around havan icon */}
-        <div className="relative w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24 mx-auto">
+        <div className="relative w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 lg:w-24 lg:h-24  mx-auto">
           {/* Center Havan Icon */}
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center mr-3 justify-center">
             <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 bg-orange-400 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold">
               🔥
             </div>
@@ -354,7 +374,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
     <div className="w-full space-y-4 sm:space-y-6">
       {/* Header */}
       <div className="text-center mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2">Select Your Seats</h2>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2">Select Your Spots</h2>
         <p className="text-gray-600 text-sm sm:text-base">Choose your preferred seating arrangement</p>
       </div>
 
@@ -370,7 +390,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
           <div className="w-3 h-3 bg-gray-500 rounded border border-gray-400"></div>
-          <span className="text-gray-600 font-medium">Booked</span>
+          <span className="text-gray-600 font-medium">Reserved</span>
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
           <div className="w-3 h-3 bg-gray-300 rounded border border-gray-300"></div>

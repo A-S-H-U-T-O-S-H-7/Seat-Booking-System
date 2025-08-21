@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ShowBookingFlow from '@/components/show/ShowBookingFlow';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Footer from '@/components/home/Footer';
 
 export default function ShowBookingPage() {
   const router = useRouter();
@@ -26,9 +27,9 @@ export default function ShowBookingPage() {
                 />
                 <div>
                   <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-fuchsia-600 via-rose-600 to-pink-700 bg-clip-text text-transparent">
-                    Book Your Show
+                    Reserve Your Show Place
                   </h1>
-                  <p className="text-xs sm:text-sm text-gray-600">  Reserve your seat for an evening of culture and celebration</p>
+                  <p className="text-xs sm:text-sm text-gray-600">  Reserve your place for an evening of culture and celebration</p>
                 </div>
               </Link>
               <button 
@@ -53,6 +54,7 @@ export default function ShowBookingPage() {
         <ShowSeatBookingProvider>
           <ShowBookingFlow />
         </ShowSeatBookingProvider>
+        <Footer/>
       </div>
     </ProtectedRoute>
   );

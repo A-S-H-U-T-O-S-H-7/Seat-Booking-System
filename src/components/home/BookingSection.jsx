@@ -8,7 +8,7 @@ function BookingSection({ user }) {
         <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-12 text-gray-800">
-              Choose Your Booking Type
+              Choose Your Participation Type
             </h3>
             
             <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8">
@@ -27,13 +27,13 @@ function BookingSection({ user }) {
                   </div>
                   <div>
                     <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-800 group-hover:text-orange-600 transition-colors duration-300 leading-tight">
-                      Havan Seat
+                      Havan Place
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Sacred ceremony</p>
                   </div>
                 </div>
-                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
-                  Secure your seat for the sacred Havan ceremony. Choose from multiple sessions and seating arrangements.
+                <p className="text-gray-700 text-center text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
+                  Secure your place for the sacred Havan ceremony. Choose from multiple sessions and seating arrangements.
                 </p>
               </Link>
 
@@ -57,8 +57,8 @@ function BookingSection({ user }) {
                     <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Vendor space</p>
                   </div>
                 </div>
-                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
-                  Reserve a stall for your business. 5-day booking with prime locations available.
+                <p className="text-gray-700 text-center text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
+                  Reserve a stall space for your business. 5-day booking with prime locations available.
                 </p>
               </Link>
 
@@ -77,13 +77,13 @@ function BookingSection({ user }) {
                   </div>
                   <div>
                     <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300 leading-tight">
-                      Show Seat
+                      Show place
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Entertainment</p>
                   </div>
                 </div>
-                <p className="text-gray-700 text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
-                  Book seats for cultural shows and performances.
+                <p className="text-gray-700 text-center text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
+                  Pick your spot for cultural shows and performances.
                 </p>
               </Link>
             </div>
@@ -95,14 +95,14 @@ function BookingSection({ user }) {
       <section className="py-12 sm:py-16 bg-gradient-to-b from-gray-50 to-orange-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-12 text-gray-800">
-            Why Book Online?
+            Why Register Online?
           </h3>
           
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💺</div>
-              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Choose Your Seat</h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Select exact seats with visual seat map</p>
+              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Choose Your Place</h4>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Select exact places with visual seat map</p>
             </div>
             
             <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
@@ -114,14 +114,17 @@ function BookingSection({ user }) {
             <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
               <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">📧</div>
               <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Email Confirmation</h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Instant booking confirmation via email</p>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Get immediate email confirmation of your donation</p>
             </div>
             
             <div className="text-center p-4 sm:p-6 rounded-xl bg-white hover:shadow-lg transition-all duration-300 hover:transform hover:scale-105">
-              <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">💰</div>
-              <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Flexible Refunds</h4>
-              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">Full refund if canceled 15+ days before</p>
-            </div>
+  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">🤝</div>
+  <h4 className="font-bold text-base sm:text-lg mb-2 text-gray-800">Dedicated Support</h4>
+  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+    Our team is here to assist you at every step
+  </p>
+</div>
+
           </div>
         </div>
       </section>

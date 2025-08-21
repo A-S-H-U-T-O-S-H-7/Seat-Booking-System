@@ -183,42 +183,42 @@ const StallPaymentProcess = ({ vendorDetails }) => {
   // Success screen
   if (paymentSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex flex-col justify-center items-center px-2 sm:px-4 py-3 sm:py-6">
-        <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl max-w-4xl w-full overflow-hidden border border-green-200">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center px-2 sm:px-4 py-3 sm:py-6">
+        <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl max-w-4xl w-full overflow-hidden border border-blue-200">
           {/* Success Header */}
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-3 sm:px-5 py-3 sm:py-4 text-center">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-3 sm:px-5 py-3 sm:py-4 text-center">
             <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 bg-white rounded-full flex items-center justify-center shadow-lg">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 text-green-500 text-2xl sm:text-3xl font-bold flex items-center justify-center">✓</div>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500 text-2xl sm:text-3xl font-bold flex items-center justify-center">✓</div>
             </div>
             
             <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">
-              🎉 {selectedStalls.length > 1 ? 'Multi-Stall Booking Confirmed!' : 'Stall Booking Confirmed!'}
+              🎉 {selectedStalls.length > 1 ? 'Multi-Stall Reservation Confirmed!' : 'Stall Reservation Confirmed!'}
             </h3>
             
-            <p className="text-green-100 text-sm sm:text-base">
+            <p className="text-blue-100 text-sm sm:text-base">
               Your {selectedStalls.length > 1 ? `${selectedStalls.length} vendor stalls have` : 'vendor stall has'} been successfully reserved
             </p>
           </div>
 
           <div className="p-2 sm:p-4 space-y-3 sm:space-y-4">
             {/* Booking Details */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-2 sm:p-3">
-              <h4 className="text-base sm:text-lg font-bold text-green-800 mb-2 sm:mb-3 flex items-center">
-                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center mr-2">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+              <h4 className="text-base sm:text-lg font-bold text-blue-800 mb-2 sm:mb-3 flex items-center">
+                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
                   <span className="text-white font-bold text-xs sm:text-sm">📋</span>
                 </div>
-                Stall Booking Details
+                Stall Reservation Details
               </h4>
               
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200">
-                  <p className="text-xs text-gray-600 mb-1">Booking ID</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm break-all">{bookingId}</p>
+                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
+                  <p className="text-xs text-gray-600 mb-1">Reservation ID</p>
+                  <p className="font-bold text-blue-800 text-xs sm:text-sm break-all">{bookingId}</p>
                 </div>
                 
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200">
+                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
                   <p className="text-xs text-gray-600 mb-1">Stall IDs</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm">
+                  <p className="font-bold text-blue-800 text-xs sm:text-sm">
                     {selectedStalls && selectedStalls.length > 0 
                       ? selectedStalls.slice(0, 3).join(', ') + (selectedStalls.length > 3 ? ` +${selectedStalls.length - 3} more` : '')
                       : 'N/A'
@@ -226,38 +226,38 @@ const StallPaymentProcess = ({ vendorDetails }) => {
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200 col-span-2 sm:col-span-1">
+                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200 col-span-2 sm:col-span-1">
                   <p className="text-xs text-gray-600 mb-1">Duration</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm">5 Days</p>
+                  <p className="font-bold text-blue-800 text-xs sm:text-sm">5 Days</p>
                 </div>
                 
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200">
+                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
                   <p className="text-xs text-gray-600 mb-1">Business Type</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm break-all">{vendorDetails?.businessType}</p>
+                  <p className="font-bold text-blue-800 text-xs sm:text-sm break-all">{vendorDetails?.businessType}</p>
                 </div>
                 
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-green-200">
+                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
                   <p className="text-xs text-gray-600 mb-1">Contact Person</p>
-                  <p className="font-bold text-green-800 text-xs sm:text-sm">{vendorDetails?.ownerName}</p>
+                  <p className="font-bold text-blue-800 text-xs sm:text-sm">{vendorDetails?.ownerName}</p>
                 </div>
                 
-                <div className="bg-gradient-to-r from-amber-100 to-yellow-100 rounded-md p-2 sm:p-3 shadow-sm border border-amber-300">
-                  <p className="text-xs text-amber-700 mb-1">Total Amount</p>
-                  <p className="font-bold text-amber-800 text-sm sm:text-base">₹{getTotalAmount()}</p>
+                <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-md p-2 sm:p-3 shadow-sm border border-purple-300">
+                  <p className="text-xs text-purple-700 mb-1">Total Amount</p>
+                  <p className="font-bold text-purple-800 text-sm sm:text-base">₹{getTotalAmount()}</p>
                 </div>
               </div>
             </div>
 
             {/* Email Confirmation */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-2 sm:p-3">
               <div className="flex items-start">
                 <div className="text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0">📧</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm sm:text-base font-semibold text-blue-800">Confirmation Email Sent</p>
-                  <p className="text-xs sm:text-sm text-blue-600">
+                  <p className="text-sm sm:text-base font-semibold text-indigo-800">Confirmation Email Sent</p>
+                  <p className="text-xs sm:text-sm text-indigo-600">
                     A detailed confirmation has been sent to
                   </p>
-                  <p className="text-xs sm:text-sm text-blue-800 font-medium break-words break-all">
+                  <p className="text-xs sm:text-sm text-indigo-800 font-medium break-words break-all">
                     {vendorDetails?.email}
                   </p>
                 </div>
@@ -265,16 +265,16 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             </div>
 
             {/* Auto-redirect Countdown */}
-            <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-2 sm:p-3">
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2 sm:p-3">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-amber-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg">
                   {countdown}
                 </div>
                 <div className="text-center sm:text-left">
-                  <p className="text-orange-800 font-bold text-sm sm:text-base">
+                  <p className="text-purple-800 font-bold text-sm sm:text-base">
                     Auto-redirecting to Profile
                   </p>
-                  <p className="text-xs sm:text-sm text-orange-600">
+                  <p className="text-xs sm:text-sm text-purple-600">
                     Redirecting in {countdown} second{countdown > 1 ? 's' : ''}...
                   </p>
                 </div>
@@ -285,7 +285,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               <button
                 onClick={goToProfile}
-                className="bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white py-2 sm:py-3 rounded-md sm:rounded-lg font-bold text-sm sm:text-base transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
+                className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white py-2 sm:py-3 rounded-md sm:rounded-lg font-bold text-sm sm:text-base transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
               >
                 <span className="mr-1 sm:mr-2">🏠</span>
                 Go to Profile Now
@@ -296,7 +296,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 sm:py-3 rounded-md sm:rounded-lg font-bold text-sm sm:text-base transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
               >
                 <span className="mr-1 sm:mr-2">🏪</span>
-                Book Another Stall
+                Reserve Another Stall
               </button>
             </div>
             
@@ -313,28 +313,28 @@ const StallPaymentProcess = ({ vendorDetails }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 flex flex-col justify-center items-center px-2 sm:px-4 py-4 sm:py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center px-2 sm:px-4 py-4 sm:py-8">
       <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl max-w-4xl w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-amber-600 px-4 sm:px-6 py-4 sm:py-5">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-4 sm:px-6 py-4 sm:py-5">
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white text-center">Complete Stall Payment</h2>
-          <p className="text-orange-100 text-center mt-1 sm:mt-2 text-sm sm:text-base">Secure your vendor stall now</p>
+          <p className="text-blue-100 text-center mt-1 sm:mt-2 text-sm sm:text-base">Your contribution brings hope — in classrooms, homes, and communities😊</p>
         </div>
 
         <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
           {/* Final Booking Summary */}
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
-            <h3 className="text-lg sm:text-xl font-bold text-orange-800 mb-3 sm:mb-4 flex items-center">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-500 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+            <h3 className="text-lg sm:text-xl font-bold text-blue-800 mb-3 sm:mb-4 flex items-center">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center mr-2 sm:mr-3">
                 <span className="text-white font-bold text-sm sm:text-base">📋</span>
               </div>
-              Final Stall Booking Summary
+              Final Summary
             </h3>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
               {/* Vendor Details */}
-              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-orange-200">
-                <h4 className="font-semibold text-orange-700 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-blue-200">
+                <h4 className="font-semibold text-blue-700 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
                   <span className="text-base sm:text-lg mr-2">👤</span>
                   Vendor Details
                 </h4>
@@ -348,8 +348,8 @@ const StallPaymentProcess = ({ vendorDetails }) => {
               </div>
 
               {/* Stall Details */}
-              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-orange-200">
-                <h4 className="font-semibold text-orange-700 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
+              <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-blue-200">
+                <h4 className="font-semibold text-blue-700 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
                   <span className="text-base sm:text-lg mr-2">🏢</span>
                   Stall Details
                 </h4>
@@ -363,13 +363,13 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             </div>
 
             {/* Total Amount - Highlighted */}
-            <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
+            <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
                 <div className="mb-2 sm:mb-0">
-                  <h4 className="text-base sm:text-lg font-semibold text-amber-800">Total Amount to Pay</h4>
-                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-amber-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.”</p>
+                  <h4 className="text-base sm:text-lg font-semibold text-purple-800">Total Amount to Pay</h4>
+                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-orange-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act."</p>
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-amber-800 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl shadow-md">
+                <div className="text-2xl sm:text-3xl font-bold text-purple-800 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl shadow-md">
                   ₹{getTotalAmount?.() || 0}
                 </div>
               </div>
@@ -377,9 +377,9 @@ const StallPaymentProcess = ({ vendorDetails }) => {
           </div>
 
           {/* Payment Section */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
-            <h3 className="text-lg sm:text-xl font-bold text-blue-800 mb-3 sm:mb-4 flex items-center">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg sm:rounded-xl p-3 sm:p-4">
+            <h3 className="text-lg sm:text-xl font-bold text-indigo-800 mb-3 sm:mb-4 flex items-center">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-indigo-500 rounded-full flex items-center justify-center mr-2 sm:mr-3">
                 <span className="text-white font-bold text-sm sm:text-base">💳</span>
               </div>
               Secure Payment
@@ -387,11 +387,11 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             
             {/* Security Info */}
             <div className="mb-3 sm:mb-4">
-              <div className="flex items-center p-3 bg-white rounded-lg shadow-sm border border-blue-200">
-                <div className="text-blue-600 mr-3 text-xl sm:text-2xl">🔒</div>
+              <div className="flex items-center p-3 bg-white rounded-lg shadow-sm border border-indigo-200">
+                <div className="text-indigo-600 mr-3 text-xl sm:text-2xl">🔒</div>
                 <div className="text-xs sm:text-sm">
-                  <p className="font-semibold text-blue-800">SSL Secured Payment</p>
-                  <p className="text-blue-600">Your payment information is protected with 256-bit SSL encryption</p>
+                  <p className="font-semibold text-indigo-800">Bank Grade Security</p>
+                  <p className="text-indigo-600">Powered by CCAvenue - India's leading payment gateway</p>
                 </div>
               </div>
             </div>
@@ -400,10 +400,10 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             <button
               onClick={initiatePayment}
               disabled={processing}
-              className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg transition-all duration-300 transform ${
+              className={`w-full py-3 cursor-pointer sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg transition-all duration-300 transform ${
                 processing
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 hover:scale-105 shadow-lg hover:shadow-xl'
+                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
               } text-white`}
             >
               {processing ? (
@@ -415,7 +415,11 @@ const StallPaymentProcess = ({ vendorDetails }) => {
                   Processing Payment...
                 </span>
               ) : (
-                <>🚀 Pay ₹{getTotalAmount?.() || 0} - Complete Stall Booking</>
+                <span className="flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
+                  Pay ₹{getTotalAmount?.() || 0}
+                </span>
+               
               )}
             </button>
 
@@ -424,31 +428,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             </p>
           </div>
 
-          {/* Important Notes */}
-          <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-l-4 border-yellow-400 rounded-r-lg sm:rounded-r-xl p-3 sm:p-4">
-            <h4 className="font-bold text-yellow-800 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
-              <span className="text-lg sm:text-xl mr-2">⚠️</span>
-              Important Information
-            </h4>
-            <ul className="text-xs sm:text-sm text-yellow-700 space-y-1 sm:space-y-2">
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Payment must be completed to confirm your stall booking</span>
-              </li> 
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Stall will be released if payment is not completed within 10 minutes</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Full refund available if canceled 15 days before the event</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-yellow-600 mr-2 mt-1">•</span>
-                <span>Bring valid ID during setup</span>
-              </li>
-            </ul>
-          </div>
+         
         </div>
       </div>
     </div>

@@ -385,7 +385,6 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
             <li>• Valid for entire 5-day event</li>
             <li>• Basic facilities included</li>
             <li>• Setup: 2hrs before start</li>
-            <li>• Cancellation: 20 days prior</li>
           </ul>
         </div>
       </div>

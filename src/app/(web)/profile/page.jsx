@@ -406,7 +406,7 @@ const ProfilePage = () => {
           {/* Footer with booking info and action */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
             <div className="text-xs text-gray-500 space-y-1">
-              <p>🕐 Booked: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
+              <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
               {booking.customerDetails && (
                 <p>📞 Contact: {booking.customerDetails.phone}</p>
               )}
@@ -565,7 +565,7 @@ const ProfilePage = () => {
             <div className="lg:col-span-3">
               <div className="bg-white rounded-xl shadow-lg p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-                  <h3 className="text-xl font-bold text-gray-800">Your Bookings</h3>
+                  <h3 className="text-xl font-bold text-gray-800">Your Reservations</h3>
                   
                   {/* Tab Navigation */}
                   <div className="flex bg-gray-100 rounded-lg p-1">
@@ -609,13 +609,13 @@ const ProfilePage = () => {
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-3xl text-gray-400">🎫</span>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Havan bookings yet</h4>
-                      <p className="text-gray-400 mb-4">Book your first seat for the sacred Havan ceremony</p>
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Havan reservations yet</h4>
+                      <p className="text-gray-400 mb-4">Reserve your first seat for the sacred Havan ceremony</p>
                       <Link
                         href="/booking"
                         className="inline-block bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
                       >
-                        Book Havan Seats
+                        Reserve Havan Spots
                       </Link>
                     </div>
                   ) : (
@@ -629,13 +629,13 @@ const ProfilePage = () => {
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-3xl text-gray-400">🎭</span>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Show bookings yet</h4>
-                      <p className="text-gray-400 mb-4">Book your first seat for cultural shows and performances</p>
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Show reservations yet</h4>
+                      <p className="text-gray-400 mb-4">Reserve your first seat for cultural shows and performances</p>
                       <Link
                         href="/booking/show"
                         className="inline-block bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
                       >
-                        Book Show Seats
+                        Reserve Show Spots
                       </Link>
                     </div>
                   ) : (
@@ -649,13 +649,13 @@ const ProfilePage = () => {
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-3xl text-gray-400">🏪</span>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Stall bookings yet</h4>
-                      <p className="text-gray-400 mb-4">Book your first stall for business opportunities</p>
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No Stall reservations yet</h4>
+                      <p className="text-gray-400 mb-4">Reserve your first stall for business opportunities</p>
                       <Link
                         href="/booking/stall"
                         className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
                       >
-                        Book Stalls
+                        Reserve Stalls
                       </Link>
                     </div>
                   ) : (
@@ -676,25 +676,25 @@ const ProfilePage = () => {
                     href="/booking"
                     className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🎫 Book Havan Seats
+                    🎫 Reserve Havan Spots
                   </Link>
                   <Link
                     href="/booking/show"
                     className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🎭 Book Show Seats
+                    🎭 Reserve Show Spots
                   </Link>
                   <Link
                     href="/booking/stall"
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🏪 Book Stalls
+                    🏪 Reserve Stalls
                   </Link>
                   <button
                     onClick={refreshBookings}
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg font-medium transition-colors duration-200"
                   >
-                    🔄 Refresh Bookings
+                    🔄 Refresh Reservations
                   </button>
                 </div>
               </div>
@@ -736,22 +736,14 @@ const ProfilePage = () => {
 
                   <div className="pt-4 border-t border-gray-200">
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      For booking-related queries, please contact us with your Booking ID. 
+                      For reservation-related queries, please contact us with your Reservation ID. 
                       Support is available Monday to Saturday, 9 AM to 6 PM.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Important Notes */}
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
-                <h4 className="font-medium text-yellow-800 mb-2">Important Notes</h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• Confirmation email sent to registered address</li>
-                  <li>• Arrive 30 minutes before ceremony time</li>
-                  <li>• Refunds processed within 5-7 business days</li>
-                </ul>
-              </div>
+              
             </div>
           </div>
         </div>

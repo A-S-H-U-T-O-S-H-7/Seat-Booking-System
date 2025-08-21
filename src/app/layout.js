@@ -6,8 +6,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
-  title: "Havan Seat Booking",
-  description: "Book your havan seats online",
+  title: "svsamiti",
+  description: "Donate For a Noble Cause",
 };
 
 export default function RootLayout({ children }) {

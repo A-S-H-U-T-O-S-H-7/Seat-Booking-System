@@ -380,7 +380,7 @@ const UserProfileInfo = ({ user, onEdit }) => {
               <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Bookings Yet</h3>
               <p className="text-gray-600 mb-4">
-                Your profile will be automatically populated with your information once you make your first booking.
+                Your profile will be automatically populated with your information once you make your first Reservation.
               </p>
               <div className="flex flex-col sm:flex-row gap-2 justify-center">
                 <a

@@ -583,7 +583,7 @@ export default function ShowAuditorium() {
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 md:w-5 h-4 md:h-5 bg-gray-400 rounded-md"></div>
-          <span className="text-gray-700">Booked</span>
+          <span className="text-gray-700">Reserved</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-4 md:w-5 h-4 md:h-5 bg-gray-600 rounded-md"></div>
