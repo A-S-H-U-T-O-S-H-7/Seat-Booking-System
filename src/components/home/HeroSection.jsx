@@ -95,6 +95,7 @@ function HeroSection({ user }) {
                 <div className="text-center lg:text-left space-y-3">
                   <p className="text-lg sm:text-xl lg:text-xl text-gray-800 leading-relaxed font-bold">
                     Be a <span className="font-black text-transparent bg-gradient-to-r from-orange-600 via-red-600 to-yellow-600 bg-clip-text">SVS member</span> and join us for a divine 5-day ceremony.
+                    <Link href="/"> <span className='font-black underline animate-pulse text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text'> Donate Now!</span></Link>
                   </p>
                   <div className="w-16 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mx-auto lg:mx-0"></div>
                   <p className="text-base sm:text-lg lg:text-lg text-gray-700 leading-relaxed font-medium">
@@ -153,7 +154,7 @@ function HeroSection({ user }) {
                           transition-all duration-500 delay-200">
               <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap 
                              drop-shadow-lg flex items-center gap-2">
-                Pick Your Havan Spot
+                Reserve Your Havan Spot
               </span>
             </div>
           </Link>
@@ -199,7 +200,7 @@ function HeroSection({ user }) {
                           transition-all duration-500 delay-200">
               <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap 
                              drop-shadow-lg flex items-center gap-2">
-                Pick Your Stall Place
+                Reserve Your Stall
               </span>
             </div>
           </Link>
@@ -244,7 +245,7 @@ function HeroSection({ user }) {
                           transition-all duration-500 delay-200">
               <span className="text-white font-semibold text-base tracking-wide whitespace-nowrap 
                              drop-shadow-lg flex items-center gap-2">
-                Pick Your Show Spot
+                Reserve Your Show Spot
               </span>
             </div>
           </Link>

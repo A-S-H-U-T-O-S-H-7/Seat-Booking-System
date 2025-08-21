@@ -557,9 +557,7 @@ const ProfilePage = () => {
             <SimpleUserProfile user={user} />
           </div>
 
-          {/* Debug Component - Remove in production
-          <DebugBookings /> */}
-
+          
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Booking History */}
             <div className="lg:col-span-3">
@@ -676,19 +674,19 @@ const ProfilePage = () => {
                     href="/booking"
                     className="w-full bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🎫 Reserve Havan Spots
+                    🎫 Reserve Havan Spot
                   </Link>
                   <Link
                     href="/booking/show"
                     className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🎭 Reserve Show Spots
+                    🎭 Reserve Show Spot
                   </Link>
                   <Link
                     href="/booking/stall"
                     className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
-                    🏪 Reserve Stalls
+                    🏪 Reserve Your Stall
                   </Link>
                   <button
                     onClick={refreshBookings}
