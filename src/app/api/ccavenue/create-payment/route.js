@@ -76,15 +76,15 @@ export async function POST(request) {
       return Response.json({ error: "Payment configuration error" }, { status: 500 });
     }
 
-    // FIXED: Use absolute URLs with proper encoding - separate URLs for different scenarios
+    // Use single frontend URL for all payment outcomes
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://donate.svsamiti.com';
-    const redirectUrl = `${baseUrl}/api/ccavenue/payment-response`; // For successful/failed payments
-    const cancelUrl = `${baseUrl}/payment/cancelled?booking_id=${orderId}`; // For cancelled payments
+    const redirectUrl = `${baseUrl}/api/ccavenue/payment-response`; // API processes and redirects to result page
+    const cancelUrl = `${baseUrl}/payment/result?status=cancelled&booking_id=${orderId}`; // Direct redirect for cancellation
     
     console.log('🌐 URL Configuration:');
     console.log('  Base URL:', baseUrl);
-    console.log('  Redirect URL (success/fail):', redirectUrl);
-    console.log('  Cancel URL (user cancellation):', cancelUrl);
+    console.log('  Redirect URL (API processing):', redirectUrl);
+    console.log('  Cancel URL (direct to result):', cancelUrl);
 
     // ✅ Build merchantData string as per CCAvenue spec - FIXED: Properly encode URLs
     const merchantData =

@@ -12,7 +12,7 @@ export async function POST(request) {
     const encResp = formData.get('encResp');
     
     if (!encResp) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/failed?error=no_response`);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=failed&error=no_response`);
     }
 
     // Try to decrypt with both working keys (India and Foreign)
@@ -24,7 +24,7 @@ export async function POST(request) {
         decryptedData = decrypt(encResp, process.env.CCAVENUE_FOREIGN_WORKING_KEY);
       } catch (error) {
         console.error('Decryption failed:', error);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/failed?error=decryption_failed`);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=failed&error=decryption_failed`);
       }
     }
 
@@ -70,7 +70,7 @@ export async function POST(request) {
         }
       });
 
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/success?booking_id=${merchant_param1}&order_id=${order_id}`);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=success&booking_id=${merchant_param1}&order_id=${order_id}`);
     } else {
       await updateBookingStatus(merchant_param1, {
         status: 'payment_failed',
@@ -83,12 +83,12 @@ export async function POST(request) {
         }
       });
 
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/failed?booking_id=${merchant_param1}&reason=${status_message}`);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=failed&booking_id=${merchant_param1}&reason=${encodeURIComponent(status_message)}`);
     }
 
   } catch (error) {
     console.error('Payment response error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/failed?error=server_error`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/payment/result?status=failed&error=server_error`);
   }
 }
 
