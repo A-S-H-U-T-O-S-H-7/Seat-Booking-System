@@ -4,7 +4,6 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ShowBookingFlow from '@/components/show/ShowBookingFlow';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Footer from '@/components/home/Footer';
 
 export default function ShowBookingPage() {
   const router = useRouter();
@@ -54,7 +53,6 @@ export default function ShowBookingPage() {
         <ShowSeatBookingProvider>
           <ShowBookingFlow />
         </ShowSeatBookingProvider>
-        <Footer/>
       </div>
     </ProtectedRoute>
   );

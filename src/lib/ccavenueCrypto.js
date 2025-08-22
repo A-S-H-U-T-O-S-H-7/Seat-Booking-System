@@ -12,8 +12,8 @@ export function encrypt(plainText, workingKey) {
     console.log('  Key hash length:', keyHash.length);
     
     // Use the working key as IV (first 16 bytes)
-    const iv = Buffer.from(workingKey.substring(0, 16), 'utf8');
-    console.log('  IV length:', iv.length);
+  const iv = Buffer.alloc(16);
+      console.log('  IV length:', iv.length);
     
     const cipher = createCipheriv('aes-128-cbc', keyHash, iv);
     cipher.setAutoPadding(true);

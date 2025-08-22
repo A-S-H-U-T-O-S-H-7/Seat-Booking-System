@@ -51,7 +51,6 @@ export default function StallBookingPage() {
         <StallBookingProvider>
           <StallBookingFlow />
         </StallBookingProvider>
-        <Footer/>
       </div>
     </ProtectedRoute>
   );

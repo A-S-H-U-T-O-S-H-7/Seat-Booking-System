@@ -192,7 +192,6 @@ export default function BookingPage() {
               <BookingFlow />
             </div>
           </div>
-          <Footer/>
         </div>
       </BookingProvider>
     </ProtectedRoute>

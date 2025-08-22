@@ -74,29 +74,8 @@ export async function POST(request) {
     console.log('  Cancel URL:', cancelUrl);
     console.log('  CCAvenue PRODUCTION URL: https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
     
-    const merchantData = [
-      `merchant_id=${merchantId}`,
-      `order_id=${orderId}`,
-      `currency=INR`,
-      `amount=${amount}`,
-      `redirect_url=${redirectUrl}`,
-      `cancel_url=${cancelUrl}`,
-      `language=EN`,
-      `billing_name=${billingName}`,
-      `billing_email=${billingEmail}`,
-      `billing_tel=${billingTel}`,
-      `billing_address=${billingAddress || 'N/A'}`,
-      `billing_city=Delhi`,
-      `billing_state=Delhi`,
-      `billing_zip=110001`,
-      `billing_country=India`,
-      `delivery_name=${billingName}`,
-      `delivery_email=${billingEmail}`,
-      `delivery_tel=${billingTel}`,
-      `merchant_param1=${orderId}`, // Store booking ID for reference
-      `promo_code=`,
-      `customer_identifier=`
-    ].join('&');
+    // Create merchant data in exact format CCAvenue expects
+    const merchantData = `merchant_id=${merchantId}&order_id=${orderId}&currency=INR&amount=${amount}&redirect_url=${redirectUrl}&cancel_url=${cancelUrl}&language=EN&billing_name=${encodeURIComponent(billingName)}&billing_email=${encodeURIComponent(billingEmail)}&billing_tel=${billingTel}&billing_address=${encodeURIComponent(billingAddress || 'N/A')}&billing_city=Delhi&billing_state=Delhi&billing_zip=110001&billing_country=India&delivery_name=${encodeURIComponent(billingName)}&delivery_email=${encodeURIComponent(billingEmail)}&delivery_tel=${billingTel}&merchant_param1=${orderId}&promo_code=&customer_identifier=`;
 
     console.log('📦 Merchant Data (first 200 chars):', merchantData.substring(0, 200) + '...');
     console.log('📦 Full merchant data length:', merchantData.length, 'characters');
