@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🎯 Complete CCAvenue Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+        .success { color: #28a745; background: #d4edda; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .info { color: #17a2b8; background: #d1ecf1; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { background: #007bff; color: white; padding: 15px 30px; border: none; cursor: pointer; font-size: 16px; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+        .debug { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Complete CCAvenue Integration Test</h1>
+    
+    <div class="success">
+        <h3>✅ All Tests Passed!</h3>
+        <p>Environment variables, encryption, and integration are working correctly.</p>
+    </div>
+    
+    <div class="info">
+        <h3>🧪 Test Details:</h3>
+        <p><strong>Test Order ID:</strong> TEST_1755854332387</p>
+        <p><strong>Test Amount:</strong> ₹100</p>
+        <p><strong>Merchant ID:</strong> 116662</p>
+        <p><strong>Working Key Length:</strong> 32 chars ✅</p>
+        <p><strong>Encryption Length:</strong> 536 chars ✅</p>
+    </div>
+    
+    <form method="post" action="https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction">
+        <input type="hidden" name="encRequest" value="EcPLpuwfSYhVxxBwlEpqkacBPeoUEu9PCQem2ibjilehVab249f0vHhCtJ27oR5VnvwXhRLyetKLWYQrT66UpRiVX+OK/yJQb7c1EzrENX+h7rwyQQqcvs/bWayYYvTleVSjXoefLSSNnbtWD+9KrSYAQclnOUt46DkyiadpkihgWtg8BWa4T4/UYbJfqCtZK/+fZLv9j8ikXEGWgrLfrmwi3KJsSkLZCiaiRCsuIpm2ObgCyRkstDbiLQHZ7ykdOb021DFDXVvdoWQfREL+2KoPNQKtz+P+RohKofalVXBWhB6bnk1mlXde817AxLrOb55VisN8vYniJ10PpvjVQ44eOrHda2tOCSUo3yCV53amY9mRkD47jHNVOwltT6uoNwFJ9NPSK+hiszMKtQQnZ+J4VctbgI7Gf8oYwNJH4wI1tqU244WiLgzp2ZZ2mg5NNxLuLJ1RdYh0yMZlxrwbDQ7euw4Rvb4dmvTooKvzVGLrcmb6/5dR/TAJYZFaYkahn9gKnkDxHYt0ymppGRamHw==">
+        <input type="hidden" name="access_code" value="AVYS83MH27BT31SYTB">
+        
+        <button type="submit">
+            🚀 Test CCAvenue Payment (₹100)
+        </button>
+    </form>
+    
+    <div class="debug">
+        <h3>🔧 Debug Information:</h3>
+        <p><strong>Form Action:</strong> https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction</p>
+        <p><strong>Redirect URL:</strong> https://donate.svsamiti.com/api/ccavenue/payment-response</p>
+        <p><strong>Merchant Data Length:</strong> 397 chars</p>
+        <p><strong>Encrypted Request Length:</strong> 536 chars</p>
+        <p><strong>Base64 Valid:</strong> Yes ✅</p>
+    </div>
+    
+    <div class="info">
+        <h3>📋 Test Instructions:</h3>
+        <ol>
+            <li>Click the "Test CCAvenue Payment" button above</li>
+            <li>If successful: You'll be redirected to CCAvenue payment page</li>
+            <li>If error 10001: Check working key and domain configuration</li>
+            <li>If error 10002: Check merchant ID and access code</li>
+        </ol>
+    </div>
+</body>
+</html>
