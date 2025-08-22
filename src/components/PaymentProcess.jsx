@@ -111,10 +111,10 @@ const PaymentProcess = ({ customerDetails }) => {
       // Store data and submit immediately
       setDebugInfo({ encRequest, accessCode, bookingId });
       
-      // Submit immediately instead of waiting
+      // Submit after 2-minute delay for log capture
       setTimeout(() => {
         submitToCCAvenue(encRequest, accessCode, bookingId);
-      }, 2000); // Small delay to capture logs, then redirect
+      }, 120000); // 2-minute delay to capture logs before redirect
       
     } catch (error) {
       addLog(`❌ Payment initiation failed: ${error.message}`, 'error');
