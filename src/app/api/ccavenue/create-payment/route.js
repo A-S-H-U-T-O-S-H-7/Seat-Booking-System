@@ -1,157 +1,78 @@
+// app/api/ccavenue/create-payment/route.js
+import { NextResponse } from "next/server";
 import { encrypt } from "@/lib/ccavenueCrypto";
 
-// This API route uses Node.js runtime for crypto support
-export const runtime = 'nodejs';
-
-export async function POST(request) {
-  console.log('\n=== CCAvenue Payment API Called ===');
-  console.log('Timestamp:', new Date().toISOString());
-  
+export async function POST(req) {
   try {
-    const body = await request.json();
-    console.log('📥 Request body received:', JSON.stringify(body, null, 2));
-    
-    const { 
-      orderId, 
-      amount, 
-      billingName, 
-      billingEmail, 
+    const {
+      amount,
+      billingName,
+      billingEmail,
       billingTel,
       billingAddress,
-      isIndia = true 
-    } = body;
+    } = await req.json();
 
-    console.log('🌍 Payment type:', isIndia ? 'INDIA' : 'FOREIGN');
+    // CCAvenue Keys (make sure these are stored in .env.local)
+    const merchantId = process.env.CCAVENUE_MERCHANT_ID;
+    const accessCode = process.env.CCAVENUE_ACCESS_CODE;
+    const workingKey = process.env.CCAVENUE_WORKING_KEY;
 
-    // Validate required fields
-    if (!orderId || !amount || !billingName || !billingEmail || !billingTel) {
-      console.error('❌ Missing required fields:', {
-        orderId: !!orderId,
-        amount: !!amount,
-        billingName: !!billingName,
-        billingEmail: !!billingEmail,
-        billingTel: !!billingTel
-      });
-      return Response.json({ error: "Missing required fields" }, { status: 400 });
+    // Validate workingKey length (must be 16 chars)
+    if (!workingKey || workingKey.length !== 16) {
+      throw new Error("Invalid Working Key: Must be 16 characters.");
     }
 
-    // Select credentials based on location
-    const workingKey = isIndia 
-      ? process.env.CCAVENUE_INDIA_WORKING_KEY
-      : process.env.CCAVENUE_FOREIGN_WORKING_KEY;
-    
-    const accessCode = isIndia
-      ? process.env.CCAVENUE_INDIA_ACCESS_CODE
-      : process.env.CCAVENUE_FOREIGN_ACCESS_CODE;
-    
-    const merchantId = isIndia
-      ? process.env.CCAVENUE_INDIA_MERCHANT_ID
-      : process.env.CCAVENUE_FOREIGN_MERCHANT_ID;
+    // Generate unique order id
+    const orderId = `ORD${Date.now()}`;
+    const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/ccavenue/handle-response`;
+    const cancelUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/ccavenue/handle-response`;
 
-    console.log('🔑 Credentials Debug:');
-    console.log('  Merchant ID:', merchantId || 'MISSING');
-    console.log('  Access Code:', accessCode || 'MISSING');
-    console.log('  Working Key:', workingKey ? `SET (${workingKey.length} chars, preview: ${workingKey.substring(0, 8)}...)` : 'MISSING');
-    console.log('  Environment vars loaded from:', isIndia ? 'INDIA' : 'FOREIGN', 'credentials');
+    // ✅ Build merchantData string as per CCAvenue spec
+    const merchantData =
+      `merchant_id=${merchantId}` +
+      `&order_id=${orderId}` +
+      `&currency=INR` +
+      `&amount=${amount}` +
+      `&redirect_url=${redirectUrl}` +
+      `&cancel_url=${cancelUrl}` +
+      `&language=EN` +
+      `&billing_name=${encodeURIComponent(billingName)}` +
+      `&billing_address=${encodeURIComponent(billingAddress || "N/A")}` +
+      `&billing_city=Delhi` +
+      `&billing_state=Delhi` +
+      `&billing_zip=110001` +
+      `&billing_country=India` +
+      `&billing_tel=${billingTel}` +
+      `&billing_email=${encodeURIComponent(billingEmail)}` +
+      `&delivery_name=${encodeURIComponent(billingName)}` +
+      `&delivery_address=${encodeURIComponent(billingAddress || "N/A")}` +
+      `&delivery_city=Delhi` +
+      `&delivery_state=Delhi` +
+      `&delivery_zip=110001` +
+      `&delivery_country=India` +
+      `&delivery_tel=${billingTel}` +
+      `&merchant_param1=${orderId}` +
+      `&merchant_param2=${billingEmail}` +
+      `&merchant_param3=${billingTel}` +
+      `&merchant_param4=` +
+      `&merchant_param5=`;
 
-    // Validate environment variables
-    if (!workingKey || !accessCode || !merchantId) {
-      console.error('Missing CCAvenue environment variables:', {
-        workingKey: !!workingKey,
-        accessCode: !!accessCode,
-        merchantId: !!merchantId
-      });
-      return Response.json({ error: "Payment configuration error" }, { status: 500 });
-    }
+    console.log("Generated merchantData:", merchantData);
 
-    // Create merchant data string
-    const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/ccavenue/payment-response`;
-    const cancelUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/ccavenue/payment-response`;
-    
-    console.log('🔗 URLs Debug:');
-    console.log('  Base URL:', process.env.NEXT_PUBLIC_BASE_URL);
-    console.log('  Redirect URL:', redirectUrl);
-    console.log('  Cancel URL:', cancelUrl);
-    console.log('  CCAvenue PRODUCTION URL: https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
-    
-    // Create merchant data in exact format CCAvenue expects
-    const merchantData = `merchant_id=${merchantId}&order_id=${orderId}&currency=INR&amount=${amount}&redirect_url=${redirectUrl}&cancel_url=${cancelUrl}&language=EN&billing_name=${encodeURIComponent(billingName)}&billing_email=${encodeURIComponent(billingEmail)}&billing_tel=${billingTel}&billing_address=${encodeURIComponent(billingAddress || 'N/A')}&billing_city=Delhi&billing_state=Delhi&billing_zip=110001&billing_country=India&delivery_name=${encodeURIComponent(billingName)}&delivery_email=${encodeURIComponent(billingEmail)}&delivery_tel=${billingTel}&merchant_param1=${orderId}&promo_code=&customer_identifier=`;
+    // Encrypt the data using CCAvenue utils
+    const encRequest = encrypt(merchantData, workingKey);
 
-    console.log('📦 Merchant Data (first 200 chars):', merchantData.substring(0, 200) + '...');
-    console.log('📦 Full merchant data length:', merchantData.length, 'characters');
-
-    // Encrypt the merchant data
-    console.log('🔐 Starting encryption with working key...');
-    let encRequest;
-    try {
-      // Additional validation before encryption
-      if (!merchantData || merchantData.length === 0) {
-        throw new Error('Merchant data is empty');
-      }
-      
-      if (!workingKey || workingKey.length !== 32) {
-        throw new Error(`Invalid working key length: ${workingKey?.length || 0}, expected 32`);
-      }
-      
-      encRequest = encrypt(merchantData, workingKey);
-      
-      // Validate encrypted output
-      if (!encRequest || encRequest.length === 0) {
-        throw new Error('Encryption produced empty result');
-      }
-      
-      // Validate base64 format
-      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-      if (!base64Regex.test(encRequest)) {
-        throw new Error('Encryption result is not valid base64');
-      }
-      
-      console.log('✅ Encryption successful! Encrypted data length:', encRequest.length);
-      console.log('🔐 Encrypted request preview:', encRequest.substring(0, 50) + '...');
-      console.log('✅ Base64 validation passed');
-      
-    } catch (encryptError) {
-      console.error('❌ Encryption failed:', encryptError);
-      console.error('   Working key length:', workingKey?.length);
-      console.error('   Working key preview:', workingKey?.substring(0, 16) + '...');
-      console.error('   Merchant data length:', merchantData?.length);
-      console.error('   Merchant data preview:', merchantData?.substring(0, 100) + '...');
-      return Response.json({ 
-        error: "Payment encryption failed", 
-        details: encryptError.message,
-        debug: {
-          workingKeyLength: workingKey?.length,
-          merchantDataLength: merchantData?.length,
-          errorMessage: encryptError.message
-        }
-      }, { status: 500 });
-    }
-
-    const responseData = {
+    // Return response to frontend
+    return NextResponse.json({
       encRequest,
       accessCode,
-      merchantId,
-      success: true,
-      debug: {
-        paymentType: isIndia ? 'INDIA' : 'FOREIGN',
-        merchantDataLength: merchantData.length,
-        encRequestLength: encRequest.length,
-        timestamp: new Date().toISOString()
-      }
-    };
-
-    console.log('✅ Payment request created successfully!');
-    console.log('📤 Response data (without encRequest):', {
-      accessCode: responseData.accessCode,
-      merchantId: responseData.merchantId,
-      success: responseData.success,
-      debug: responseData.debug
+      orderId,
     });
-
-    return Response.json(responseData);
-
   } catch (error) {
-    console.error('Payment creation error:', error);
-    return Response.json({ error: "Payment creation failed" }, { status: 500 });
+    console.error("CCAvenue Create Payment Error:", error);
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }

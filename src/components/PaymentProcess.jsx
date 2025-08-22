@@ -28,72 +28,105 @@ const PaymentProcess = ({ customerDetails }) => {
 
   const { getShiftLabel, getShiftTime } = useShifts();
 
-  // Create booking first, then initiate payment
-  const initiatePayment = async () => {
-    setProcessing(true);
+  // FIXED: Payment initiation function
+const initiatePayment = async () => {
+  setProcessing(true);
 
-    try {
-      // Step 1: Create booking with 'pending' status
-      const bookingId = await createPendingBooking();
+  try {
+    // Step 1: Create booking with 'pending' status
+    const bookingId = await createPendingBooking();
 
-      // Step 2: Create payment request
-      const paymentResponse = await fetch('/api/ccavenue/create-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: bookingId,
-          amount: getTotalAmount().toString(),
-          billingName: customerDetails.name,
-          billingEmail: customerDetails.email,
-          billingTel: customerDetails.phone,
-          billingAddress: customerDetails.address || 'N/A',
-          isIndia: true, // Set based on customer location
-          currency: "INR", // 👈 IMPORTANT (or USD, etc.)
-        }),
-      });
+    // Step 2: Create payment request with FIXED payload
+    const paymentPayload = {
+      orderId: bookingId,
+      amount: getTotalAmount(),
+      billingName: customerDetails.name,
+      billingEmail: customerDetails.email,
+      billingTel: customerDetails.phone,
+      billingAddress: customerDetails.address || 'Delhi, India',
+      isIndia: true
+    };
 
-      if (!paymentResponse.ok) {
-        throw new Error('Failed to create payment request');
-      }
+    console.log('💳 Creating payment with payload:', paymentPayload);
 
-      const responseData = await paymentResponse.json();
-      const { encRequest, accessCode } = responseData;
+    const paymentResponse = await fetch('/api/ccavenue/create-payment', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
+      body: JSON.stringify(paymentPayload),
+    });
 
-      // Step 3: Create and submit hidden form to CCAvenue with proper encoding
-      console.log('🚀 Submitting to CCAvenue with:');
-      console.log('  - encRequest length:', encRequest?.length || 0);
-      console.log('  - access_code:', accessCode);
-      console.log('  - encRequest preview:', encRequest?.substring(0, 50) + '...');
-      
-      const form = document.createElement("form");
-      form.method = "post"; // lowercase
-      form.action = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";
-      form.target = "_self";
-
-      const encField = document.createElement("input");
-      encField.type = "hidden";
-      encField.name = "encRequest";
-      encField.value = encRequest;
-
-      const accField = document.createElement("input");
-      accField.type = "hidden";
-      accField.name = "access_code";
-      accField.value = accessCode;
-
-      form.appendChild(encField);
-      form.appendChild(accField);
-      document.body.appendChild(form);
-      
-      console.log('📋 Form created successfully, submitting...');
-      form.submit();
-
-      setProcessing(false);
-    } catch (error) {
-      console.error("Payment initiation failed:", error);
-      toast.error("Failed to initiate payment. Please try again.");
-      setProcessing(false);
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.json();
+      console.error('Payment API error:', errorData);
+      throw new Error(errorData.error || 'Failed to create payment request');
     }
-  };
+
+    const responseData = await paymentResponse.json();
+    
+    if (!responseData.success) {
+      throw new Error('Payment request creation failed');
+    }
+
+    const { encRequest, accessCode } = responseData;
+
+    if (!encRequest || !accessCode) {
+      throw new Error('Missing payment parameters from API');
+    }
+
+    // Step 3: FIXED form submission to CCAvenue
+    console.log('🚀 Redirecting to CCAvenue...');
+    console.log('  - encRequest length:', encRequest.length);
+    console.log('  - accessCode:', accessCode);
+    
+    // FIXED: Proper form creation and submission
+    const form = document.createElement("form");
+    form.setAttribute('method', 'POST');
+    form.setAttribute('action', 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
+    form.setAttribute('target', '_self');
+    form.style.display = 'none';
+
+    // FIXED: Proper input creation
+    const encInput = document.createElement("input");
+    encInput.setAttribute('type', 'hidden');
+    encInput.setAttribute('name', 'encRequest');
+    encInput.setAttribute('value', encRequest);
+
+    const accInput = document.createElement("input");
+    accInput.setAttribute('type', 'hidden');
+    accInput.setAttribute('name', 'access_code');
+    accInput.setAttribute('value', accessCode);
+
+    form.appendChild(encInput);
+    form.appendChild(accInput);
+    
+    // FIXED: Append to body and submit immediately
+    document.body.appendChild(form);
+    
+    console.log('📋 Form elements:');
+    console.log('  - Form action:', form.getAttribute('action'));
+    console.log('  - Form method:', form.getAttribute('method'));
+    console.log('  - encRequest input:', !!form.querySelector('input[name="encRequest"]'));
+    console.log('  - access_code input:', !!form.querySelector('input[name="access_code"]'));
+    
+    // Submit the form
+    form.submit();
+    
+    // Clean up
+    setTimeout(() => {
+      if (document.body.contains(form)) {
+        document.body.removeChild(form);
+      }
+    }, 1000);
+
+  } catch (error) {
+    console.error("❌ Payment initiation failed:", error);
+    toast.error(error.message || "Failed to initiate payment. Please try again.");
+    setProcessing(false);
+  }
+};
 
 
   const createPendingBooking = async () => {

@@ -1,61 +1,71 @@
-import { createCipheriv, createDecipheriv, createHash } from "crypto";
+const crypto = require("crypto");
 
-export function encrypt(plainText, workingKey) {
+// FIXED: Proper key derivation for CCAvenue
+const deriveKey = (workingKey) => {
+  return crypto.createHash("md5").update(workingKey, "utf8").digest();
+};
+
+// FIXED: Use proper IV (16 zero bytes)
+const IV = Buffer.alloc(16, 0);
+
+function encrypt(plainText, workingKey) {
   try {
-    console.log('🔐 CCAvenue Encrypt - Starting...');
-    console.log('  Plain text length:', plainText.length);
-    console.log('  Working key length:', workingKey.length);
-    console.log('  Working key preview:', workingKey.substring(0, 8) + '...');
+    console.log('🔐 Encrypting with working key length:', workingKey?.length);
     
-    // CCAvenue uses MD5 hash of working key for AES encryption
-    const keyHash = createHash('md5').update(workingKey, 'utf8').digest();
-    console.log('  Key hash length:', keyHash.length);
+    if (!workingKey || workingKey.length !== 32) {
+      throw new Error(`Invalid working key length: ${workingKey?.length}, expected 32`);
+    }
     
-    // Use the working key as IV (first 16 bytes)
-  const iv = Buffer.alloc(16);
-      console.log('  IV length:', iv.length);
+    if (!plainText) {
+      throw new Error('Plain text is empty');
+    }
     
-    const cipher = createCipheriv('aes-128-cbc', keyHash, iv);
+    const key = deriveKey(workingKey);
+    console.log('🔑 Derived key length:', key.length);
+    
+    const cipher = crypto.createCipheriv("aes-128-cbc", key, IV);
     cipher.setAutoPadding(true);
     
-    let encrypted = cipher.update(plainText, 'utf8', 'base64');
-    encrypted += cipher.final('base64');
+    let encrypted = cipher.update(plainText, "utf8", "base64");
+    encrypted += cipher.final("base64");
     
-    console.log('✅ CCAvenue Encrypt - Success!');
-    console.log('  Encrypted length:', encrypted.length);
-    console.log('  Encrypted preview:', encrypted.substring(0, 50) + '...');
+    console.log('✅ Encryption completed, result length:', encrypted.length);
     
     return encrypted;
+    
   } catch (error) {
-    console.error('❌ CCAvenue Encrypt - Error:', error);
-    throw new Error(`Encryption failed: ${error.message}`);
+    console.error('❌ Encryption error:', error.message);
+    throw error;
   }
 }
 
-export function decrypt(encText, workingKey) {
+function decrypt(encBase64, workingKey) {
   try {
-    console.log('🔓 CCAvenue Decrypt - Starting...');
-    console.log('  Encrypted text length:', encText.length);
-    console.log('  Working key length:', workingKey.length);
+    console.log('🔓 Decrypting with working key length:', workingKey?.length);
     
-    // CCAvenue uses MD5 hash of working key for AES decryption
-    const keyHash = createHash('md5').update(workingKey, 'utf8').digest();
+    if (!workingKey || workingKey.length !== 32) {
+      throw new Error(`Invalid working key length: ${workingKey?.length}, expected 32`);
+    }
     
-    // Use the working key as IV (first 16 bytes)
-    const iv = Buffer.from(workingKey.substring(0, 16), 'utf8');
+    if (!encBase64) {
+      throw new Error('Encrypted data is empty');
+    }
     
-    const decipher = createDecipheriv('aes-128-cbc', keyHash, iv);
+    const key = deriveKey(workingKey);
+    const decipher = crypto.createDecipheriv("aes-128-cbc", key, IV);
     decipher.setAutoPadding(true);
     
-    let decrypted = decipher.update(encText, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
+    let decrypted = decipher.update(encBase64, "base64", "utf8");
+    decrypted += decipher.final("utf8");
     
-    console.log('✅ CCAvenue Decrypt - Success!');
-    console.log('  Decrypted length:', decrypted.length);
+    console.log('✅ Decryption completed');
     
     return decrypted;
+    
   } catch (error) {
-    console.error('❌ CCAvenue Decrypt - Error:', error);
-    throw new Error(`Decryption failed: ${error.message}`);
+    console.error('❌ Decryption error:', error.message);
+    throw error;
   }
 }
+
+module.exports = { encrypt, decrypt };
