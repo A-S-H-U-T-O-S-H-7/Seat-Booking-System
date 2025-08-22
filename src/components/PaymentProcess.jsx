@@ -38,10 +38,9 @@ const PaymentProcess = ({ customerDetails }) => {
     console.log(logEntry);
   };
 
-  // DEBUG: Payment initiation function with 3-minute wait
+  // Payment initiation function - ready for new integration
   const initiatePayment = async () => {
     setProcessing(true);
-    setDebugMode(true);
     setLogs([]);
     
     addLog('🚀 Payment initiation started');
@@ -55,152 +54,19 @@ const PaymentProcess = ({ customerDetails }) => {
       const bookingId = await createPendingBooking();
       addLog(`✅ Booking created: ${bookingId}`);
 
-      // Step 2: Create payment request with FIXED payload
-      const paymentPayload = {
-        orderId: bookingId,
-        amount: getTotalAmount(),
-        billingName: customerDetails.name,
-        billingEmail: customerDetails.email,
-        billingTel: customerDetails.phone,
-        billingAddress: customerDetails.address || 'Delhi, India',
-        isIndia: true
-      };
-
-      addLog('💳 Creating payment request...');
-      addLog(`Payload: ${JSON.stringify(paymentPayload, null, 2)}`);
-
-      const paymentResponse = await fetch('/api/ccavenue/create-payment', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify(paymentPayload),
-      });
-
-      addLog(`API Response Status: ${paymentResponse.status}`);
+      // TODO: Replace this with your new payment gateway integration
+      addLog('💳 Payment gateway integration removed. Ready for new implementation.');
       
-      if (!paymentResponse.ok) {
-        const errorData = await paymentResponse.json();
-        addLog(`❌ Payment API error: ${JSON.stringify(errorData)}`, 'error');
-        throw new Error(errorData.error || 'Failed to create payment request');
-      }
-
-      const responseData = await paymentResponse.json();
-      addLog(`✅ API Response received: ${JSON.stringify(responseData.debug || {})}`);
-      
-      if (!responseData.success) {
-        addLog('❌ Payment request creation failed', 'error');
-        throw new Error('Payment request creation failed');
-      }
-
-      const { encRequest, accessCode } = responseData;
-
-      if (!encRequest || !accessCode) {
-        addLog('❌ Missing payment parameters from API', 'error');
-        throw new Error('Missing payment parameters from API');
-      }
-
-      addLog(`🔐 Encryption successful: ${encRequest.length} chars`);
-      addLog(`🔑 Access code: ${accessCode}`);
-      
-      // FIXED: Immediate redirect instead of debug countdown
-      addLog('🚀 Proceeding to CCAvenue payment...');
-      addLog('📖 Check browser console for detailed logs!');
-      
-      // Store data and submit immediately
-      setDebugInfo({ encRequest, accessCode, bookingId });
-      
-      // Submit after 2-minute delay for log capture
-      setTimeout(() => {
-        submitToCCAvenue(encRequest, accessCode, bookingId);
-      }, 120000); // 2-minute delay to capture logs before redirect
+      toast.info("Payment integration has been removed. Please add your new payment gateway.");
+      setProcessing(false);
       
     } catch (error) {
       addLog(`❌ Payment initiation failed: ${error.message}`, 'error');
       toast.error(error.message || "Failed to initiate payment. Please try again.");
       setProcessing(false);
-      setDebugMode(false);
     }
   };
   
-  // Submit to CCAvenue after debug period
-  const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
-    addLog('🚀 Debug period complete, submitting to CCAvenue...');
-    
-    // CRITICAL FIX: Validate encrypted request before submission
-    if (!encRequest || !accessCode) {
-      addLog('❌ CRITICAL: Missing encRequest or accessCode!', 'error');
-      addLog(`encRequest exists: ${!!encRequest}`, 'error');
-      addLog(`accessCode exists: ${!!accessCode}`, 'error');
-      return;
-    }
-    
-    if (encRequest.length < 100) {
-      addLog('⚠️ WARNING: encRequest seems too short!', 'error');
-      addLog(`encRequest length: ${encRequest.length}`, 'error');
-    }
-    
-    // FIXED: Use direct property assignment instead of setAttribute to prevent URL issues
-    const form = document.createElement("form");
-    form.method = "POST";  // Direct assignment
-    form.action = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";  // Direct assignment
-    form.target = "_self";
-    form.style.display = "none";
-    form.acceptCharset = "UTF-8";  // CRITICAL: Ensure UTF-8 encoding
-
-    const encInput = document.createElement("input");
-    encInput.type = "hidden";
-    encInput.name = "encRequest";
-    encInput.value = encRequest;
-
-    const accInput = document.createElement("input");
-    accInput.type = "hidden";
-    accInput.name = "access_code";
-    accInput.value = accessCode;
-
-    form.appendChild(encInput);
-    form.appendChild(accInput);
-    document.body.appendChild(form);
-    
-    addLog('📋 FIXED: Form created with direct property assignment');
-    addLog(`Form action: ${form.action}`);
-    addLog(`Form method: ${form.method}`);
-    addLog(`encRequest field: ${!!form.querySelector('input[name="encRequest"]')}`);
-    addLog(`access_code field: ${!!form.querySelector('input[name="access_code"]')}`);
-    addLog(`encRequest length: ${encRequest.length}`);
-    addLog(`access_code value: ${accessCode}`);
-    
-    // FIXED: More lenient validation and better debugging
-    addLog(`🔍 Form validation check:`);
-    addLog(`  Action URL: ${form.action}`);
-    addLog(`  Method: ${form.method}`);
-    addLog(`  Contains ccavenue: ${form.action.includes('ccavenue.com')}`);
-    addLog(`  Method is POST: ${form.method.toUpperCase() === 'POST'}`);
-    
-    // FIXED: More flexible validation
-    if (form.action.includes('ccavenue.com') && form.method.toUpperCase() === 'POST') {
-      addLog('✅ Form validation passed, submitting to CCAvenue...');
-      addLog('⚠️ Note: If you get 10002 error, check merchant credentials');
-      form.submit();
-    } else {
-      addLog('❌ Form validation failed!', 'error');
-      addLog(`Expected action to contain 'ccavenue.com', got: ${form.action}`, 'error');
-      addLog(`Expected method 'POST', got: ${form.method}`, 'error');
-      
-      // Try submitting anyway for debugging
-      addLog('⚠️ Attempting submission anyway for debugging...', 'error');
-      form.submit();
-    }
-  };
-  
-  // Skip debug and submit immediately
-  const skipDebugAndSubmit = () => {
-    if (debugInfo) {
-      addLog('⚡ Skipping debug, submitting immediately...');
-      submitToCCAvenue(debugInfo.encRequest, debugInfo.accessCode, debugInfo.bookingId);
-    }
-  };
 
 
   const createPendingBooking = async () => {
@@ -261,7 +127,7 @@ const PaymentProcess = ({ customerDetails }) => {
           totalAmount: getTotalAmount(),
           status: 'pending_payment', // Important: pending status
           payment: {
-            gateway: 'ccavenue',
+            gateway: 'pending_integration',
             amount: getTotalAmount(),
             currency: 'INR'
           },
@@ -280,45 +146,6 @@ const PaymentProcess = ({ customerDetails }) => {
     }
   };
 
-  const redirectToCCAvenue = (encRequest, accessCode) => {
-    console.log('\n=== CCAvenue Redirect Debug ===');
-    console.log('🌐 Redirecting to CCAvenue...');
-    console.log('📝 Form Details:');
-    console.log('  Action URL: https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
-    console.log('  Method: POST');
-    console.log('  Target: _self');
-    console.log('🔑 Form Data:');
-    console.log('  encRequest length:', encRequest?.length || 0);
-    console.log('  encRequest preview:', encRequest?.substring(0, 50) + '...');
-    console.log('  access_code:', accessCode);
-    console.log('  access_code length:', accessCode?.length || 0);
-
-    // Create form dynamically and submit to CCAvenue
-    const form = document.createElement('form');
-    form.method = 'post';
-    form.action = 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
-    form.target = '_self'; // Ensure it opens in the same window
-
-    const encInput = document.createElement('input');
-    encInput.type = 'hidden';
-    encInput.name = 'encRequest';
-    encInput.value = encRequest;
-    form.appendChild(encInput);
-
-    const accInput = document.createElement('input');
-    accInput.type = 'hidden';
-    accInput.name = 'access_code';
-    accInput.value = accessCode;
-    form.appendChild(accInput);
-
-    console.log('📋 Form created with', form.children.length, 'input fields');
-    console.log('🚀 Submitting form to CCAvenue...');
-
-    document.body.appendChild(form);
-    form.submit();
-
-    console.log('✅ Form submitted! User should be redirected to CCAvenue.');
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 flex flex-col justify-center items-center px-2 sm:px-4 py-4 sm:py-8">
@@ -399,7 +226,7 @@ const PaymentProcess = ({ customerDetails }) => {
                 <div className="text-blue-600 mr-3 text-xl sm:text-2xl">🔒</div>
                 <div className="text-xs sm:text-sm">
                   <p className="font-semibold text-blue-800">Bank Grade Security</p>
-                  <p className="text-blue-600">Powered by CCAvenue - India's leading payment gateway</p>
+                  <p className="text-blue-600">Secure payment gateway integration ready</p>
                 </div>
               </div>
             </div>

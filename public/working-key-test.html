@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CCAvenue Working Key Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .error { background: #ffebee; border: 1px solid #f44336; padding: 15px; border-radius: 4px; margin: 10px 0; color: #c62828; }
+        .success { background: #e8f5e8; border: 1px solid #4caf50; padding: 15px; border-radius: 4px; margin: 10px 0; color: #2e7d32; }
+        .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 4px; margin: 10px 0; color: #856404; }
+        .info { background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 4px; margin: 10px 0; color: #1565c0; }
+        button { background: #2196f3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1976d2; }
+        .test-button { background: #4caf50; }
+        .test-button:hover { background: #388e3c; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+        input[type="text"] { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; }
+        .key-input { background: #fffde7; border: 2px solid #ff9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 CCAvenue Working Key Diagnostic</h1>
+        
+        <div class="error">
+            <h3>🚨 10001 Error = Working Key Problem</h3>
+            <p>Since you're getting a 10001 error, the issue is almost certainly with your working key. Let's diagnose it.</p>
+        </div>
+
+        <div class="warning">
+            <h3>⚠️ SECURITY WARNING</h3>
+            <p><strong>DO NOT</strong> paste your real working key here if you're sharing this screen. Use this for local testing only.</p>
+        </div>
+
+        <div class="info">
+            <h3>📋 Working Key Requirements</h3>
+            <ul>
+                <li><strong>Length:</strong> Exactly 16 characters (ASCII) OR exactly 32 characters (hex)</li>
+                <li><strong>Characters:</strong> Only alphanumeric characters (A-Z, a-z, 0-9)</li>
+                <li><strong>No spaces:</strong> Before, after, or inside the key</li>
+                <li><strong>No special characters:</strong> No quotes, brackets, or symbols</li>
+            </ul>
+        </div>
+
+        <h3>🧪 Test Your Working Key</h3>
+        <p>Enter your working key below to validate it:</p>
+        <input type="text" id="workingKeyInput" placeholder="Enter your working key here..." class="key-input" maxlength="50">
+        <button onclick="validateWorkingKey()" class="test-button">🔍 Validate Working Key</button>
+        
+        <div id="validation-result"></div>
+
+        <hr>
+        
+        <h3>🔧 Test Current API Configuration</h3>
+        <button onclick="testCurrentConfig()">🧪 Test Current API Config</button>
+        
+        <div id="api-test-result"></div>
+
+        <hr>
+        
+        <h3>📋 Manual Working Key Entry Test</h3>
+        <p>If validation fails, try creating a payment with a manually entered working key:</p>
+        <button onclick="testWithManualKey()" class="test-button">🔨 Test with Manual Key</button>
+        
+        <div id="manual-test-result"></div>
+        
+        <hr>
+        
+        <div id="debug-logs">
+            <h3>🔍 Debug Information</h3>
+            <pre id="log-output">Click any test button to start debugging...</pre>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function addLog(message, type = 'INFO') {
+            const timestamp = new Date().toISOString();
+            logs.push(`[${timestamp}] ${type}: ${message}`);
+            document.getElementById('log-output').textContent = logs.join('\n');
+        }
+        
+        function validateWorkingKey() {
+            const key = document.getElementById('workingKeyInput').value.trim();
+            const resultDiv = document.getElementById('validation-result');
+            
+            if (!key) {
+                resultDiv.innerHTML = '<div class="error">Please enter a working key to validate.</div>';
+                return;
+            }
+            
+            addLog(`Testing working key: "${key}"`);
+            addLog(`Working key length: ${key.length}`);
+            
+            let issues = [];
+            let validations = [];
+            
+            // Check length
+            if (key.length !== 16 && key.length !== 32) {
+                issues.push(`Invalid length: ${key.length} (should be 16 or 32)`);
+            } else {
+                validations.push(`✅ Length: ${key.length} characters (${key.length === 16 ? 'ASCII format' : 'Hex format'})`);
+            }
+            
+            // Check for spaces
+            if (key.includes(' ')) {
+                issues.push('Contains spaces (not allowed)');
+            } else {
+                validations.push('✅ No spaces found');
+            }
+            
+            // Check for special characters
+            const alphanumeric = /^[A-Za-z0-9]+$/;
+            if (!alphanumeric.test(key)) {
+                issues.push('Contains non-alphanumeric characters');
+            } else {
+                validations.push('✅ Only alphanumeric characters');
+            }
+            
+            // Check if hex (for 32-char keys)
+            if (key.length === 32) {
+                const hexPattern = /^[A-Fa-f0-9]+$/;
+                if (hexPattern.test(key)) {
+                    validations.push('✅ Valid hexadecimal format');
+                } else {
+                    issues.push('32-character key should be hexadecimal (0-9, A-F)');
+                }
+            }
+            
+            addLog(`Validation issues: ${issues.length}`);
+            addLog(`Validation successes: ${validations.length}`);
+            
+            let resultHTML = '';
+            
+            if (validations.length > 0) {
+                resultHTML += '<div class="success"><h4>✅ Validations Passed:</h4><ul>';
+                validations.forEach(v => resultHTML += `<li>${v}</li>`);
+                resultHTML += '</ul></div>';
+            }
+            
+            if (issues.length > 0) {
+                resultHTML += '<div class="error"><h4>❌ Issues Found:</h4><ul>';
+                issues.forEach(i => resultHTML += `<li>${i}</li>`);
+                resultHTML += '</ul></div>';
+            }
+            
+            if (issues.length === 0) {
+                resultHTML += '<div class="success"><h3>🎉 Working Key Looks Valid!</h3><p>Your working key format appears correct. If you\'re still getting 10001 errors, the key content might be wrong.</p></div>';
+                
+                // Test encryption
+                testEncryption(key);
+            }
+            
+            resultDiv.innerHTML = resultHTML;
+        }
+        
+        async function testEncryption(workingKey) {
+            addLog('Testing encryption with provided working key...');
+            
+            const testData = 'merchant_id=116662&order_id=TEST123&amount=100&currency=INR';
+            addLog(`Test data: ${testData}`);
+            addLog(`Test data length: ${testData.length}`);
+            
+            try {
+                const response = await fetch('/api/test-working-key', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        workingKey: workingKey,
+                        testData: testData
+                    })
+                });
+                
+                const result = await response.json();
+                addLog(`Server encryption test result: ${JSON.stringify(result, null, 2)}`);
+                
+                const resultDiv = document.getElementById('validation-result');
+                let currentHTML = resultDiv.innerHTML;
+                
+                if (result.success && result.encryption.success) {
+                    currentHTML += `
+                        <div class="success">
+                            <h4>🔐 Encryption Test PASSED!</h4>
+                            <p>Your working key successfully encrypted test data.</p>
+                            <p><strong>Encrypted length:</strong> ${result.encryption.encryptedLength} characters</p>
+                            <p><strong>Recommendation:</strong> ${result.recommendation}</p>
+                        </div>
+                    `;
+                } else {
+                    currentHTML += `
+                        <div class="error">
+                            <h4>❌ Encryption Test FAILED!</h4>
+                            <p><strong>Error:</strong> ${result.encryption?.error || 'Unknown error'}</p>
+                            <p><strong>Recommendation:</strong> ${result.recommendation}</p>
+                        </div>
+                    `;
+                }
+                
+                resultDiv.innerHTML = currentHTML;
+                
+            } catch (error) {
+                addLog(`Error testing encryption: ${error.message}`, 'ERROR');
+            }
+        }
+        
+        async function testCurrentConfig() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<p>Testing current API configuration...</p>';
+            
+            addLog('Testing current API configuration');
+            
+            try {
+                const response = await fetch('/api/debug/ccavenue');
+                const data = await response.json();
+                
+                addLog(`API response: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.status === 'OK') {
+                    resultDiv.innerHTML = '<div class="success">✅ Environment variables are configured correctly.</div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Issues found: ${data.issues.join(', ')}</div>`;
+                }
+                
+            } catch (error) {
+                addLog(`Error testing API: ${error.message}`, 'ERROR');
+                resultDiv.innerHTML = `<div class="error">❌ Error testing API: ${error.message}</div>`;
+            }
+        }
+        
+        async function testWithManualKey() {
+            const key = document.getElementById('workingKeyInput').value.trim();
+            const resultDiv = document.getElementById('manual-test-result');
+            
+            if (!key) {
+                resultDiv.innerHTML = '<div class="error">Please enter a working key first.</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>Creating test payment with manual key...</p>';
+            addLog('Creating test payment with manually entered key');
+            
+            try {
+                // Create a test payment but log what we would send
+                const testPayment = {
+                    orderId: 'MANUAL_TEST_' + Date.now(),
+                    amount: '1.00',
+                    billingName: 'Manual Test',
+                    billingEmail: 'manual@test.com',
+                    billingTel: '9999999999',
+                    billingAddress: 'Test Address'
+                };
+                
+                addLog(`Would test with: ${JSON.stringify(testPayment)}`);
+                addLog(`Using working key: ${key.substring(0, 4)}${'*'.repeat(key.length - 4)}`);
+                
+                resultDiv.innerHTML = `
+                    <div class="warning">
+                        <h4>⚠️ Manual Key Test</h4>
+                        <p>To test with your manual key, you would need to:</p>
+                        <ol>
+                            <li>Temporarily update your .env.local file with this key</li>
+                            <li>Restart your dev server (npm run dev)</li>
+                            <li>Run the payment test again</li>
+                        </ol>
+                        <p><strong>Key to test:</strong> <code>${key}</code></p>
+                    </div>
+                `;
+                
+            } catch (error) {
+                addLog(`Error in manual test: ${error.message}`, 'ERROR');
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-load current config on page load
+        window.onload = function() {
+            testCurrentConfig();
+        };
+    </script>
+</body>
+</html>
