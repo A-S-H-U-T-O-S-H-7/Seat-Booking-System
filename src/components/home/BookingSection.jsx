@@ -58,7 +58,7 @@ function BookingSection({ user }) {
                   </div>
                 </div>
                 <p className="text-gray-700 text-center text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
-                  Reserve a stall space for your business. 5-day booking with prime locations available.
+                  Reserve a stall space for your business. 5-day reserve with prime locations available.
                 </p>
               </Link>
 

@@ -94,9 +94,10 @@ function HeroSection({ user }) {
               <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 lg:p-8 shadow-2xl border border-orange-200/30 hover:shadow-3xl transition-all duration-500">
                 <div className="text-center lg:text-left space-y-3">
                   <p className="text-lg sm:text-xl lg:text-xl text-gray-800 leading-relaxed font-bold">
+                                      <Link href="/"> <span className='font-black underline animate-pulse text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text'> Donate Now!  </span></Link>
                     Be a <span className="font-black text-transparent bg-gradient-to-r from-orange-600 via-red-600 to-yellow-600 bg-clip-text">SVS member</span> and join us for a divine 5-day ceremony.
-                    <Link href="/"> <span className='font-black underline animate-pulse text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text'> Donate Now!</span></Link>
                   </p>
+                  
                   <div className="w-16 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full mx-auto lg:mx-0"></div>
                   <p className="text-base sm:text-lg lg:text-lg text-gray-700 leading-relaxed font-medium">
                     Contribute with devotion and reserve your seat for a spiritual experience filled with 
@@ -278,7 +279,7 @@ function HeroSection({ user }) {
                         transition-transform duration-800"></div>
           
           <span className="relative text-2xl mr-4 group-hover:animate-pulse">🎯</span>
-          <span className="relative font-bold tracking-wide">Register & Book Seats</span>
+          <span className="relative font-bold tracking-wide">Register Now</span>
         </Link>
       </div>
       
@@ -294,7 +295,7 @@ function HeroSection({ user }) {
                      hover:scale-105 hover:shadow-orange-500/25 transition-all duration-300"
         >
           <span className="relative text-2xl mr-4 group-hover:animate-pulse">🔐</span>
-          <span className="relative font-bold tracking-wide">Login to Book</span>
+          <span className="relative font-bold tracking-wide">LogIn</span>
         </Link>
       </div>
     </div>

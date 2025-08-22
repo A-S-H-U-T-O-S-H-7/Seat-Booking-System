@@ -80,7 +80,7 @@ function Header({ user, handleLogout }) {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium">My Profile</p>
-                          <p className="text-xs text-gray-500">View bookings</p>
+                          <p className="text-xs text-gray-500">View Profile</p>
                         </div>
                         <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
