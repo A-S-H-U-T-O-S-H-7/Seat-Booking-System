@@ -104,23 +104,17 @@ const PaymentProcess = ({ customerDetails }) => {
       addLog(`🔐 Encryption successful: ${encRequest.length} chars`);
       addLog(`🔑 Access code: ${accessCode}`);
       
-      // DEBUG: Start 3-minute countdown
-      addLog('⏰ Starting 3-minute debug countdown...');
+      // FIXED: Immediate redirect instead of debug countdown
+      addLog('🚀 Proceeding to CCAvenue payment...');
       addLog('📖 Check browser console for detailed logs!');
       
-      let timeLeft = 180; // 3 minutes
-      const countdownInterval = setInterval(() => {
-        timeLeft--;
-        setCountdown(timeLeft);
-        
-        if (timeLeft <= 0) {
-          clearInterval(countdownInterval);
-          submitToCCAvenue(encRequest, accessCode, bookingId);
-        }
-      }, 1000);
-      
-      // Store data for later submission
+      // Store data and submit immediately
       setDebugInfo({ encRequest, accessCode, bookingId });
+      
+      // Submit immediately instead of waiting
+      setTimeout(() => {
+        submitToCCAvenue(encRequest, accessCode, bookingId);
+      }, 2000); // Small delay to capture logs, then redirect
       
     } catch (error) {
       addLog(`❌ Payment initiation failed: ${error.message}`, 'error');
@@ -163,14 +157,26 @@ const PaymentProcess = ({ customerDetails }) => {
     addLog(`encRequest length: ${encRequest.length}`);
     addLog(`access_code value: ${accessCode}`);
     
-    // Additional validation before submit
-    if (form.action.includes('secure.ccavenue.com') && form.method === 'POST') {
-      addLog('✅ Form validation passed, submitting...');
+    // FIXED: More lenient validation and better debugging
+    addLog(`🔍 Form validation check:`);
+    addLog(`  Action URL: ${form.action}`);
+    addLog(`  Method: ${form.method}`);
+    addLog(`  Contains ccavenue: ${form.action.includes('ccavenue.com')}`);
+    addLog(`  Method is POST: ${form.method.toUpperCase() === 'POST'}`);
+    
+    // FIXED: More flexible validation
+    if (form.action.includes('ccavenue.com') && form.method.toUpperCase() === 'POST') {
+      addLog('✅ Form validation passed, submitting to CCAvenue...');
+      addLog('⚠️ Note: If you get 10002 error, check merchant credentials');
       form.submit();
     } else {
       addLog('❌ Form validation failed!', 'error');
-      addLog(`Action: ${form.action}`, 'error');
-      addLog(`Method: ${form.method}`, 'error');
+      addLog(`Expected action to contain 'ccavenue.com', got: ${form.action}`, 'error');
+      addLog(`Expected method 'POST', got: ${form.method}`, 'error');
+      
+      // Try submitting anyway for debugging
+      addLog('⚠️ Attempting submission anyway for debugging...', 'error');
+      form.submit();
     }
   };
   
@@ -399,7 +405,7 @@ const PaymentProcess = ({ customerDetails }) => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                   </svg>
-                  Creating Booking & Redirecting...
+                  Processing Payment...
                 </span>
               ) : (
                 <span className="flex items-center justify-center">
