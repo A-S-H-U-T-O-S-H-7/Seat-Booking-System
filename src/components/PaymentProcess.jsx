@@ -59,10 +59,16 @@ const PaymentProcess = ({ customerDetails }) => {
       const responseData = await paymentResponse.json();
       const { encRequest, accessCode } = responseData;
 
-      // Step 3: Create and submit hidden form to CCAvenue
+      // Step 3: Create and submit hidden form to CCAvenue with proper encoding
+      console.log('🚀 Submitting to CCAvenue with:');
+      console.log('  - encRequest length:', encRequest?.length || 0);
+      console.log('  - access_code:', accessCode);
+      console.log('  - encRequest preview:', encRequest?.substring(0, 50) + '...');
+      
       const form = document.createElement("form");
-      form.method = "POST";
+      form.method = "post"; // lowercase
       form.action = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";
+      form.target = "_self";
 
       const encField = document.createElement("input");
       encField.type = "hidden";
@@ -76,8 +82,9 @@ const PaymentProcess = ({ customerDetails }) => {
 
       form.appendChild(encField);
       form.appendChild(accField);
-
       document.body.appendChild(form);
+      
+      console.log('📋 Form created successfully, submitting...');
       form.submit();
 
       setProcessing(false);

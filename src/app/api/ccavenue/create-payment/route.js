@@ -105,14 +105,47 @@ export async function POST(request) {
     console.log('🔐 Starting encryption with working key...');
     let encRequest;
     try {
+      // Additional validation before encryption
+      if (!merchantData || merchantData.length === 0) {
+        throw new Error('Merchant data is empty');
+      }
+      
+      if (!workingKey || workingKey.length !== 32) {
+        throw new Error(`Invalid working key length: ${workingKey?.length || 0}, expected 32`);
+      }
+      
       encRequest = encrypt(merchantData, workingKey);
+      
+      // Validate encrypted output
+      if (!encRequest || encRequest.length === 0) {
+        throw new Error('Encryption produced empty result');
+      }
+      
+      // Validate base64 format
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(encRequest)) {
+        throw new Error('Encryption result is not valid base64');
+      }
+      
       console.log('✅ Encryption successful! Encrypted data length:', encRequest.length);
       console.log('🔐 Encrypted request preview:', encRequest.substring(0, 50) + '...');
+      console.log('✅ Base64 validation passed');
+      
     } catch (encryptError) {
       console.error('❌ Encryption failed:', encryptError);
       console.error('   Working key length:', workingKey?.length);
       console.error('   Working key preview:', workingKey?.substring(0, 16) + '...');
-      return Response.json({ error: "Payment encryption failed" }, { status: 500 });
+      console.error('   Merchant data length:', merchantData?.length);
+      console.error('   Merchant data preview:', merchantData?.substring(0, 100) + '...');
+      return Response.json({ 
+        error: "Payment encryption failed", 
+        details: encryptError.message,
+        debug: {
+          workingKeyLength: workingKey?.length,
+          merchantDataLength: merchantData?.length,
+          errorMessage: encryptError.message
+        }
+      }, { status: 500 });
     }
 
     const responseData = {
