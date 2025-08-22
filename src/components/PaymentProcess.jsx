@@ -15,7 +15,9 @@ const PaymentProcess = ({ customerDetails }) => {
   const [processing, setProcessing] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
-  const [countdown, setCountdown] = useState(120); // 2 minutes in seconds
+  const [countdown, setCountdown] = useState(60); // 3 minutes for debug
+  const [debugMode, setDebugMode] = useState(false);
+  const [logs, setLogs] = useState([]);
   const router = useRouter();
 
   const { user } = useAuth();
@@ -28,105 +30,157 @@ const PaymentProcess = ({ customerDetails }) => {
 
   const { getShiftLabel, getShiftTime } = useShifts();
 
-  // FIXED: Payment initiation function
-const initiatePayment = async () => {
-  setProcessing(true);
+  // DEBUG: Add log capturing function
+  const addLog = (message, type = 'info') => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+    setLogs(prev => [...prev, logEntry]);
+    console.log(logEntry);
+  };
 
-  try {
-    // Step 1: Create booking with 'pending' status
-    const bookingId = await createPendingBooking();
-
-    // Step 2: Create payment request with FIXED payload
-    const paymentPayload = {
-      orderId: bookingId,
-      amount: getTotalAmount(),
-      billingName: customerDetails.name,
-      billingEmail: customerDetails.email,
-      billingTel: customerDetails.phone,
-      billingAddress: customerDetails.address || 'Delhi, India',
-      isIndia: true
-    };
-
-    console.log('💳 Creating payment with payload:', paymentPayload);
-
-    const paymentResponse = await fetch('/api/ccavenue/create-payment', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
-      },
-      body: JSON.stringify(paymentPayload),
-    });
-
-    if (!paymentResponse.ok) {
-      const errorData = await paymentResponse.json();
-      console.error('Payment API error:', errorData);
-      throw new Error(errorData.error || 'Failed to create payment request');
-    }
-
-    const responseData = await paymentResponse.json();
+  // DEBUG: Payment initiation function with 3-minute wait
+  const initiatePayment = async () => {
+    setProcessing(true);
+    setDebugMode(true);
+    setLogs([]);
     
-    if (!responseData.success) {
-      throw new Error('Payment request creation failed');
+    addLog('🚀 Payment initiation started');
+    addLog(`Customer: ${customerDetails.name}`);
+    addLog(`Amount: ₹${getTotalAmount()}`);
+    addLog(`Seats: ${selectedSeats.join(', ')}`);
+
+    try {
+      // Step 1: Create booking with 'pending' status
+      addLog('📝 Creating pending booking...');
+      const bookingId = await createPendingBooking();
+      addLog(`✅ Booking created: ${bookingId}`);
+
+      // Step 2: Create payment request with FIXED payload
+      const paymentPayload = {
+        orderId: bookingId,
+        amount: getTotalAmount(),
+        billingName: customerDetails.name,
+        billingEmail: customerDetails.email,
+        billingTel: customerDetails.phone,
+        billingAddress: customerDetails.address || 'Delhi, India',
+        isIndia: true
+      };
+
+      addLog('💳 Creating payment request...');
+      addLog(`Payload: ${JSON.stringify(paymentPayload, null, 2)}`);
+
+      const paymentResponse = await fetch('/api/ccavenue/create-payment', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify(paymentPayload),
+      });
+
+      addLog(`API Response Status: ${paymentResponse.status}`);
+      
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        addLog(`❌ Payment API error: ${JSON.stringify(errorData)}`, 'error');
+        throw new Error(errorData.error || 'Failed to create payment request');
+      }
+
+      const responseData = await paymentResponse.json();
+      addLog(`✅ API Response received: ${JSON.stringify(responseData.debug || {})}`);
+      
+      if (!responseData.success) {
+        addLog('❌ Payment request creation failed', 'error');
+        throw new Error('Payment request creation failed');
+      }
+
+      const { encRequest, accessCode } = responseData;
+
+      if (!encRequest || !accessCode) {
+        addLog('❌ Missing payment parameters from API', 'error');
+        throw new Error('Missing payment parameters from API');
+      }
+
+      addLog(`🔐 Encryption successful: ${encRequest.length} chars`);
+      addLog(`🔑 Access code: ${accessCode}`);
+      
+      // DEBUG: Start 3-minute countdown
+      addLog('⏰ Starting 3-minute debug countdown...');
+      addLog('📖 Check browser console for detailed logs!');
+      
+      let timeLeft = 180; // 3 minutes
+      const countdownInterval = setInterval(() => {
+        timeLeft--;
+        setCountdown(timeLeft);
+        
+        if (timeLeft <= 0) {
+          clearInterval(countdownInterval);
+          submitToCCAvenue(encRequest, accessCode, bookingId);
+        }
+      }, 1000);
+      
+      // Store data for later submission
+      setDebugInfo({ encRequest, accessCode, bookingId });
+      
+    } catch (error) {
+      addLog(`❌ Payment initiation failed: ${error.message}`, 'error');
+      toast.error(error.message || "Failed to initiate payment. Please try again.");
+      setProcessing(false);
+      setDebugMode(false);
     }
-
-    const { encRequest, accessCode } = responseData;
-
-    if (!encRequest || !accessCode) {
-      throw new Error('Missing payment parameters from API');
-    }
-
-    // Step 3: FIXED form submission to CCAvenue
-    console.log('🚀 Redirecting to CCAvenue...');
-    console.log('  - encRequest length:', encRequest.length);
-    console.log('  - accessCode:', accessCode);
+  };
+  
+  // Submit to CCAvenue after debug period
+  const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
+    addLog('🚀 Debug period complete, submitting to CCAvenue...');
     
-    // FIXED: Proper form creation and submission
+    // FIXED: Use direct property assignment instead of setAttribute to prevent URL issues
     const form = document.createElement("form");
-    form.setAttribute('method', 'POST');
-    form.setAttribute('action', 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
-    form.setAttribute('target', '_self');
-    form.style.display = 'none';
+    form.method = "POST";  // Direct assignment
+    form.action = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";  // Direct assignment
+    form.target = "_self";
+    form.style.display = "none";
 
-    // FIXED: Proper input creation
     const encInput = document.createElement("input");
-    encInput.setAttribute('type', 'hidden');
-    encInput.setAttribute('name', 'encRequest');
-    encInput.setAttribute('value', encRequest);
+    encInput.type = "hidden";
+    encInput.name = "encRequest";
+    encInput.value = encRequest;
 
     const accInput = document.createElement("input");
-    accInput.setAttribute('type', 'hidden');
-    accInput.setAttribute('name', 'access_code');
-    accInput.setAttribute('value', accessCode);
+    accInput.type = "hidden";
+    accInput.name = "access_code";
+    accInput.value = accessCode;
 
     form.appendChild(encInput);
     form.appendChild(accInput);
-    
-    // FIXED: Append to body and submit immediately
     document.body.appendChild(form);
     
-    console.log('📋 Form elements:');
-    console.log('  - Form action:', form.getAttribute('action'));
-    console.log('  - Form method:', form.getAttribute('method'));
-    console.log('  - encRequest input:', !!form.querySelector('input[name="encRequest"]'));
-    console.log('  - access_code input:', !!form.querySelector('input[name="access_code"]'));
+    addLog('📋 FIXED: Form created with direct property assignment');
+    addLog(`Form action: ${form.action}`);
+    addLog(`Form method: ${form.method}`);
+    addLog(`encRequest field: ${!!form.querySelector('input[name="encRequest"]')}`);
+    addLog(`access_code field: ${!!form.querySelector('input[name="access_code"]')}`);
+    addLog(`encRequest length: ${encRequest.length}`);
+    addLog(`access_code value: ${accessCode}`);
     
-    // Submit the form
-    form.submit();
-    
-    // Clean up
-    setTimeout(() => {
-      if (document.body.contains(form)) {
-        document.body.removeChild(form);
-      }
-    }, 1000);
-
-  } catch (error) {
-    console.error("❌ Payment initiation failed:", error);
-    toast.error(error.message || "Failed to initiate payment. Please try again.");
-    setProcessing(false);
-  }
-};
+    // Additional validation before submit
+    if (form.action.includes('secure.ccavenue.com') && form.method === 'POST') {
+      addLog('✅ Form validation passed, submitting...');
+      form.submit();
+    } else {
+      addLog('❌ Form validation failed!', 'error');
+      addLog(`Action: ${form.action}`, 'error');
+      addLog(`Method: ${form.method}`, 'error');
+    }
+  };
+  
+  // Skip debug and submit immediately
+  const skipDebugAndSubmit = () => {
+    if (debugInfo) {
+      addLog('⚡ Skipping debug, submitting immediately...');
+      submitToCCAvenue(debugInfo.encRequest, debugInfo.accessCode, debugInfo.bookingId);
+    }
+  };
 
 
   const createPendingBooking = async () => {

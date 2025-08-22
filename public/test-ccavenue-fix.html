@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CCAvenue 404 Error Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { background: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .debug { background: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 5px; font-family: monospace; }
+        button { background: #28a745; color: white; padding: 15px 30px; border: none; cursor: pointer; font-size: 16px; margin: 10px; border-radius: 5px; }
+        .warn { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>🔧 CCAvenue 404 Error Fix</h1>
+    
+    <div class="status">
+        <h3>✅ Your Integration Status (Working Correctly):</h3>
+        <p><strong>Booking ID:</strong> BK1755854761831</p>
+        <p><strong>Customer:</strong> Ashutosh Mohanty</p>
+        <p><strong>Amount:</strong> ₹210</p>
+        <p><strong>Encryption:</strong> 1196 characters (✅ Working)</p>
+        <p><strong>Access Code:</strong> AVYS83MH27BT31SYTB</p>
+        <p><strong>Working Key:</strong> B0114E6D2077B31E0910759D3570B2EE</p>
+    </div>
+    
+    <div class="error">
+        <h3>❌ Current Issue:</h3>
+        <p><strong>Wrong URL:</strong> https://secure.ccavenue.com/transaction/donate.svsamiti.com</p>
+        <p><strong>Correct URL:</strong> https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction</p>
+    </div>
+    
+    <h2>🧪 Test Form Submission</h2>
+    <p>Let's test the correct form submission format:</p>
+    
+    <button onclick="testFormCreation()">1️⃣ Test Form Creation</button>
+    <button onclick="generateWorkingExample()" class="warn">2️⃣ Generate Working Example</button>
+    
+    <div id="testResults"></div>
+    
+    <script>
+        function testFormCreation() {
+            console.log('🔧 Testing form creation...');
+            
+            // Test the exact form creation logic
+            const form = document.createElement("form");
+            form.setAttribute('method', 'POST');
+            form.setAttribute('action', 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
+            form.setAttribute('target', '_self');
+            
+            // Sample encrypted data (using a valid format)
+            const sampleEncRequest = 'EcPLpuwfSYhVxxBwlEpqkacBPeoUEu9PCQem2ibjilehVab249f0vHhCtJ27oR5VnvwXhRLyetKLWYQrT66UpX0hri+TC5CEDZbJeGFAfUHIpxEaDSx7CQRg7okyJ8ZNQfuPMmlCuFJnMFWRqQYy29IcC5blN+Aninq7Z6rpV/6Yj6enBBIIlIAdH7aZSMY8MpA0JFh1pRmN8EuvThSaDMunigWprjFmI6ohYxQJvPCQ24tD9b5bEMAwKiL84IQkdwE4bCzxZmEXQRHT4eUR8FpQft/gTfJtodWFJjtbg5mXN1lRAxnuOMhg7Pc6c3IMDet8xJg9de7Wqav4+jXq6XDcsrIZVGskHCgZ4HBwvcbh9bYp9W7lLuprDA9ncz9HhmnERcREo8QCRlhdjypb6B86ZVL0Oc+SJcvptE12NWZWCyfi';
+            
+            const encInput = document.createElement("input");
+            encInput.setAttribute('type', 'hidden');
+            encInput.setAttribute('name', 'encRequest');
+            encInput.setAttribute('value', sampleEncRequest);
+            
+            const accInput = document.createElement("input");
+            accInput.setAttribute('type', 'hidden');
+            accInput.setAttribute('name', 'access_code');
+            accInput.setAttribute('value', 'AVYS83MH27BT31SYTB');
+            
+            form.appendChild(encInput);
+            form.appendChild(accInput);
+            
+            // Log the results
+            console.log('✅ Form created successfully:');
+            console.log('   Action:', form.getAttribute('action'));
+            console.log('   Method:', form.getAttribute('method'));
+            console.log('   encRequest field:', !!encInput);
+            console.log('   access_code field:', !!accInput);
+            
+            document.getElementById('testResults').innerHTML = `
+                <div class="status">
+                    <h3>✅ Form Creation Test Results:</h3>
+                    <p><strong>Action URL:</strong> ${form.getAttribute('action')}</p>
+                    <p><strong>Method:</strong> ${form.getAttribute('method')}</p>
+                    <p><strong>encRequest field:</strong> ✅ Present</p>
+                    <p><strong>access_code field:</strong> ✅ Present</p>
+                    <p><strong>Form elements:</strong> ${form.children.length} inputs</p>
+                </div>
+                <div class="debug">
+                    <h4>🔍 Form HTML Preview:</h4>
+                    <pre>&lt;form method="POST" action="${form.getAttribute('action')}"&gt;
+  &lt;input type="hidden" name="encRequest" value="[ENCRYPTED_DATA]" /&gt;
+  &lt;input type="hidden" name="access_code" value="AVYS83MH27BT31SYTB" /&gt;
+&lt;/form&gt;</pre>
+                </div>
+            `;
+        }
+        
+        function generateWorkingExample() {
+            const workingForm = `
+                <div class="status">
+                    <h3>🚀 Working CCAvenue Form (Copy this to your code):</h3>
+                </div>
+                <div class="debug">
+                    <h4>📋 JavaScript Code for PaymentProcess.jsx:</h4>
+                    <pre>// Fixed form submission function
+const submitToCCAvenue = (encRequest, accessCode) => {
+  console.log('🚀 Submitting to CCAvenue...');
+  
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";
+  form.target = "_self";
+  form.style.display = "none";
+
+  const encInput = document.createElement("input");
+  encInput.type = "hidden";
+  encInput.name = "encRequest";
+  encInput.value = encRequest;
+
+  const accInput = document.createElement("input");
+  accInput.type = "hidden";
+  accInput.name = "access_code";
+  accInput.value = accessCode;
+
+  form.appendChild(encInput);
+  form.appendChild(accInput);
+  document.body.appendChild(form);
+  
+  console.log('Form action:', form.action);
+  console.log('Form method:', form.method);
+  
+  form.submit();
+};</pre>
+                </div>
+                <div class="error">
+                    <h4>⚠️ Important Notes:</h4>
+                    <ul>
+                        <li>Make sure the action URL is exactly: <code>https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction</code></li>
+                        <li>Use <code>form.method = "POST"</code> (not setAttribute)</li>
+                        <li>Use <code>form.action = "URL"</code> (not setAttribute)</li>
+                        <li>Ensure form is appended to document.body before submission</li>
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('testResults').innerHTML = workingForm;
+        }
+        
+        // Auto-run initial test
+        console.log('🎯 CCAvenue 404 Fix Test Page Loaded');
+        console.log('✅ Your payment integration is working - just need to fix the form submission');
+    </script>
+</body>
+</html>
