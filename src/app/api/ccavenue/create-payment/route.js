@@ -76,18 +76,24 @@ export async function POST(request) {
       return Response.json({ error: "Payment configuration error" }, { status: 500 });
     }
 
-    // FIXED: Use correct redirect URLs
-    const redirectUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/ccavenue/payment-response`;
-    const cancelUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/api/ccavenue/payment-response`;
+    // FIXED: Use absolute URLs with proper encoding
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://donate.svsamiti.com';
+    const redirectUrl = `${baseUrl}/api/ccavenue/payment-response`;
+    const cancelUrl = `${baseUrl}/api/ccavenue/payment-response`;
+    
+    console.log('🌐 URL Configuration:');
+    console.log('  Base URL:', baseUrl);
+    console.log('  Redirect URL:', redirectUrl);
+    console.log('  Cancel URL:', cancelUrl);
 
-    // ✅ Build merchantData string as per CCAvenue spec
+    // ✅ Build merchantData string as per CCAvenue spec - FIXED: Properly encode URLs
     const merchantData =
       `merchant_id=${merchantId}` +
       `&order_id=${orderId}` +
       `&currency=INR` +
       `&amount=${amount}` +
-      `&redirect_url=${redirectUrl}` +
-      `&cancel_url=${cancelUrl}` +
+      `&redirect_url=${encodeURIComponent(redirectUrl)}` +
+      `&cancel_url=${encodeURIComponent(cancelUrl)}` +
       `&language=EN` +
       `&billing_name=${encodeURIComponent(billingName)}` +
       `&billing_address=${encodeURIComponent(billingAddress || "N/A")}` +
@@ -105,10 +111,15 @@ export async function POST(request) {
       `&delivery_country=India` +
       `&delivery_tel=${billingTel}` +
       `&merchant_param1=${orderId}` +
-      `&merchant_param2=${billingEmail}` +
+      `&merchant_param2=${encodeURIComponent(billingEmail)}` +
       `&merchant_param3=${billingTel}` +
       `&merchant_param4=` +
       `&merchant_param5=`;
+    
+    console.log('🔍 Merchant Data Debug:');
+    console.log('  Redirect URL (encoded):', encodeURIComponent(redirectUrl));
+    console.log('  Cancel URL (encoded):', encodeURIComponent(cancelUrl));
+    console.log('  Full merchant data length:', merchantData.length);
 
     console.log("Generated merchantData:", merchantData);
 

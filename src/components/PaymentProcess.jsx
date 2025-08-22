@@ -15,7 +15,7 @@ const PaymentProcess = ({ customerDetails }) => {
   const [processing, setProcessing] = useState(false);
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebugOverlay, setShowDebugOverlay] = useState(false);
-  const [countdown, setCountdown] = useState(60); // 3 minutes for debug
+  const [countdown, setCountdown] = useState(60); 
   const [debugMode, setDebugMode] = useState(false);
   const [logs, setLogs] = useState([]);
   const router = useRouter();
@@ -128,12 +128,26 @@ const PaymentProcess = ({ customerDetails }) => {
   const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
     addLog('🚀 Debug period complete, submitting to CCAvenue...');
     
+    // CRITICAL FIX: Validate encrypted request before submission
+    if (!encRequest || !accessCode) {
+      addLog('❌ CRITICAL: Missing encRequest or accessCode!', 'error');
+      addLog(`encRequest exists: ${!!encRequest}`, 'error');
+      addLog(`accessCode exists: ${!!accessCode}`, 'error');
+      return;
+    }
+    
+    if (encRequest.length < 100) {
+      addLog('⚠️ WARNING: encRequest seems too short!', 'error');
+      addLog(`encRequest length: ${encRequest.length}`, 'error');
+    }
+    
     // FIXED: Use direct property assignment instead of setAttribute to prevent URL issues
     const form = document.createElement("form");
     form.method = "POST";  // Direct assignment
     form.action = "https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction";  // Direct assignment
     form.target = "_self";
     form.style.display = "none";
+    form.acceptCharset = "UTF-8";  // CRITICAL: Ensure UTF-8 encoding
 
     const encInput = document.createElement("input");
     encInput.type = "hidden";

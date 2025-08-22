@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple CCAvenue Test</title>
+</head>
+<body>
+    <h1>Simple CCAvenue Test</h1>
+    <p>This is a minimal test form to verify CCAvenue integration.</p>
+    
+    <form action="https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction" method="POST">
+        <!-- Replace with actual encrypted data from your backend -->
+        <input type="hidden" name="encRequest" value="TEST_ENCRYPTED_DATA" />
+        <input type="hidden" name="access_code" value="AVYS83MH27BT31SYTB" />
+        <button type="submit">Test CCAvenue (Will Fail - Demo Only)</button>
+    </form>
+    
+    <hr>
+    
+    <h2>Steps to Test Properly:</h2>
+    <ol>
+        <li>Go to your main booking page</li>
+        <li>Complete the booking process</li>
+        <li>Click Pay</li>
+        <li>Check browser console for detailed logs</li>
+    </ol>
+    
+    <h2>Expected Behaviors:</h2>
+    <ul>
+        <li><strong>Error 10001</strong>: Invalid encrypted request - Usually encoding/encryption issue</li>
+        <li><strong>Error 10002</strong>: Merchant authentication failed - Wrong credentials</li>
+        <li><strong>Success</strong>: Redirects to payment page</li>
+    </ul>
+    
+    <h2>Key Issues to Check:</h2>
+    <ul>
+        <li>✅ Working Key: B0114E6D2077B31E0910759D3570B2EE (32 chars)</li>
+        <li>✅ Access Code: AVYS83MH27BT31SYTB</li>
+        <li>✅ Merchant ID: 116662</li>
+        <li>⚠️ Domain whitelist: Ensure donate.svsamiti.com is whitelisted</li>
+        <li>⚠️ SSL: Ensure HTTPS is working properly</li>
+        <li>⚠️ Character encoding: Form must use UTF-8</li>
+    </ul>
+    
+    <script>
+        console.log('=== CCAvenue Test Page Loaded ===');
+        console.log('🏪 Merchant ID: 116662');
+        console.log('🔑 Access Code: AVYS83MH27BT31SYTB'); 
+        console.log('🔐 Working Key Length: 32 (Modern hex format)');
+        console.log('🌐 Base URL: https://donate.svsamiti.com');
+        console.log('📝 Form Action: https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction');
+    </script>
+</body>
+</html>
