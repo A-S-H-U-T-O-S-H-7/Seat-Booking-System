@@ -38,12 +38,12 @@ const PaymentProcess = ({ customerDetails }) => {
     console.log(logEntry);
   };
 
-  // Payment initiation function - ready for new integration
-  const initiatePayment = async () => {
+  // CCAvenue Payment Integration
+  const handlePayment = async () => {
     setProcessing(true);
     setLogs([]);
     
-    addLog('🚀 Payment initiation started');
+    addLog('🚀 CCAvenue payment initiation started');
     addLog(`Customer: ${customerDetails.name}`);
     addLog(`Amount: ₹${getTotalAmount()}`);
     addLog(`Seats: ${selectedSeats.join(', ')}`);
@@ -54,16 +54,146 @@ const PaymentProcess = ({ customerDetails }) => {
       const bookingId = await createPendingBooking();
       addLog(`✅ Booking created: ${bookingId}`);
 
-      // TODO: Replace this with your new payment gateway integration
-      addLog('💳 Payment gateway integration removed. Ready for new implementation.');
+      // Step 2: Prepare payment data for CCAvenue
+      const paymentData = {
+        order_id: bookingId,
+        amount: getTotalAmount().toString(),
+        name: customerDetails.name,
+        email: customerDetails.email,
+        phone: customerDetails.phone,
+        address: customerDetails.address || '123, Delhi'
+      };
       
-      toast.info("Payment integration has been removed. Please add your new payment gateway.");
-      setProcessing(false);
+      addLog('💳 Sending request to CCAvenue API...');
+      addLog(`Payment data: ${JSON.stringify(paymentData)}`);
+      
+      // Step 3: Send request to our Next.js API route (which proxies to CCAvenue)
+      const response = await fetch('/api/payment/ccavenue-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData)
+      });
+      
+      addLog(`API Response Status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      addLog(`API Response: ${JSON.stringify(data)}`);
+      
+      // Step 4: Check API response
+      if (!data.status) {
+        const errorMessage = data.errors ? data.errors.join(', ') : 'Payment request failed';
+        addLog(`❌ API Error: ${errorMessage}`, 'error');
+        throw new Error(errorMessage);
+      }
+      
+      // Step 5: Validate response data
+      if (!data.encRequest || !data.access_code) {
+        addLog('❌ Missing required payment parameters from API', 'error');
+        throw new Error('Invalid response from payment API');
+      }
+      
+      addLog(`✅ CCAvenue request prepared successfully`);
+      addLog(`Encrypted request length: ${data.encRequest.length}`);
+      addLog(`Access code: ${data.access_code}`);
+      
+      // Step 6: Redirect to CCAvenue
+      addLog('🚀 Redirecting to CCAvenue payment gateway...');
+      submitToCCAvenue(data.encRequest, data.access_code, bookingId);
       
     } catch (error) {
       addLog(`❌ Payment initiation failed: ${error.message}`, 'error');
       toast.error(error.message || "Failed to initiate payment. Please try again.");
       setProcessing(false);
+    }
+  };
+  
+  // Submit form to CCAvenue payment gateway
+  const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
+    addLog('🌐 Creating CCAvenue payment form...');
+    
+    try {
+      // Create form dynamically
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+      form.target = '_self';
+      form.style.display = 'none';
+      
+      // Add encrypted request input
+      const encInput = document.createElement('input');
+      encInput.type = 'hidden';
+      encInput.name = 'encRequest';
+      encInput.value = encRequest;
+      form.appendChild(encInput);
+      
+      // Add access code input
+      const accInput = document.createElement('input');
+      accInput.type = 'hidden';
+      accInput.name = 'access_code';
+      accInput.value = accessCode;
+      form.appendChild(accInput);
+      
+      // Append form to body and submit
+      document.body.appendChild(form);
+      
+      addLog('✅ Form created and ready for submission');
+      addLog(`Form action: ${form.action}`);
+      addLog(`Booking ID: ${bookingId}`);
+      addLog('🚀 Submitting to CCAvenue...');
+      
+      // Submit form
+      form.submit();
+      
+      // Clean up
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      addLog(`❌ Form submission error: ${error.message}`, 'error');
+      toast.error('Failed to redirect to payment gateway');
+      setProcessing(false);
+    }
+  };
+  
+  // Handle payment response (to be called from payment status page)
+  const handlePaymentResponse = async (encResp) => {
+    addLog('📥 Processing payment response...');
+    
+    try {
+      // Send encrypted response to our API route (which proxies to CCAvenue)
+      const response = await fetch('/api/payment/ccavenue-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          encResp: encResp
+        })
+      });
+      
+      const data = await response.json();
+      addLog(`Response handler result: ${JSON.stringify(data)}`);
+      
+      if (data.status && data.data) {
+        addLog('✅ Payment processed successfully');
+        return data.data;
+      } else {
+        addLog('❌ Payment processing failed', 'error');
+        return null;
+      }
+      
+    } catch (error) {
+      addLog(`❌ Payment response handling failed: ${error.message}`, 'error');
+      return null;
     }
   };
   
@@ -233,7 +363,7 @@ const PaymentProcess = ({ customerDetails }) => {
 
             {/* Payment Button */}
             <button
-              onClick={initiatePayment}
+              onClick={handlePayment}
               disabled={processing}
               className={`w-full py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg transition-all duration-300 transform ${processing
                 ? 'bg-gray-400 cursor-not-allowed'
