@@ -116,34 +116,86 @@ const ShowBookingFlow = () => {
       <div className="container mx-auto px-2 py-2 md:py-8">
         <div className={`${getContainerMaxWidth()} pb-5 md:pb-10 mx-auto`}>
 
-          <div className="text-center mb-8">
-            <div className="relative bg-gradient-to-br from-pink-200 via-white to-fuchsia-200 backdrop-blur-sm rounded-2xl p-3 md:p-8 shadow-2xl border border-white/60 overflow-hidden">
-              {/* Background Decoration */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
-              
-              <div className="relative z-10">
-                {/* Main Icon */}
-                <div className="inline-flex items-center justify-center w-16 h-16 ">
-                  <img src="/show.png" alt="Show" className="w-12 h-12 object-contain" />
-                </div>
-                
-                {/* Title */}
-                <h1 className="text-3xl md:text-5xl font-bold mb-3">
-                  <span className="bg-gradient-to-r from-rose-900 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">
-                                        Reserve Your Show Place
-                  </span>
-                </h1>
-                
-                {/* Subtitle */}
-                <p className="text-lg md:text-xl text-gray-600 font-medium mb-6 max-w-2xl mx-auto">
-  ✨ Reserve your seat for an evening of culture and celebration 🎶🎉
-                                     </p>                
-              </div>
-            </div>
-          </div>
-
+        <div className="text-center mb-8">
+  <div className="relative bg-gradient-to-br from-pink-200 via-white to-fuchsia-200 backdrop-blur-sm rounded-2xl p-3 md:p-8 shadow-2xl border border-white/60 overflow-hidden">
+    {/* Background Decoration */}
+    <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
+    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
+    <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
+    
+    {/* Corner Mandala Decorations - Larger and properly positioned */}
+    {/* Top Left Corner */}
+    <div className="absolute top-0 left-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+      <img 
+        src="/showmandala.png" 
+        alt="" 
+        className="w-40 h-40 md:w-56 md:h-56 object-contain"
+        style={{ 
+          transform: 'translate(-50%, -50%)',
+          transformOrigin: 'top left'
+        }}
+      />
+    </div>
+    
+    {/* Top Right Corner */}
+    <div className="absolute top-0 right-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+      <img 
+        src="/showmandala.png" 
+        alt="" 
+        className="w-40 h-40 md:w-56 md:h-56 object-contain"
+        style={{ 
+          transform: 'translate(50%, -50%)',
+          transformOrigin: 'top right'
+        }}
+      />
+    </div>
+    
+    {/* Bottom Left Corner */}
+    <div className="absolute bottom-0 left-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+      <img 
+        src="/showmandala.png" 
+        alt="" 
+        className="w-40 h-40 md:w-56 md:h-56 object-contain"
+        style={{ 
+          transform: 'translate(-50%, 50%)',
+          transformOrigin: 'bottom left'
+        }}
+      />
+    </div>
+    
+    {/* Bottom Right Corner */}
+    <div className="absolute bottom-0 right-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+      <img 
+        src="/showmandala.png" 
+        alt="" 
+        className="w-40 h-40 md:w-56 md:h-56 object-contain"
+        style={{ 
+          transform: 'translate(50%, 50%)',
+          transformOrigin: 'bottom right'
+        }}
+      />
+    </div>
+    
+    <div className="relative z-10">
+      {/* Main Icon */}
+      <div className="inline-flex items-center justify-center w-16 h-16">
+        <img src="/show.png" alt="Show" className="w-12 h-12 object-contain" />
+      </div>
+      
+      {/* Title */}
+      <h1 className="text-3xl md:text-5xl font-bold mb-3">
+        <span className="bg-gradient-to-r from-rose-900 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">
+          Reserve Your Show Place
+        </span>
+      </h1>
+      
+      {/* Subtitle */}
+      <p className="text-lg md:text-xl text-gray-600 font-medium mb-6 max-w-2xl mx-auto">
+        ✨ Reserve your place for an evening of culture and celebration 🎶🎉
+      </p>                
+    </div>
+  </div>
+</div>
           {/* Progress Steps */}
           <div className="mb-8">
             {/* Mobile */}

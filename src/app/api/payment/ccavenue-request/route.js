@@ -4,14 +4,14 @@ import { NextResponse } from 'next/server';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { order_id, amount, name, email, phone, address } = body;
+    const { order_id, purpose, amount, name, email, phone, address } = body;
 
     // Validate required fields
-    if (!order_id || !amount || !name || !email || !phone) {
+    if (!order_id || !purpose || !amount || !name || !email || !phone) {
       return NextResponse.json({
         status: false,
         message: 'Missing required fields',
-        errors: ['order_id, amount, name, email, and phone are required']
+        errors: ['order_id, purpose, amount, name, email, and phone are required']
       }, { status: 400 });
     }
 
@@ -21,13 +21,14 @@ export async function POST(request) {
     // Prepare data for CCAvenue API
     const paymentData = {
       order_id,
+      purpose, // Required to identify payment type
       amount: amount.toString(),
       name,
       email,
       phone,
       address: address || 'Delhi, India',
-      redirect_url: `${origin}/payment/success`,
-      cancel_url: `${origin}/payment/cancel`
+      redirect_url: `https://donate.svsamiti.com/payment/status`,
+      cancel_url: `https://donate.svsamiti.com/payment/cancel`
     };
 
     console.log('🚀 Proxying payment request to CCAvenue:', {

@@ -244,7 +244,7 @@ const StallMap = () => {
             <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-400 rounded flex items-center justify-center">
               <Store className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
             </div>
-            <span className="text-gray-700 font-medium">Booked</span>
+            <span className="text-gray-700 font-medium">Reserved</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-600 rounded flex items-center justify-center">

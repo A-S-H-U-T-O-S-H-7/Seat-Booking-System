@@ -5,6 +5,7 @@ import { useStallBooking } from '@/context/StallBookingContext';
 import StallMap from './StallMap';
 import VendorDetails from './VendorDetails';
 import StallPaymentProcess from './StallPaymentProcess';
+import DonateBar from '../donation/DonationBar';
 
 const StallBookingFlow = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -106,48 +107,69 @@ const StallBookingFlow = () => {
         <div className="max-w-7xl pb-5 md:pb-10 mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="relative bg-gradient-to-br from-purple-200 via-white to-purple-200 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/60 overflow-hidden">
-              {/* Background Decoration */}
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
-              
-              <div className="relative z-10">
-                {/* Main Icon */}
-                <div className="inline-flex items-center justify-center w-16 h-16 ">
-                  <img src="/stall3.jpg" alt="Stall" className="w-12 h-12 object-contain" />
-                </div>
-                
-                {/* Title */}
-                <h1 className="text-4xl md:text-5xl font-bold mb-3">
-                  <span className="bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    Pick Your Stall
-                  </span>
-                </h1>
-                
-                {/* Subtitle */}
-                <p className="text-lg md:text-xl text-gray-600 font-medium mb-6 max-w-2xl mx-auto">
-                  Secure your premium business space for the 5-day grand event
-                </p>
-                
-                {/* Feature Pills */}
-                <div className="flex flex-wrap justify-center gap-3 text-sm">
-                  <div className="flex items-center gap-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-4 py-2 rounded-full border border-green-200/50 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="font-semibold">Prime Locations</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-4 py-2 rounded-full border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span className="font-semibold">5-Day Event Pass</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full border border-purple-200/50 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                    <span className="font-semibold">Premium Amenities</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <div className="relative bg-gradient-to-br from-purple-200 via-white to-purple-200 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/60 overflow-hidden">
+    
+    {/* Stall Design Border at Top of Block */}
+    <div 
+      className="w-full h-8 sm:h-12 bg-repeat-x bg-center"
+      style={{
+        backgroundImage: 'url(/stalldesign.png)',
+        backgroundSize: 'auto 100%'
+      }}
+      onError={(e) => {
+        e.target.style.display = 'none';
+      }}
+    ></div>
+    
+    <div className="p-8">
+      {/* Background Decoration */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
+      
+      <div className="relative z-10">
+        {/* Main Icon */}
+        <div className="inline-flex items-center justify-center w-16 h-16 ">
+          <img src="/stall3.jpg" alt="Stall" className="w-12 h-12 object-contain" />
+        </div>
+       {/* DonateBar - Break out of padding constraint */}
+        <div className='-mx-8 mb-4'>
+          <div className='max-w-lg md:max-w-md mx-auto px-2'>
+            <DonateBar/>
           </div>
+        </div>
+        
+        {/* Title */}
+        <h1 className="text-4xl md:text-5xl font-bold mb-3">
+          <span className="bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Pick Your Stall
+          </span>
+        </h1>
+        
+        {/* Subtitle */}
+        <p className="text-lg md:text-xl text-gray-600 font-medium mb-6 max-w-2xl mx-auto">
+          Secure your premium business space for the 5-day grand event
+        </p>
+        
+        {/* Feature Pills */}
+        <div className="flex flex-wrap justify-center gap-3 text-sm">
+          <div className="flex items-center gap-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-4 py-2 rounded-full border border-green-200/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="font-semibold">Prime Locations</span>
+          </div>
+          <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-4 py-2 rounded-full border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <span className="font-semibold">5-Day Event Pass</span>
+          </div>
+          <div className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full border border-purple-200/50 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+            <span className="font-semibold">Premium Amenities</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
           {/* Progress Steps */}
           <div className="mb-8">

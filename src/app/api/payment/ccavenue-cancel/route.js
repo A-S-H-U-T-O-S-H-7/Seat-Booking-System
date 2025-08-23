@@ -1,4 +1,4 @@
-// Next.js App Router API route to handle CCAvenue response processing
+// Next.js App Router API route to handle CCAvenue payment cancellations
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -15,7 +15,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    console.log('🔐 Processing CCAvenue encrypted response:', {
+    console.log('🚫 Processing CCAvenue payment cancellation:', {
       encRespLength: encResp.length,
       timestamp: new Date().toISOString()
     });
@@ -32,37 +32,28 @@ export async function POST(request) {
       })
     });
 
-    console.log('📥 CCAvenue response handler status:', response.status);
+    console.log('📥 CCAvenue cancellation handler status:', response.status);
 
     if (!response.ok) {
       throw new Error(`CCAvenue response handler returned status ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('✅ CCAvenue response processed:', {
+    console.log('✅ CCAvenue cancellation processed:', {
       status: data.status,
       hasData: !!data.data,
       timestamp: new Date().toISOString()
     });
 
-    // If we have valid data, prepare redirect URL
+    // If we have valid data, redirect to failure page
     if (data.status && data.data) {
       const paymentInfo = data.data;
       
-      // Create redirect URL based on payment status
+      // Redirect to payment success page with failure status
       const redirectUrl = new URL('/payment/success', 'https://donate.svsamiti.com');
       redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
-      
-      if (paymentInfo.order_status === 'Success') {
-        redirectUrl.searchParams.set('status', 'success');
-        redirectUrl.searchParams.set('amount', paymentInfo.amount || '0');
-        redirectUrl.searchParams.set('tracking_id', paymentInfo.tracking_id || '');
-      } else {
-        redirectUrl.searchParams.set('status', 'failed');
-        redirectUrl.searchParams.set('message', encodeURIComponent(paymentInfo.failure_message || 'Payment failed'));
-      }
-      
-      console.log('🔀 Redirecting to:', redirectUrl.toString());
+      redirectUrl.searchParams.set('status', 'cancelled');
+      redirectUrl.searchParams.set('message', 'Payment was cancelled by user');
       
       // Return redirect response
       return NextResponse.json({
@@ -76,20 +67,26 @@ export async function POST(request) {
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error('❌ CCAvenue response processing error:', error);
+    console.error('❌ CCAvenue cancellation processing error:', error);
     
     return NextResponse.json({
       status: false,
-      message: 'Payment response processing failed',
+      message: 'Payment cancellation processing failed',
       errors: [error.message || 'Internal server error']
     }, { status: 500 });
   }
 }
 
-// Only allow POST method
-export async function GET() {
-  return NextResponse.json({ 
-    status: false, 
-    message: 'Method not allowed. Only POST requests are accepted.' 
-  }, { status: 405 });
+// Also handle GET requests (some payment gateways use GET for cancellations)
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const encResp = searchParams.get('encResp');
+  
+  if (!encResp) {
+    // Redirect to general cancellation page
+    return NextResponse.redirect(new URL('/payment/success?status=cancelled&message=Payment%20was%20cancelled', 'https://donate.svsamiti.com'));
+  }
+  
+  // Process the encrypted response
+  return POST(request);
 }

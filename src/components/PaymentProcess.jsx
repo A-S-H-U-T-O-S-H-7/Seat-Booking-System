@@ -57,11 +57,12 @@ const PaymentProcess = ({ customerDetails }) => {
       // Step 2: Prepare payment data for CCAvenue
       const paymentData = {
         order_id: bookingId,
+        purpose: 'havan_booking', // Required to identify payment type
         amount: getTotalAmount().toString(),
         name: customerDetails.name,
         email: customerDetails.email,
         phone: customerDetails.phone,
-        address: customerDetails.address || '123, Delhi'
+        address: customerDetails.address || 'Delhi, India'
       };
       
       addLog('💳 Sending request to CCAvenue API...');

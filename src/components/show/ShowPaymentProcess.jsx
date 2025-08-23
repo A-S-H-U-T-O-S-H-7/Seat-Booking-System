@@ -39,27 +39,122 @@ const ShowPaymentProcess = () => {
     setProcessing(true);
     
     try {
-      console.log('Processing booking...');
+      console.log('Creating pending show booking...');
       
+      // Create pending booking first
       const result = await processBooking(userDetails, {
-        method: 'cash',
-        transactionId: 'simulated_' + Math.random().toString(36).substr(2, 9)
+        method: 'pending_payment',
+        transactionId: 'pending_' + Date.now()
       });
       
       console.log('processBooking result:', result);
         
       if (result.success) {
-        setBookingId(result.bookingId);
-        setPaymentSuccess(true);
-        toast.success('Booking completed successfully!');
+        const bookingId = result.bookingId;
+        console.log('✅ Show booking created:', bookingId);
+        
+        // Prepare payment data for CCAvenue
+        const paymentData = {
+          order_id: bookingId,
+          purpose: 'show_booking', // Required to identify payment type
+          amount: totalPrice.toString(),
+          name: userDetails.name,
+          email: userDetails.email,
+          phone: userDetails.phone,
+          address: userDetails.address || 'Delhi, India'
+        };
+        
+        console.log('💳 Sending request to CCAvenue API...', paymentData);
+        
+        // Send request to CCAvenue API
+        const response = await fetch('/api/payment/ccavenue-request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(paymentData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('CCAvenue API Response:', data);
+        
+        if (!data.status) {
+          const errorMessage = data.errors ? data.errors.join(', ') : 'Payment request failed';
+          throw new Error(errorMessage);
+        }
+        
+        if (!data.encRequest || !data.access_code) {
+          throw new Error('Invalid response from payment API');
+        }
+        
+        console.log('✅ CCAvenue request prepared successfully');
+        
+        // Redirect to CCAvenue
+        submitToCCAvenue(data.encRequest, data.access_code, bookingId);
+        
       } else {
         console.error('Booking failed:', result.error);
         toast.error(result.error || 'Booking failed. Please try again.');
       }
     } catch (error) {
-      console.error('Booking failed:', error);
-      toast.error('Booking failed. Please try again.');
+      console.error('Booking/Payment failed:', error);
+      toast.error(error.message || 'Failed to initiate payment. Please try again.');
     } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Submit form to CCAvenue payment gateway
+  const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
+    console.log('🌐 Creating CCAvenue payment form...');
+    
+    try {
+      // Create form dynamically
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+      form.target = '_self';
+      form.style.display = 'none';
+      
+      // Add encrypted request input
+      const encInput = document.createElement('input');
+      encInput.type = 'hidden';
+      encInput.name = 'encRequest';
+      encInput.value = encRequest;
+      form.appendChild(encInput);
+      
+      // Add access code input
+      const accInput = document.createElement('input');
+      accInput.type = 'hidden';
+      accInput.name = 'access_code';
+      accInput.value = accessCode;
+      form.appendChild(accInput);
+      
+      // Append form to body and submit
+      document.body.appendChild(form);
+      
+      console.log('🚀 Submitting to CCAvenue...', {
+        action: form.action,
+        bookingId: bookingId
+      });
+      
+      // Submit form
+      form.submit();
+      
+      // Clean up
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error('Failed to redirect to payment gateway');
       setProcessing(false);
     }
   };
