@@ -253,186 +253,197 @@ function PaymentSuccessContent() {
                   </div>
                 )}
                 
-                {/* Show booking details */}
-                {bookingDetails && bookingType === 'show' && (
-                  <>
-                    <div>
-                      <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {bookingDetails?.selectedSeats ? (
-                          bookingDetails.selectedSeats.map((seat, idx) => (
-                            <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
-                              {seat}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-gray-500">Loading...</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Render booking details based on type */}
+                {(() => {
+                  if (!bookingDetails) {
+                    return null; // Loading state already handled above
+                  }
+                  
+                  // Show booking details
+                  if (bookingType === 'show') {
+                    return (
+                      <>
+                        <div>
+                          <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {bookingDetails?.selectedSeats && bookingDetails.selectedSeats.length > 0 ? (
+                              bookingDetails.selectedSeats.map((seat, idx) => (
+                                <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                  {seat}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-500">No seats selected</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Show Date:</p>
+                            <p className="text-gray-900">
+                              {(() => {
+                                try {
+                                  if (bookingDetails?.selectedDate) {
+                                    const date = bookingDetails.selectedDate.seconds ? 
+                                      new Date(bookingDetails.selectedDate.seconds * 1000) : 
+                                      new Date(bookingDetails.selectedDate);
+                                    return date.toLocaleDateString('en-IN', {
+                                      weekday: 'long',
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    });
+                                  }
+                                  return 'Date not available';
+                                } catch (e) {
+                                  console.error('Date parsing error:', e);
+                                  return 'Date not available';
+                                }
+                              })()} 
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium text-gray-700">Show Time:</p>
+                            <p className="text-gray-900">5:00 PM - 10:00 PM</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Customer Name:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.userDetails?.name || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Total Seats:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.selectedSeats?.length || 0} seat{(bookingDetails?.selectedSeats?.length || 0) !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  }
+                  
+                  // Stall booking details
+                  if (bookingType === 'stall') {
+                    return (
+                      <>
+                        <div>
+                          <p className="font-medium text-gray-700 mb-1">Stall IDs:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {bookingDetails?.stallIds && bookingDetails.stallIds.length > 0 ? (
+                              bookingDetails.stallIds.map((stallId, idx) => (
+                                <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                  {stallId}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-500">No stalls selected</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Event Duration:</p>
+                            <p className="text-gray-900">5 Days (Nov 15-20, 2025)</p>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium text-gray-700">Business Type:</p>
+                            <p className="text-gray-900 capitalize">
+                              {bookingDetails?.vendorDetails?.businessType || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Contact Person:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.vendorDetails?.ownerName || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Total Stalls:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || 0} stall{(bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || 0) !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  }
+                  
+                  // Havan booking details (default/fallback)
+                  return (
+                    <>
                       <div>
-                        <p className="font-medium text-gray-700">Show Date:</p>
-                        <p className="text-gray-900">
-                          {(() => {
-                            try {
-                              if (bookingDetails?.selectedDate) {
-                                const date = bookingDetails.selectedDate.seconds ? 
-                                  new Date(bookingDetails.selectedDate.seconds * 1000) : 
-                                  new Date(bookingDetails.selectedDate);
-                                return date.toLocaleDateString('en-IN', {
-                                  weekday: 'long',
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                });
-                              }
-                              return 'Loading...';
-                            } catch (e) {
-                              console.error('Date parsing error:', e);
-                              return 'Date not available';
-                            }
-                          })()} 
-                        </p>
+                        <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {bookingDetails?.seats && bookingDetails.seats.length > 0 ? (
+                            bookingDetails.seats.map((seat, idx) => (
+                              <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                {seat}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-500">No seats selected</span>
+                          )}
+                        </div>
                       </div>
                       
-                      <div>
-                        <p className="font-medium text-gray-700">Show Time:</p>
-                        <p className="text-gray-900">5:00 PM - 10:00 PM</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <p className="font-medium text-gray-700">Event Date:</p>
+                          <p className="text-gray-900">
+                            {(() => {
+                              try {
+                                if (bookingDetails?.eventDate) {
+                                  const date = bookingDetails.eventDate.seconds ? 
+                                    new Date(bookingDetails.eventDate.seconds * 1000) : 
+                                    new Date(bookingDetails.eventDate);
+                                  return date.toLocaleDateString('en-IN', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  });
+                                }
+                                return 'Date not available';
+                              } catch (e) {
+                                console.error('Date parsing error:', e);
+                                return 'Date not available';
+                              }
+                            })()} 
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-gray-700">Shift:</p>
+                          <p className="text-gray-900 capitalize">
+                            {bookingDetails?.shift ? (
+                              bookingDetails.shift === 'morning' ? 'Morning (6:00 AM - 12:00 PM)' :
+                              bookingDetails.shift === 'evening' ? 'Evening (6:00 PM - 12:00 AM)' :
+                              bookingDetails.shift
+                            ) : 'Shift not available'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <p className="font-medium text-gray-700">Customer Name:</p>
-                        <p className="text-gray-900 font-semibold">
-                          {bookingDetails?.userDetails?.name || 'N/A'}
-                        </p>
-                      </div>
+                      
                       <div>
                         <p className="font-medium text-gray-700">Total Seats:</p>
                         <p className="text-gray-900 font-semibold">
-                          {bookingDetails?.selectedSeats ? bookingDetails.selectedSeats.length : '...'} seat{bookingDetails?.selectedSeats?.length !== 1 ? 's' : ''}
+                          {bookingDetails?.seats?.length || 0} seat{(bookingDetails?.seats?.length || 0) !== 1 ? 's' : ''}
                         </p>
                       </div>
-                    </div>
-                  </>
-                )}
-                
-                {/* Stall booking details */}
-                {bookingType === 'stall' && (
-                  <>
-                    <div>
-                      <p className="font-medium text-gray-700 mb-1">Stall IDs:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {bookingDetails?.stallIds ? (
-                          bookingDetails.stallIds.map((stallId, idx) => (
-                            <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
-                              {stallId}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-gray-500">Loading...</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <p className="font-medium text-gray-700">Event Duration:</p>
-                        <p className="text-gray-900">5 Days (Nov 15-20, 2025)</p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium text-gray-700">Business Type:</p>
-                        <p className="text-gray-900 capitalize">
-                          {bookingDetails?.vendorDetails?.businessType || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <p className="font-medium text-gray-700">Contact Person:</p>
-                        <p className="text-gray-900 font-semibold">
-                          {bookingDetails?.vendorDetails?.ownerName || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-700">Total Stalls:</p>
-                        <p className="text-gray-900 font-semibold">
-                          {bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || '...'} stall{(bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length) !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-                
-                {/* Havan booking details (default/fallback) */}
-                {(bookingType === 'havan' || !bookingType) && (
-                  <>
-                    <div>
-                      <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {bookingDetails?.seats ? (
-                          bookingDetails.seats.map((seat, idx) => (
-                            <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
-                              {seat}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-gray-500">Loading...</span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <p className="font-medium text-gray-700">Event Date:</p>
-                        <p className="text-gray-900">
-                          {(() => {
-                            try {
-                              if (bookingDetails?.eventDate) {
-                                const date = bookingDetails.eventDate.seconds ? 
-                                  new Date(bookingDetails.eventDate.seconds * 1000) : 
-                                  new Date(bookingDetails.eventDate);
-                                return date.toLocaleDateString('en-IN', {
-                                  weekday: 'long',
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                });
-                              }
-                              return 'Loading...';
-                            } catch (e) {
-                              console.error('Date parsing error:', e);
-                              return 'Date not available';
-                            }
-                          })()} 
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <p className="font-medium text-gray-700">Shift:</p>
-                        <p className="text-gray-900 capitalize">
-                          {bookingDetails?.shift ? (
-                            bookingDetails.shift === 'morning' ? 'Morning (6:00 AM - 12:00 PM)' :
-                            bookingDetails.shift === 'evening' ? 'Evening (6:00 PM - 12:00 AM)' :
-                            bookingDetails.shift
-                          ) : 'Loading...'}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="font-medium text-gray-700">Total Seats:</p>
-                      <p className="text-gray-900 font-semibold">
-                        {bookingDetails?.seats ? bookingDetails.seats.length : '...'} seat{bookingDetails?.seats?.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </>
-                )}
+                    </>
+                  );
+                })()
               </div>
             </div>
 
