@@ -151,26 +151,28 @@ function PaymentSuccessContent() {
   
   useEffect(() => {
     const fetchBookingDetails = async () => {
-      if (paymentInfo && paymentInfo.order_id) {
+      if (paymentInfo && paymentInfo.order_id && paymentInfo.order_id !== 'error') {
         try {
-          // Import Firebase dynamically
+          // Import Firebase dynamically with error handling
           const { db } = await import('@/lib/firebase');
           const { doc, getDoc } = await import('firebase/firestore');
           
           let bookingData = null;
           let detectedType = null;
           
-          // Try to determine booking type from order_id prefix
-          if (paymentInfo.order_id.startsWith('SHOW-')) {
+          // Safely determine booking type from order_id prefix
+          const orderId = String(paymentInfo.order_id);
+          
+          if (orderId.startsWith('SHOW-')) {
             detectedType = 'show';
-            const bookingRef = doc(db, 'showBookings', paymentInfo.order_id);
+            const bookingRef = doc(db, 'showBookings', orderId);
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) {
               bookingData = bookingSnap.data();
             }
-          } else if (paymentInfo.order_id.startsWith('STALL-')) {
+          } else if (orderId.startsWith('STALL-')) {
             detectedType = 'stall';
-            const bookingRef = doc(db, 'stallBookings', paymentInfo.order_id);
+            const bookingRef = doc(db, 'stallBookings', orderId);
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) {
               bookingData = bookingSnap.data();
@@ -178,21 +180,34 @@ function PaymentSuccessContent() {
           } else {
             // Default to havan booking for backward compatibility
             detectedType = 'havan';
-            const bookingRef = doc(db, 'bookings', paymentInfo.order_id);
+            const bookingRef = doc(db, 'bookings', orderId);
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) {
               bookingData = bookingSnap.data();
             }
           }
           
+          // Always set the detected type, even if no booking data found
+          setBookingType(detectedType);
+          
           if (bookingData) {
             console.log('Fetched booking details:', bookingData, 'Type:', detectedType);
             setBookingDetails(bookingData);
-            setBookingType(detectedType);
+          } else {
+            console.log('No booking data found for order:', orderId, 'Type:', detectedType);
+            // Set empty booking details to prevent undefined errors
+            setBookingDetails({});
           }
         } catch (error) {
           console.error('Error fetching booking details:', error);
+          // Set fallback values to prevent crashes
+          setBookingType('havan'); // Default fallback
+          setBookingDetails({});
         }
+      } else {
+        // Set fallback values when no valid order_id
+        setBookingType('havan');
+        setBookingDetails({});
       }
     };
     
@@ -227,8 +242,19 @@ function PaymentSuccessContent() {
                  'Reservation Details'}
               </h3>
               <div className="space-y-3 text-sm">
+                {/* Loading state */}
+                {!bookingDetails && (
+                  <div className="text-center py-4">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+                    </div>
+                    <p className="text-gray-500 text-sm mt-2">Loading booking details...</p>
+                  </div>
+                )}
+                
                 {/* Show booking details */}
-                {bookingType === 'show' && (
+                {bookingDetails && bookingType === 'show' && (
                   <>
                     <div>
                       <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
@@ -249,14 +275,25 @@ function PaymentSuccessContent() {
                       <div>
                         <p className="font-medium text-gray-700">Show Date:</p>
                         <p className="text-gray-900">
-                          {bookingDetails?.selectedDate ? (
-                            new Date(bookingDetails.selectedDate.seconds ? bookingDetails.selectedDate.seconds * 1000 : bookingDetails.selectedDate).toLocaleDateString('en-IN', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })
-                          ) : 'Loading...'}
+                          {(() => {
+                            try {
+                              if (bookingDetails?.selectedDate) {
+                                const date = bookingDetails.selectedDate.seconds ? 
+                                  new Date(bookingDetails.selectedDate.seconds * 1000) : 
+                                  new Date(bookingDetails.selectedDate);
+                                return date.toLocaleDateString('en-IN', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                });
+                              }
+                              return 'Loading...';
+                            } catch (e) {
+                              console.error('Date parsing error:', e);
+                              return 'Date not available';
+                            }
+                          })()} 
                         </p>
                       </div>
                       
@@ -354,14 +391,25 @@ function PaymentSuccessContent() {
                       <div>
                         <p className="font-medium text-gray-700">Event Date:</p>
                         <p className="text-gray-900">
-                          {bookingDetails?.eventDate ? (
-                            new Date(bookingDetails.eventDate.seconds ? bookingDetails.eventDate.seconds * 1000 : bookingDetails.eventDate).toLocaleDateString('en-IN', {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
-                            })
-                          ) : 'Loading...'}
+                          {(() => {
+                            try {
+                              if (bookingDetails?.eventDate) {
+                                const date = bookingDetails.eventDate.seconds ? 
+                                  new Date(bookingDetails.eventDate.seconds * 1000) : 
+                                  new Date(bookingDetails.eventDate);
+                                return date.toLocaleDateString('en-IN', {
+                                  weekday: 'long',
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                });
+                              }
+                              return 'Loading...';
+                            } catch (e) {
+                              console.error('Date parsing error:', e);
+                              return 'Date not available';
+                            }
+                          })()} 
                         </p>
                       </div>
                       
