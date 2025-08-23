@@ -3,8 +3,32 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const { encResp } = body;
+    let encResp;
+    
+    // Try to get the content type
+    const contentType = request.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      // Handle form data (typical for CCAvenue)
+      const formData = await request.formData();
+      encResp = formData.get('encResp');
+    } else if (contentType.includes('application/json')) {
+      // Handle JSON data (from our frontend)
+      const body = await request.json();
+      encResp = body.encResp;
+    } else {
+      // Fallback: try to parse as text and extract encResp
+      const text = await request.text();
+      console.log('Raw cancel request body:', text);
+      
+      // Try to parse as URL-encoded data
+      if (text.includes('encResp=')) {
+        const urlParams = new URLSearchParams(text);
+        encResp = urlParams.get('encResp');
+      }
+    }
+
+    console.log('Cancel - Extracted encResp length:', encResp ? encResp.length : 'null');
 
     // Validate encrypted response
     if (!encResp) {

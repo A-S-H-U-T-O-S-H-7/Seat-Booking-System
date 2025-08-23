@@ -27,8 +27,8 @@ export async function POST(request) {
       email,
       phone,
       address: address || 'Delhi, India',
-      redirect_url: `https://donate.svsamiti.com/payment/status`,
-      cancel_url: `https://donate.svsamiti.com/payment/cancel`
+      redirect_url: `https://donate.svsamiti.com/api/payment/ccavenue-response`,
+      cancel_url: `https://donate.svsamiti.com/api/payment/ccavenue-cancel`
     };
 
     console.log('🚀 Proxying payment request to CCAvenue:', {
