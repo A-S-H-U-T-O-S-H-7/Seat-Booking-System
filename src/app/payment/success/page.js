@@ -19,24 +19,51 @@ function LoadingPaymentResult() {
 // Main payment success component that uses useSearchParams
 function PaymentSuccessContent() {
   const [paymentInfo, setPaymentInfo] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    // Get payment details from URL params
-    const order_id = searchParams.get('order_id');
-    const status = searchParams.get('status');
-    const message = searchParams.get('message');
-    const amount = searchParams.get('amount');
-    const tracking_id = searchParams.get('tracking_id');
+    console.log('PaymentSuccessContent mounted');
+    
+    try {
+      // Get payment details from URL params
+      const order_id = searchParams.get('order_id');
+      const status = searchParams.get('status');
+      const message = searchParams.get('message');
+      const amount = searchParams.get('amount');
+      const tracking_id = searchParams.get('tracking_id');
+      
+      console.log('Payment URL params:', {
+        order_id,
+        status, 
+        message,
+        amount,
+        tracking_id
+      });
 
-    setPaymentInfo({
-      order_id,
-      status,
-      message,
-      amount,
-      tracking_id
-    });
+      const paymentData = {
+        order_id,
+        status,
+        message,
+        amount,
+        tracking_id
+      };
+      
+      console.log('Setting payment info:', paymentData);
+      setPaymentInfo(paymentData);
+      
+    } catch (error) {
+      console.error('Error processing payment params:', error);
+      setPaymentInfo({
+        order_id: 'error',
+        status: 'error',
+        message: 'Failed to load payment information'
+      });
+    } finally {
+      setIsLoading(false);
+      console.log('Payment info loading completed');
+    }
   }, [searchParams]);
 
   const getStatusIcon = () => {
@@ -115,15 +142,18 @@ function PaymentSuccessContent() {
     );
   }
 
+  const isSuccess = paymentInfo.status === 'success';
+  const isFailure = paymentInfo.status === 'failed';
+  
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-${getStatusColor()}-50 via-white to-${getStatusColor()}-100 flex flex-col justify-center items-center px-4 py-8`}>
+    <div className={isSuccess ? 'min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex flex-col justify-center items-center px-4 py-8' : isFailure ? 'min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 flex flex-col justify-center items-center px-4 py-8' : 'min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 flex flex-col justify-center items-center px-4 py-8'}>
       <div className="bg-white shadow-xl rounded-2xl max-w-2xl w-full p-8">
         {/* Status Icon and Title */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             {getStatusIcon()}
           </div>
-          <h1 className={`text-3xl font-bold text-${getStatusColor()}-800 mb-2`}>
+          <h1 className={isSuccess ? 'text-3xl font-bold text-green-800 mb-2' : isFailure ? 'text-3xl font-bold text-red-800 mb-2' : 'text-3xl font-bold text-yellow-800 mb-2'}>
             {getStatusTitle()}
           </h1>
           <p className="text-gray-600 text-lg">
@@ -133,8 +163,8 @@ function PaymentSuccessContent() {
 
         {/* Payment Details */}
         {paymentInfo.order_id && (
-          <div className={`bg-${getStatusColor()}-50 border border-${getStatusColor()}-200 rounded-lg p-6 mb-8`}>
-            <h3 className={`text-lg font-semibold text-${getStatusColor()}-800 mb-4`}>Payment Details</h3>
+          <div className={isSuccess ? 'bg-green-50 border border-green-200 rounded-lg p-6 mb-8' : isFailure ? 'bg-red-50 border border-red-200 rounded-lg p-6 mb-8' : 'bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8'}>
+            <h3 className={isSuccess ? 'text-lg font-semibold text-green-800 mb-4' : isFailure ? 'text-lg font-semibold text-red-800 mb-4' : 'text-lg font-semibold text-yellow-800 mb-4'}>Payment Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="font-medium text-gray-700">Order ID:</p>
@@ -154,7 +184,7 @@ function PaymentSuccessContent() {
               )}
               <div>
                 <p className="font-medium text-gray-700">Status:</p>
-                <p className={`text-${getStatusColor()}-800 font-semibold capitalize`}>
+                <p className={isSuccess ? 'text-green-800 font-semibold capitalize' : isFailure ? 'text-red-800 font-semibold capitalize' : 'text-yellow-800 font-semibold capitalize'}>
                   {paymentInfo.status}
                 </p>
               </div>
@@ -168,7 +198,7 @@ function PaymentSuccessContent() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {paymentInfo.status === 'success' ? (
+          {isSuccess ? (
             <>
               <button
                 onClick={handleViewBookings}
@@ -203,8 +233,8 @@ function PaymentSuccessContent() {
 
         {/* Additional Information */}
         <div className="mt-8 text-center">
-          <div className={`bg-${getStatusColor()}-50 border border-${getStatusColor()}-200 rounded-lg p-4`}>
-            {paymentInfo.status === 'success' ? (
+          <div className={isSuccess ? 'bg-green-50 border border-green-200 rounded-lg p-4' : 'bg-red-50 border border-red-200 rounded-lg p-4'}>
+            {isSuccess ? (
               <div>
                 <h4 className="font-semibold text-green-800 mb-2">What's Next?</h4>
                 <p className="text-sm text-green-700">

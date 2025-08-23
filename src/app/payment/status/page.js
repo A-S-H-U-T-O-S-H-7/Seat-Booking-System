@@ -97,18 +97,35 @@ function PaymentStatusContent() {
 
   const updateBookingStatus = async (paymentInfo) => {
     try {
-      // Update the booking status based on payment result
-      // This would typically involve a Firebase update
-      console.log('Updating booking status for:', paymentInfo.order_id);
+      console.log('🔄 Updating booking status for:', paymentInfo.order_id);
       
-      // For now, just log - you can implement Firebase update here
-      if (paymentInfo.order_status === 'Success') {
-        console.log('✅ Payment successful - booking should be confirmed');
+      // Import the payment service dynamically
+      const { updateBookingAfterPayment, getBookingTypeFromOrderId } = await import('@/services/paymentService');
+      
+      // Determine booking type from order ID and purpose
+      const bookingType = getBookingTypeFromOrderId(paymentInfo.order_id, paymentInfo.mer_param1);
+      
+      console.log('📋 Detected booking type:', bookingType);
+      
+      // Update booking status in Firebase
+      const success = await updateBookingAfterPayment(
+        paymentInfo.order_id,
+        paymentInfo,
+        bookingType
+      );
+      
+      if (success) {
+        if (paymentInfo.order_status === 'Success') {
+          console.log('✅ Payment successful - booking confirmed in Firebase');
+        } else {
+          console.log('❌ Payment failed - booking cancelled in Firebase');
+        }
       } else {
-        console.log('❌ Payment failed - booking should be cancelled');
+        console.error('⚠️ Failed to update booking status in Firebase');
       }
+      
     } catch (error) {
-      console.error('Failed to update booking status:', error);
+      console.error('❌ Failed to update booking status:', error);
     }
   };
 
