@@ -69,9 +69,35 @@ export async function POST(request) {
       timestamp: new Date().toISOString()
     });
 
-    // If we have valid data, prepare redirect URL
+    // If we have valid data, update Firebase and redirect
     if (data.status && data.data) {
       const paymentInfo = data.data;
+      
+      console.log('💾 Updating booking status in Firebase...');
+      
+      try {
+        // Import and call the payment service
+        const paymentService = await import('@/services/paymentService');
+        const bookingType = paymentService.getBookingTypeFromOrderId(
+          paymentInfo.order_id, 
+          paymentInfo.mer_param1
+        );
+        
+        console.log('📋 Booking type detected:', bookingType);
+        
+        // Update Firebase booking status
+        const updateSuccess = await paymentService.updateBookingAfterPayment(
+          paymentInfo.order_id,
+          paymentInfo,
+          bookingType
+        );
+        
+        console.log('🔄 Firebase update result:', updateSuccess);
+        
+      } catch (error) {
+        console.error('❌ Error updating Firebase:', error);
+        // Continue with redirect even if Firebase update fails
+      }
       
       // Create redirect URL based on payment status
       const redirectUrl = new URL('/payment/success', 'https://donate.svsamiti.com');
@@ -88,11 +114,71 @@ export async function POST(request) {
       
       console.log('🔀 Redirecting to:', redirectUrl.toString());
       
-      // Return redirect response
-      return NextResponse.json({
-        status: true,
-        redirect: redirectUrl.toString(),
-        data: paymentInfo
+      // Return HTML redirect page (more reliable than server redirect)
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Payment Processing Complete</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              margin: 0;
+              padding: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              color: white;
+            }
+            .container {
+              text-align: center;
+              background: rgba(255, 255, 255, 0.1);
+              padding: 2rem;
+              border-radius: 10px;
+              backdrop-filter: blur(10px);
+            }
+            .spinner {
+              border: 4px solid rgba(255, 255, 255, 0.3);
+              border-radius: 50%;
+              border-top: 4px solid white;
+              width: 40px;
+              height: 40px;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 1rem;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="spinner"></div>
+            <h2>Payment Processing Complete</h2>
+            <p>Redirecting to confirmation page...</p>
+          </div>
+          <script>
+            console.log('Payment redirect page loaded');
+            setTimeout(function() {
+              console.log('Redirecting to:', '${redirectUrl.toString()}');
+              window.location.href = '${redirectUrl.toString()}';
+            }, 1000);
+          </script>
+        </body>
+        </html>
+      `;
+      
+      return new Response(htmlContent, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
       });
     }
 

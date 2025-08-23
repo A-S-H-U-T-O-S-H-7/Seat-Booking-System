@@ -6,27 +6,53 @@ export async function POST(request) {
     const body = await request.json();
     const { order_id, purpose, amount, name, email, phone, address } = body;
 
-    // Validate required fields
-    if (!order_id || !purpose || !amount || !name || !email || !phone) {
+    // Comprehensive validation for CCAvenue API requirements
+    const errors = [];
+    
+    if (!order_id || order_id.trim().length === 0) {
+      errors.push('Order ID is required');
+    }
+    
+    if (!purpose || purpose.trim().length === 0) {
+      errors.push('Purpose is required');
+    }
+    
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      errors.push('Valid amount is required');
+    }
+    
+    if (!name || name.trim().length < 2) {
+      errors.push('Customer name must be at least 2 characters');
+    }
+    
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push('Valid email address is required');
+    }
+    
+    if (!phone || !/^[0-9]{10}$/.test(phone.replace(/\D/g, ''))) {
+      errors.push('Valid 10-digit phone number is required');
+    }
+    
+    if (errors.length > 0) {
       return NextResponse.json({
         status: false,
-        message: 'Missing required fields',
-        errors: ['order_id, purpose, amount, name, email, and phone are required']
+        message: 'Validation failed',
+        errors: errors
       }, { status: 400 });
     }
 
     // Get origin from headers
     const origin = request.headers.get('origin') || 'http://localhost:3000';
 
-    // Prepare data for CCAvenue API
+    // Prepare data for CCAvenue API with proper formatting
     const paymentData = {
-      order_id,
-      purpose, // Required to identify payment type
-      amount: amount.toString(),
-      name,
-      email,
-      phone,
-      address: address || 'Delhi, India',
+      order_id: order_id.trim(),
+      purpose: purpose.trim(),
+      amount: parseFloat(amount).toFixed(2), // Ensure decimal format
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone.replace(/\D/g, ''), // Remove non-digits
+      address: (address || 'Delhi, India').trim(),
       redirect_url: `https://donate.svsamiti.com/api/payment/ccavenue-response`,
       cancel_url: `https://donate.svsamiti.com/api/payment/ccavenue-cancel`
     };
