@@ -1,9 +1,23 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
-export default function PaymentSuccessPage() {
+// Loading component for suspense fallback
+function LoadingPaymentResult() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col justify-center items-center px-4 py-8">
+      <div className="bg-white shadow-xl rounded-2xl max-w-md w-full p-8 text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <h2 className="text-xl font-bold text-gray-800 mb-2">Loading Payment Result</h2>
+        <p className="text-gray-600">Please wait...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main payment success component that uses useSearchParams
+function PaymentSuccessContent() {
   const [paymentInfo, setPaymentInfo] = useState(null);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -218,5 +232,14 @@ export default function PaymentSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingPaymentResult />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
