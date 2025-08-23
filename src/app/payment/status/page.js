@@ -68,7 +68,13 @@ function PaymentStatusContent() {
           
           // Redirect to success page
           setTimeout(() => {
-            router.push(`/payment/success?order_id=${paymentInfo.order_id}&status=success`);
+            const params = new URLSearchParams({
+              order_id: paymentInfo.order_id,
+              status: 'success',
+              ...(paymentInfo.amount && { amount: paymentInfo.amount }),
+              ...(paymentInfo.tracking_id && { tracking_id: paymentInfo.tracking_id })
+            });
+            router.push(`/payment/success?${params.toString()}`);
           }, 2000);
           
         } else {
@@ -76,7 +82,14 @@ function PaymentStatusContent() {
           toast.error('Payment failed: ' + (paymentInfo.failure_message || 'Unknown error'));
           
           setTimeout(() => {
-            router.push(`/payment/success?order_id=${paymentInfo.order_id}&status=failed&message=${encodeURIComponent(paymentInfo.failure_message || 'Payment failed')}`);
+            const params = new URLSearchParams({
+              order_id: paymentInfo.order_id,
+              status: 'failed',
+              message: paymentInfo.failure_message || 'Payment failed',
+              ...(paymentInfo.amount && { amount: paymentInfo.amount }),
+              ...(paymentInfo.tracking_id && { tracking_id: paymentInfo.tracking_id })
+            });
+            router.push(`/payment/success?${params.toString()}`);
           }, 3000);
         }
       } else {

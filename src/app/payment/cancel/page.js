@@ -71,8 +71,12 @@ function PaymentCancelContent() {
 
       // Auto-redirect to success page with cancellation status
       setTimeout(() => {
-        const redirectUrl = `/payment/success?order_id=${order_id}&status=cancelled&message=${encodeURIComponent(message)}`;
-        router.push(redirectUrl);
+        const params = new URLSearchParams({
+          order_id: order_id,
+          status: 'cancelled',
+          message: message
+        });
+        router.push(`/payment/success?${params.toString()}`);
       }, 3000);
 
     } catch (error) {

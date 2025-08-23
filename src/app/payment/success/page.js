@@ -99,6 +99,8 @@ function PaymentSuccessContent() {
         return <CheckCircle className="w-16 h-16 text-green-600" />;
       case "failed":
         return <XCircle className="w-16 h-16 text-red-600" />;
+      case "cancelled":
+        return <XCircle className="w-16 h-16 text-orange-600" />;
       default:
         return <AlertTriangle className="w-16 h-16 text-yellow-600" />;
     }
@@ -111,6 +113,8 @@ function PaymentSuccessContent() {
         return "Payment Successful!";
       case "failed":
         return "Payment Failed";
+      case "cancelled":
+        return "Payment Cancelled";
       default:
         return "Payment Status Unknown";
     }
@@ -123,6 +127,8 @@ function PaymentSuccessContent() {
         return "Your payment has been processed successfully. You will receive a confirmation email shortly.";
       case "failed":
         return paymentInfo.message || "Your payment could not be processed. Please try again.";
+      case "cancelled":
+        return paymentInfo.message || "Your payment was cancelled. No charges have been made to your account.";
       default:
         return "We could not determine the status of your payment. Please contact support.";
     }
@@ -138,6 +144,7 @@ function PaymentSuccessContent() {
 
   const isSuccess = paymentInfo.status === "success";
   const isFailure = paymentInfo.status === "failed";
+  const isCancelled = paymentInfo.status === "cancelled";
 
   return (
     <div
@@ -146,6 +153,8 @@ function PaymentSuccessContent() {
           ? "min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex items-center justify-center px-4 py-6"
           : isFailure
           ? "min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 flex items-center justify-center px-4 py-6"
+          : isCancelled
+          ? "min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center px-4 py-6"
           : "min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 flex items-center justify-center px-4 py-6"
       }
     >
@@ -159,6 +168,8 @@ function PaymentSuccessContent() {
                 ? "text-2xl font-bold text-green-800 mb-2"
                 : isFailure
                 ? "text-2xl font-bold text-red-800 mb-2"
+                : isCancelled
+                ? "text-2xl font-bold text-orange-800 mb-2"
                 : "text-2xl font-bold text-yellow-800 mb-2"
             }
           >
@@ -174,7 +185,7 @@ function PaymentSuccessContent() {
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-5">
               <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
                 <span className="mr-2">📅</span>
-                Booking Information
+                Reservation Information
               </h3>
               <div className="space-y-4 text-sm">
                 {(() => {
@@ -185,10 +196,16 @@ function PaymentSuccessContent() {
                         <div>
                           <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
                           <div className="flex flex-wrap gap-2">
-                            {bookingDetails?.seats && bookingDetails.seats.length > 0 ? (
-                              bookingDetails.seats.map((seat, idx) => (
+                            {(bookingDetails?.showDetails?.selectedSeats && bookingDetails.showDetails.selectedSeats.length > 0) ? (
+                              bookingDetails.showDetails.selectedSeats.map((seat, idx) => (
                                 <span key={idx} className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
                                   {seat}
+                                </span>
+                              ))
+                            ) : bookingDetails?.seats && bookingDetails.seats.length > 0 ? (
+                              bookingDetails.seats.map((seat, idx) => (
+                                <span key={idx} className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                  {typeof seat === 'object' ? seat.seatId : seat}
                                 </span>
                               ))
                             ) : (
@@ -211,9 +228,14 @@ function PaymentSuccessContent() {
                               {(() => {
                                 try {
                                   if (bookingDetails?.showDetails?.date) {
-                                    const date = bookingDetails.showDetails.date.seconds ? 
-                                      new Date(bookingDetails.showDetails.date.seconds * 1000) : 
-                                      new Date(bookingDetails.showDetails.date);
+                                    let date;
+                                    if (bookingDetails.showDetails.date.seconds) {
+                                      date = new Date(bookingDetails.showDetails.date.seconds * 1000);
+                                    } else if (bookingDetails.showDetails.date.toDate) {
+                                      date = bookingDetails.showDetails.date.toDate();
+                                    } else {
+                                      date = new Date(bookingDetails.showDetails.date);
+                                    }
                                     return date.toLocaleDateString('en-IN', {
                                       weekday: 'long',
                                       year: 'numeric',
@@ -242,7 +264,12 @@ function PaymentSuccessContent() {
                           <div>
                             <p className="font-medium text-gray-700">Total Seats:</p>
                             <p className="text-gray-900 font-semibold">
-                              {bookingDetails?.seats?.length || 0} seat{(bookingDetails?.seats?.length || 0) !== 1 ? 's' : ''}
+                              {(() => {
+                                const seatCount = bookingDetails?.showDetails?.selectedSeats?.length || 
+                                                  bookingDetails?.seats?.length || 
+                                                  bookingDetails?.showDetails?.totalCapacity || 0;
+                                return `${seatCount} seat${seatCount !== 1 ? 's' : ''}`;
+                              })()}
                             </p>
                           </div>
                         </div>
@@ -270,12 +297,6 @@ function PaymentSuccessContent() {
                         </div>
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <p className="font-medium text-gray-700">Vendor/Business Name:</p>
-                            <p className="text-gray-900 font-semibold">
-                              {bookingDetails?.vendorDetails?.businessName || 'N/A'}
-                            </p>
-                          </div>
                           
                           <div>
                             <p className="font-medium text-gray-700">Event Duration:</p>
@@ -391,7 +412,7 @@ function PaymentSuccessContent() {
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <p className="font-medium text-gray-700">Order ID:</p>
+                    <p className="font-medium text-gray-700">Reservation ID:</p>
                     <p className="text-gray-900 font-mono text-xs">{paymentInfo.order_id}</p>
                   </div>
                   
@@ -418,7 +439,7 @@ function PaymentSuccessContent() {
             <h3 className="text-lg font-semibold text-red-800 mb-4">Payment Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-medium text-gray-700">Order ID:</p>
+                <p className="font-medium text-gray-700">Reservation ID:</p>
                 <p className="text-gray-900 font-mono">{paymentInfo.order_id}</p>
               </div>
               {paymentInfo.amount && (
@@ -485,8 +506,8 @@ function PaymentSuccessContent() {
               <div>
                 <h4 className="font-semibold text-green-800 mb-2">What's Next?</h4>
                 <p className="text-sm text-green-700">
-                  • You will receive a confirmation email with your booking details<br/>
-                  • Please save your Order ID for future reference<br/>
+                  • You will receive a confirmation email with your reservation details<br/>
+                  • Please save your Reservation ID for future reference<br/>
                   • Contact support if you have any questions
                 </p>
               </div>
