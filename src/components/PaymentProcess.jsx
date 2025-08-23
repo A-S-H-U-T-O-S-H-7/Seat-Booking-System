@@ -58,7 +58,7 @@ const PaymentProcess = ({ customerDetails }) => {
       const paymentData = {
         order_id: bookingId,
         purpose: 'havan_booking', // Required to identify payment type
-        amount: getTotalAmount().toString(),
+        amount: getTotalAmount(),
         name: customerDetails.name,
         email: customerDetails.email,
         phone: customerDetails.phone,
@@ -67,6 +67,22 @@ const PaymentProcess = ({ customerDetails }) => {
       
       addLog('💳 Sending request to CCAvenue API...');
       addLog(`Payment data: ${JSON.stringify(paymentData)}`);
+      addLog(`Customer details: ${JSON.stringify(customerDetails)}`);
+      addLog(`Total amount: ${getTotalAmount()}`);
+      
+      // Validate data before sending
+      if (!customerDetails.name || customerDetails.name.trim().length < 2) {
+        throw new Error('Customer name must be at least 2 characters');
+      }
+      if (!customerDetails.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) {
+        throw new Error('Valid email address is required');
+      }
+      if (!customerDetails.phone || !/^[0-9]{10}$/.test(customerDetails.phone.replace(/\D/g, ''))) {
+        throw new Error('Valid 10-digit phone number is required');
+      }
+      if (!getTotalAmount() || getTotalAmount() <= 0) {
+        throw new Error('Valid amount is required');
+      }
       
       // Step 3: Send request to our Next.js API route (which proxies to CCAvenue)
       const response = await fetch('/api/payment/ccavenue-request', {
