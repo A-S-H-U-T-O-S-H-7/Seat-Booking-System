@@ -650,7 +650,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
         })),
         userDetails,
         paymentDetails,
-        status: 'confirmed',
+        status: paymentDetails.method === 'pending_payment' ? 'pending' : 'confirmed',
         createdAt: serverTimestamp(),
         eventType: 'show'
       };
@@ -666,10 +666,12 @@ export const ShowSeatBookingProvider = ({ children }) => {
       const updatedSeats = { ...currentSeats };
       state.selectedSeats.forEach(seatId => {
         updatedSeats[seatId] = {
-          booked: true,
+          booked: paymentDetails.method !== 'pending_payment', // Only mark as booked if payment is confirmed
+          blocked: paymentDetails.method === 'pending_payment', // Block seats during pending payment
           bookingId: bookingRef.id,
           userId: user.uid,
-          bookedAt: serverTimestamp()
+          bookedAt: paymentDetails.method !== 'pending_payment' ? serverTimestamp() : null,
+          blockedAt: paymentDetails.method === 'pending_payment' ? serverTimestamp() : null
         };
       });
       

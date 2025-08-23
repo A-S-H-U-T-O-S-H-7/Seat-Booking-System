@@ -70,7 +70,7 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
       }
       
       // If it's a show booking, update seat availability
-      if (bookingType === 'show' && bookingData.selectedSeats) {
+      if (bookingType === 'show' && (bookingData.showDetails?.selectedSeats || bookingData.selectedSeats)) {
         await updateShowSeatAvailabilityAfterPayment(bookingData, true);
       }
       
@@ -87,7 +87,7 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
         await updateSeatAvailabilityAfterPayment(bookingData, false);
       }
       
-      if (bookingType === 'show' && bookingData.selectedSeats) {
+      if (bookingType === 'show' && (bookingData.showDetails?.selectedSeats || bookingData.selectedSeats)) {
         await updateShowSeatAvailabilityAfterPayment(bookingData, false);
       }
       
@@ -164,7 +164,8 @@ async function updateSeatAvailabilityAfterPayment(bookingData, isPaymentSuccessf
  */
 async function updateShowSeatAvailabilityAfterPayment(bookingData, isPaymentSuccessful) {
   try {
-    const { selectedDate, selectedSeats } = bookingData;
+    const selectedDate = bookingData.showDetails?.date || bookingData.selectedDate;
+    const selectedSeats = bookingData.showDetails?.selectedSeats || bookingData.selectedSeats;
     const dateKey = formatDateKey(selectedDate);
     const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
     
@@ -189,7 +190,7 @@ async function updateShowSeatAvailabilityAfterPayment(bookingData, isPaymentSucc
     } else {
       // Payment failed - release seats
       selectedSeats.forEach(seatId => {
-        if (updatedAvailability[seatId] && updatedAvailability[seatId].bookingId === bookingData.bookingId) {
+        if (updatedAvailability[seatId] && updatedAvailability[seatId].bookingId === bookingData.id) {
           delete updatedAvailability[seatId];
         }
       });
@@ -243,10 +244,13 @@ export function getBookingTypeFromOrderId(orderId, purpose) {
     if (purpose.includes('stall')) return 'stall';
   }
   
-  // Fallback to order ID pattern
+  // Fallback to order ID pattern  
   if (orderId.startsWith('BK')) return 'havan';
-  if (orderId.startsWith('SHOW')) return 'show';
-  if (orderId.startsWith('STALL')) return 'stall';
+  if (orderId.startsWith('SHOW-') || orderId.includes('show')) return 'show';
+  if (orderId.startsWith('STALL-') || orderId.includes('stall')) return 'stall';
+  
+  // For show bookings, order IDs are auto-generated Firebase IDs
+  // So we need to check the purpose parameter or booking content
   
   return 'havan'; // Default
 }
