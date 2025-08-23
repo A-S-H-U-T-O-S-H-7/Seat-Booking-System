@@ -145,37 +145,293 @@ function PaymentSuccessContent() {
   const isSuccess = paymentInfo.status === 'success';
   const isFailure = paymentInfo.status === 'failed';
   
+  // Get booking details from Firebase based on order_id and booking type
+  const [bookingDetails, setBookingDetails] = useState(null);
+  const [bookingType, setBookingType] = useState(null);
+  
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      if (paymentInfo && paymentInfo.order_id) {
+        try {
+          // Import Firebase dynamically
+          const { db } = await import('@/lib/firebase');
+          const { doc, getDoc } = await import('firebase/firestore');
+          
+          let bookingData = null;
+          let detectedType = null;
+          
+          // Try to determine booking type from order_id prefix
+          if (paymentInfo.order_id.startsWith('SHOW-')) {
+            detectedType = 'show';
+            const bookingRef = doc(db, 'showBookings', paymentInfo.order_id);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) {
+              bookingData = bookingSnap.data();
+            }
+          } else if (paymentInfo.order_id.startsWith('STALL-')) {
+            detectedType = 'stall';
+            const bookingRef = doc(db, 'stallBookings', paymentInfo.order_id);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) {
+              bookingData = bookingSnap.data();
+            }
+          } else {
+            // Default to havan booking for backward compatibility
+            detectedType = 'havan';
+            const bookingRef = doc(db, 'bookings', paymentInfo.order_id);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) {
+              bookingData = bookingSnap.data();
+            }
+          }
+          
+          if (bookingData) {
+            console.log('Fetched booking details:', bookingData, 'Type:', detectedType);
+            setBookingDetails(bookingData);
+            setBookingType(detectedType);
+          }
+        } catch (error) {
+          console.error('Error fetching booking details:', error);
+        }
+      }
+    };
+    
+    fetchBookingDetails();
+  }, [paymentInfo]);
+  
   return (
-    <div className={isSuccess ? 'min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex flex-col justify-center items-center px-4 py-8' : isFailure ? 'min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 flex flex-col justify-center items-center px-4 py-8' : 'min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 flex flex-col justify-center items-center px-4 py-8'}>
-      <div className="bg-white shadow-xl rounded-2xl max-w-2xl w-full p-8">
+    <div className={isSuccess ? 'min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex items-center justify-center px-4 py-6' : isFailure ? 'min-h-screen bg-gradient-to-br from-red-50 via-white to-red-100 flex items-center justify-center px-4 py-6' : 'min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 flex items-center justify-center px-4 py-6'}>
+      <div className="bg-white shadow-xl rounded-2xl max-w-5xl w-full p-6">
         {/* Status Icon and Title */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
+        <div className="text-center mb-6">
+          <div className="flex justify-center mb-3">
             {getStatusIcon()}
           </div>
-          <h1 className={isSuccess ? 'text-3xl font-bold text-green-800 mb-2' : isFailure ? 'text-3xl font-bold text-red-800 mb-2' : 'text-3xl font-bold text-yellow-800 mb-2'}>
+          <h1 className={isSuccess ? 'text-2xl font-bold text-green-800 mb-2' : isFailure ? 'text-2xl font-bold text-red-800 mb-2' : 'text-2xl font-bold text-yellow-800 mb-2'}>
             {getStatusTitle()}
           </h1>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600">
             {getStatusMessage()}
           </p>
         </div>
 
-        {/* Payment Details */}
-        {paymentInfo.order_id && (
-          <div className={isSuccess ? 'bg-green-50 border border-green-200 rounded-lg p-6 mb-8' : isFailure ? 'bg-red-50 border border-red-200 rounded-lg p-6 mb-8' : 'bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8'}>
-            <h3 className={isSuccess ? 'text-lg font-semibold text-green-800 mb-4' : isFailure ? 'text-lg font-semibold text-red-800 mb-4' : 'text-lg font-semibold text-yellow-800 mb-4'}>Payment Details</h3>
+        {/* Booking & Payment Details */}
+        {(paymentInfo.order_id && isSuccess) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* Booking Details */}
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
+                <span className="mr-2">🎫</span>
+                {bookingType === 'show' ? 'Show Reservation Details' : 
+                 bookingType === 'stall' ? 'Stall Reservation Details' : 
+                 'Reservation Details'}
+              </h3>
+              <div className="space-y-3 text-sm">
+                {/* Show booking details */}
+                {bookingType === 'show' && (
+                  <>
+                    <div>
+                      <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {bookingDetails?.selectedSeats ? (
+                          bookingDetails.selectedSeats.map((seat, idx) => (
+                            <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              {seat}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">Loading...</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="font-medium text-gray-700">Show Date:</p>
+                        <p className="text-gray-900">
+                          {bookingDetails?.selectedDate ? (
+                            new Date(bookingDetails.selectedDate.seconds ? bookingDetails.selectedDate.seconds * 1000 : bookingDetails.selectedDate).toLocaleDateString('en-IN', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })
+                          ) : 'Loading...'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-700">Show Time:</p>
+                        <p className="text-gray-900">5:00 PM - 10:00 PM</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="font-medium text-gray-700">Customer Name:</p>
+                        <p className="text-gray-900 font-semibold">
+                          {bookingDetails?.userDetails?.name || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-700">Total Seats:</p>
+                        <p className="text-gray-900 font-semibold">
+                          {bookingDetails?.selectedSeats ? bookingDetails.selectedSeats.length : '...'} seat{bookingDetails?.selectedSeats?.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {/* Stall booking details */}
+                {bookingType === 'stall' && (
+                  <>
+                    <div>
+                      <p className="font-medium text-gray-700 mb-1">Stall IDs:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {bookingDetails?.stallIds ? (
+                          bookingDetails.stallIds.map((stallId, idx) => (
+                            <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              {stallId}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">Loading...</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="font-medium text-gray-700">Event Duration:</p>
+                        <p className="text-gray-900">5 Days (Nov 15-20, 2025)</p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-700">Business Type:</p>
+                        <p className="text-gray-900 capitalize">
+                          {bookingDetails?.vendorDetails?.businessType || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="font-medium text-gray-700">Contact Person:</p>
+                        <p className="text-gray-900 font-semibold">
+                          {bookingDetails?.vendorDetails?.ownerName || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-700">Total Stalls:</p>
+                        <p className="text-gray-900 font-semibold">
+                          {bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || '...'} stall{(bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length) !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {/* Havan booking details (default/fallback) */}
+                {(bookingType === 'havan' || !bookingType) && (
+                  <>
+                    <div>
+                      <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {bookingDetails?.seats ? (
+                          bookingDetails.seats.map((seat, idx) => (
+                            <span key={idx} className="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              {seat}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">Loading...</span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <p className="font-medium text-gray-700">Event Date:</p>
+                        <p className="text-gray-900">
+                          {bookingDetails?.eventDate ? (
+                            new Date(bookingDetails.eventDate.seconds ? bookingDetails.eventDate.seconds * 1000 : bookingDetails.eventDate).toLocaleDateString('en-IN', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })
+                          ) : 'Loading...'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <p className="font-medium text-gray-700">Shift:</p>
+                        <p className="text-gray-900 capitalize">
+                          {bookingDetails?.shift ? (
+                            bookingDetails.shift === 'morning' ? 'Morning (6:00 AM - 12:00 PM)' :
+                            bookingDetails.shift === 'evening' ? 'Evening (6:00 PM - 12:00 AM)' :
+                            bookingDetails.shift
+                          ) : 'Loading...'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="font-medium text-gray-700">Total Seats:</p>
+                      <p className="text-gray-900 font-semibold">
+                        {bookingDetails?.seats ? bookingDetails.seats.length : '...'} seat{bookingDetails?.seats?.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Payment Details */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center">
+                <span className="mr-2">💳</span>
+                Payment Information
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="bg-white rounded-lg p-3 border border-green-200">
+                  <p className="font-medium text-gray-700 mb-1">Total Amount Paid:</p>
+                  <p className="text-2xl font-bold text-green-800">₹{paymentInfo.amount}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="font-medium text-gray-700">Order ID:</p>
+                    <p className="text-gray-900 font-mono text-xs">{paymentInfo.order_id}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="font-medium text-gray-700">Payment Status:</p>
+                    <p className="text-green-800 font-semibold capitalize">
+                      ✅ {paymentInfo.status}
+                    </p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="font-medium text-gray-700">Payment Date:</p>
+                  <p className="text-gray-900">{new Date().toLocaleString('en-IN')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Failed Payment Details */}
+        {(paymentInfo.order_id && !isSuccess) && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-6">
+            <h3 className="text-lg font-semibold text-red-800 mb-4">Payment Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="font-medium text-gray-700">Order ID:</p>
                 <p className="text-gray-900 font-mono">{paymentInfo.order_id}</p>
               </div>
-              {paymentInfo.tracking_id && (
-                <div>
-                  <p className="font-medium text-gray-700">Tracking ID:</p>
-                  <p className="text-gray-900 font-mono">{paymentInfo.tracking_id}</p>
-                </div>
-              )}
               {paymentInfo.amount && (
                 <div>
                   <p className="font-medium text-gray-700">Amount:</p>
@@ -184,32 +440,32 @@ function PaymentSuccessContent() {
               )}
               <div>
                 <p className="font-medium text-gray-700">Status:</p>
-                <p className={isSuccess ? 'text-green-800 font-semibold capitalize' : isFailure ? 'text-red-800 font-semibold capitalize' : 'text-yellow-800 font-semibold capitalize'}>
-                  {paymentInfo.status}
-                </p>
+                <p className="text-red-800 font-semibold capitalize">{paymentInfo.status}</p>
               </div>
-              <div className="sm:col-span-2">
+              <div>
                 <p className="font-medium text-gray-700">Date & Time:</p>
-                <p className="text-gray-900">{new Date().toLocaleString()}</p>
+                <p className="text-gray-900">{new Date().toLocaleString('en-IN')}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           {isSuccess ? (
             <>
               <button
                 onClick={handleViewBookings}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300"
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-300 flex items-center justify-center"
               >
-                View My Bookings
+                <span className="mr-2">📋</span>
+                View Your Reservations
               </button>
               <button
                 onClick={handleGoHome}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300"
+                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-300 flex items-center justify-center"
               >
+                <span className="mr-2">🏠</span>
                 Go to Home
               </button>
             </>
@@ -217,14 +473,16 @@ function PaymentSuccessContent() {
             <>
               <button
                 onClick={handleTryAgain}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-300 flex items-center justify-center"
               >
+                <span className="mr-2">🔄</span>
                 Try Again
               </button>
               <button
                 onClick={handleGoHome}
-                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300"
+                className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors duration-300 flex items-center justify-center"
               >
+                <span className="mr-2">🏠</span>
                 Go to Home
               </button>
             </>

@@ -10,9 +10,6 @@ import { ShoppingBag, CreditCard, CheckCircle, Shield, Building, User, Phone, Ma
 
 const StallPaymentProcess = ({ vendorDetails }) => {
   const [processing, setProcessing] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [bookingId, setBookingId] = useState('');
-  const [countdown, setCountdown] = useState(15);
   const router = useRouter();
   const { user } = useAuth();
   const { 
@@ -31,37 +28,141 @@ const StallPaymentProcess = ({ vendorDetails }) => {
     return `STALL-${timestamp}-${random}`;
   };
 
-  // Simulate payment processing (replace with actual payment gateway integration)
   const initiatePayment = async () => {
+    // Validate vendor details
+    const requiredFields = ['ownerName', 'email', 'phone', 'businessType', 'aadhar'];
+    if (requiredFields.some(field => !vendorDetails[field])) {
+      toast.error('Please fill all required vendor details before completing booking');
+      return;
+    }
+    
+    if (selectedStalls.length === 0) {
+      toast.error('Please select at least one stall before proceeding');
+      return;
+    }
+    
     setProcessing(true);
     
     try {
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Creating pending stall booking...');
       
-      // Simulate successful payment
-      const paymentId = 'pay_' + Math.random().toString(36).substr(2, 9);
-      const orderId = 'order_' + Math.random().toString(36).substr(2, 9);
+      // Create pending booking first
+      const generatedBookingId = generateBookingId();
       
+      // Create pending booking in Firebase
       await processStallBooking({
-        paymentId,
-        orderId,
+        paymentId: 'pending_' + Date.now(),
+        orderId: generatedBookingId,
         amount: getTotalAmount(),
-        status: 'success'
+        status: 'pending_payment'
+      }, generatedBookingId);
+      
+      console.log('✅ Stall booking created with ID:', generatedBookingId);
+      
+      // Prepare payment data for CCAvenue
+      const paymentData = {
+        order_id: generatedBookingId,
+        purpose: 'stall_booking', // Required to identify payment type
+        amount: getTotalAmount().toString(),
+        name: vendorDetails.ownerName,
+        email: vendorDetails.email,
+        phone: vendorDetails.phone,
+        address: vendorDetails.address || 'Delhi, India'
+      };
+      
+      console.log('💳 Sending request to CCAvenue API...', paymentData);
+      
+      // Send request to CCAvenue API
+      const response = await fetch('/api/payment/ccavenue-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentData)
       });
       
-      setPaymentSuccess(true);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('CCAvenue API Response:', data);
+      
+      if (!data.status) {
+        const errorMessage = data.errors ? data.errors.join(', ') : 'Payment request failed';
+        throw new Error(errorMessage);
+      }
+      
+      if (!data.encRequest || !data.access_code) {
+        throw new Error('Invalid response from payment API');
+      }
+      
+      console.log('✅ CCAvenue request prepared successfully');
+      
+      // Redirect to CCAvenue
+      submitToCCAvenue(data.encRequest, data.access_code, generatedBookingId);
       
     } catch (error) {
-      console.error('Payment failed:', error);
-      toast.error('Payment failed. Please try again.');
+      console.error('Booking/Payment failed:', error);
+      toast.error(error.message || 'Failed to initiate payment. Please try again.');
     } finally {
       setProcessing(false);
     }
   };
+  
+  // Submit form to CCAvenue payment gateway
+  const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
+    console.log('🌐 Creating CCAvenue payment form...');
+    
+    try {
+      // Create form dynamically
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+      form.target = '_self';
+      form.style.display = 'none';
+      
+      // Add encrypted request input
+      const encInput = document.createElement('input');
+      encInput.type = 'hidden';
+      encInput.name = 'encRequest';
+      encInput.value = encRequest;
+      form.appendChild(encInput);
+      
+      // Add access code input
+      const accInput = document.createElement('input');
+      accInput.type = 'hidden';
+      accInput.name = 'access_code';
+      accInput.value = accessCode;
+      form.appendChild(accInput);
+      
+      // Append form to body and submit
+      document.body.appendChild(form);
+      
+      console.log('🚀 Submitting to CCAvenue...', {
+        action: form.action,
+        bookingId: bookingId
+      });
+      
+      // Submit form
+      form.submit();
+      
+      // Clean up
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error('Failed to redirect to payment gateway');
+      setProcessing(false);
+    }
+  };
 
-  const processStallBooking = async (paymentData) => {
-    const generatedBookingId = generateBookingId();
+  const processStallBooking = async (paymentData, bookingId) => {
+    const generatedBookingId = bookingId || generateBookingId();
     
     console.log('Processing stall booking for stalls:', selectedStalls);
     console.log('Total amount:', getTotalAmount());
@@ -118,7 +219,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
             ...paymentData,
             amount: getTotalAmount()
           },
-          status: 'confirmed',
+          status: paymentData.status || 'pending_payment',
           type: 'stall',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
@@ -131,186 +232,12 @@ const StallPaymentProcess = ({ vendorDetails }) => {
       });
 
       console.log('Transaction completed successfully for booking ID:', generatedBookingId);
-      setBookingId(generatedBookingId);
-      
-      // In real implementation, trigger email confirmation here
-      toast.success(`Stall booking confirmed! ${selectedStalls.length} stall(s) booked successfully. Confirmation email sent.`);
       
     } catch (error) {
       console.error('Booking failed:', error);
       throw error;
     }
   };
-
-  // Auto-redirect countdown effect
-  useEffect(() => {
-    if (paymentSuccess) {
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            // Use setTimeout to prevent setState during render
-            setTimeout(() => {
-              router.push('/profile');
-            }, 100);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      return () => clearInterval(timer);
-    }
-  }, [paymentSuccess, router]);
-
-  const handleNewBooking = () => {
-    clearSelection();
-    setPaymentSuccess(false);
-    setBookingId('');
-    // Use setTimeout to prevent setState during render
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-  };
-
-  const goToProfile = () => {
-    // Use setTimeout to prevent setState during render
-    setTimeout(() => {
-      router.push('/profile');
-    }, 100);
-  };
-
-  // Success screen
-  if (paymentSuccess) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center px-2 sm:px-4 py-3 sm:py-6">
-        <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl max-w-4xl w-full overflow-hidden border border-blue-200">
-          {/* Success Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-3 sm:px-5 py-3 sm:py-4 text-center">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 bg-white rounded-full flex items-center justify-center shadow-lg">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 text-blue-500 text-2xl sm:text-3xl font-bold flex items-center justify-center">✓</div>
-            </div>
-            
-            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">
-              🎉 {selectedStalls.length > 1 ? 'Multi-Stall Reservation Confirmed!' : 'Stall Reservation Confirmed!'}
-            </h3>
-            
-            <p className="text-blue-100 text-sm sm:text-base">
-              Your {selectedStalls.length > 1 ? `${selectedStalls.length} vendor stalls have` : 'vendor stall has'} been successfully reserved
-            </p>
-          </div>
-
-          <div className="p-2 sm:p-4 space-y-3 sm:space-y-4">
-            {/* Booking Details */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-2 sm:p-3">
-              <h4 className="text-base sm:text-lg font-bold text-blue-800 mb-2 sm:mb-3 flex items-center">
-                <div className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                  <span className="text-white font-bold text-xs sm:text-sm">📋</span>
-                </div>
-                Stall Reservation Details
-              </h4>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
-                  <p className="text-xs text-gray-600 mb-1">Reservation ID</p>
-                  <p className="font-bold text-blue-800 text-xs sm:text-sm break-all">{bookingId}</p>
-                </div>
-                
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
-                  <p className="text-xs text-gray-600 mb-1">Stall IDs</p>
-                  <p className="font-bold text-blue-800 text-xs sm:text-sm">
-                    {selectedStalls && selectedStalls.length > 0 
-                      ? selectedStalls.slice(0, 3).join(', ') + (selectedStalls.length > 3 ? ` +${selectedStalls.length - 3} more` : '')
-                      : 'N/A'
-                    }
-                  </p>
-                </div>
-                
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200 col-span-2 sm:col-span-1">
-                  <p className="text-xs text-gray-600 mb-1">Duration</p>
-                  <p className="font-bold text-blue-800 text-xs sm:text-sm">5 Days</p>
-                </div>
-                
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
-                  <p className="text-xs text-gray-600 mb-1">Business Type</p>
-                  <p className="font-bold text-blue-800 text-xs sm:text-sm break-all">{vendorDetails?.businessType}</p>
-                </div>
-                
-                <div className="bg-white rounded-md p-2 sm:p-3 shadow-sm border border-blue-200">
-                  <p className="text-xs text-gray-600 mb-1">Contact Person</p>
-                  <p className="font-bold text-blue-800 text-xs sm:text-sm">{vendorDetails?.ownerName}</p>
-                </div>
-                
-                <div className="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-md p-2 sm:p-3 shadow-sm border border-purple-300">
-                  <p className="text-xs text-purple-700 mb-1">Total Amount</p>
-                  <p className="font-bold text-purple-800 text-sm sm:text-base">₹{getTotalAmount()}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Confirmation */}
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-2 sm:p-3">
-              <div className="flex items-start">
-                <div className="text-xl sm:text-2xl mr-2 sm:mr-3 flex-shrink-0">📧</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm sm:text-base font-semibold text-indigo-800">Confirmation Email Sent</p>
-                  <p className="text-xs sm:text-sm text-indigo-600">
-                    A detailed confirmation has been sent to
-                  </p>
-                  <p className="text-xs sm:text-sm text-indigo-800 font-medium break-words break-all">
-                    {vendorDetails?.email}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Auto-redirect Countdown */}
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-2 sm:p-3">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg">
-                  {countdown}
-                </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-purple-800 font-bold text-sm sm:text-base">
-                    Auto-redirecting to Profile
-                  </p>
-                  <p className="text-xs sm:text-sm text-purple-600">
-                    Redirecting in {countdown} second{countdown > 1 ? 's' : ''}...
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-              <button
-                onClick={goToProfile}
-                className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white py-2 sm:py-3 rounded-md sm:rounded-lg font-bold text-sm sm:text-base transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
-              >
-                <span className="mr-1 sm:mr-2">🏠</span>
-                Go to Profile Now
-              </button>
-              
-              <button
-                onClick={handleNewBooking}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-2 sm:py-3 rounded-md sm:rounded-lg font-bold text-sm sm:text-base transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center"
-              >
-                <span className="mr-1 sm:mr-2">🏪</span>
-                Reserve Another Stall
-              </button>
-            </div>
-            
-            {/* Important Note */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 sm:p-3">
-              <p className="text-xs text-gray-600 text-center">
-                💾 Please save this confirmation and bring valid business documents to the event setup.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center px-2 sm:px-4 py-4 sm:py-8">
