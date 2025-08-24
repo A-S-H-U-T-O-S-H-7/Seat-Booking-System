@@ -5,8 +5,6 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, w
  * Clean up expired blocked seats and failed/cancelled bookings
  */
 export async function cleanupExpiredSeats() {
-  console.log('🧹 Starting seat cleanup service...');
-  
   try {
     const batch = writeBatch(db);
     let cleanupCount = 0;
@@ -18,29 +16,14 @@ export async function cleanupExpiredSeats() {
     const availabilityQuery = query(collection(db, 'seatAvailability'));
     const availabilitySnap = await getDocs(availabilityQuery);
     
-    console.log(`📊 Found ${availabilitySnap.docs.length} seat availability documents`);
-    
     for (const availabilityDoc of availabilitySnap.docs) {
       const availabilityData = availabilityDoc.data();
       const seats = availabilityData.seats || {};
       let hasExpiredSeats = false;
       const updatedSeats = { ...seats };
       
-      console.log(`🔍 Checking document: ${availabilityDoc.id}`);
-      console.log(`📋 Found ${Object.keys(seats).length} seats in document`);
-      
       for (const [seatId, seatData] of Object.entries(seats)) {
         totalSeatsScanned++;
-        
-        // Enhanced debugging
-        console.log(`🪑 Seat ${seatId}:`, {
-          blocked: seatData.blocked,
-          booked: seatData.booked,
-          hasExpiryTime: !!seatData.expiryTime,
-          expiryTime: seatData.expiryTime,
-          expiryTimeType: typeof seatData.expiryTime,
-          bookingId: seatData.bookingId
-        });
         
         // ONLY clean up seats that are BLOCKED, EXPIRED, and NOT admin-blocked
         // NEVER touch seats that are booked (payment successful)

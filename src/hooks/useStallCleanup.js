@@ -1,11 +1,11 @@
 "use client";
 import { useEffect } from 'react';
-import { cleanupExpiredSeats } from '@/services/seatCleanupService';
+import { cleanupExpiredStalls } from '@/services/stallCleanupService';
 
 /**
- * Hook to automatically clean up expired blocked seats
+ * Hook to automatically clean up expired blocked stalls
  */
-export function useSeatCleanup() {
+export function useStallCleanup() {
   useEffect(() => {
     let cleanupInterval;
     
@@ -13,19 +13,19 @@ export function useSeatCleanup() {
     const startCleanup = async () => {
       try {
         // Clean up immediately
-        await cleanupExpiredSeats();
+        await cleanupExpiredStalls();
         
         // Set up interval for automatic cleanup every 2 minutes
         cleanupInterval = setInterval(async () => {
           try {
-            await cleanupExpiredSeats();
+            await cleanupExpiredStalls();
           } catch (error) {
-            console.error('❌ Automatic seat cleanup failed:', error);
+            console.error('❌ Automatic stall cleanup failed:', error);
           }
         }, 2 * 60 * 1000); // 2 minutes
         
       } catch (error) {
-        console.error('❌ Failed to start seat cleanup service:', error);
+        console.error('❌ Failed to start stall cleanup service:', error);
       }
     };
     
@@ -35,7 +35,7 @@ export function useSeatCleanup() {
     return () => {
       if (cleanupInterval) {
         clearInterval(cleanupInterval);
-        console.log('🛑 Seat cleanup service stopped');
+        console.log('🛑 Stall cleanup service stopped');
       }
     };
   }, []);
@@ -43,11 +43,11 @@ export function useSeatCleanup() {
   // Manual cleanup function that components can call
   const manualCleanup = async () => {
     try {
-      console.log('🧹 Manual seat cleanup triggered...');
-      const result = await cleanupExpiredSeats();
+      console.log('🧹 Manual stall cleanup triggered...');
+      const result = await cleanupExpiredStalls();
       return result;
     } catch (error) {
-      console.error('❌ Manual seat cleanup failed:', error);
+      console.error('❌ Manual stall cleanup failed:', error);
       return { success: false, error: error.message };
     }
   };

@@ -180,21 +180,25 @@ const StallPaymentProcess = ({ vendorDetails }) => {
 
         // Verify all selected stalls are still available
         for (const stallId of selectedStalls) {
-          if (currentAvailability[stallId]?.booked) {
+          if (currentAvailability[stallId]?.booked || currentAvailability[stallId]?.blocked) {
             throw new Error(`Stall ${stallId} is no longer available`);
           }
         }
 
-        // Update stall availability for all selected stalls
+        // Block stalls temporarily (for 5 minutes) during payment processing
         const updatedAvailability = { ...currentAvailability };
+        const expiryTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+        
         selectedStalls.forEach(stallId => {
           updatedAvailability[stallId] = {
-            booked: true,
+            booked: false,
+            blocked: true,
             userId: user.uid,
             vendorName: vendorDetails.ownerName,
             businessName: vendorDetails.businessType,
             bookingId: generatedBookingId,
-            bookedAt: serverTimestamp()
+            blockedAt: serverTimestamp(),
+            expiryTime: expiryTime
           };
         });
 
@@ -223,6 +227,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
           type: 'stall',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
+          expiryTime: expiryTime, // Auto-expire if payment not completed
           eventDetails: {
             startDate: new Date('2025-11-15'),
             endDate: new Date('2025-11-20'),

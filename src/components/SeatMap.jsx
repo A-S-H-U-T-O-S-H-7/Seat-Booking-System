@@ -7,7 +7,6 @@ import { useBooking } from '@/context/BookingContext';
 import { formatDateKey } from '@/utils/dateUtils';
 import { Info, ChevronDown } from 'lucide-react';
 import { useSeatCleanup } from '@/hooks/useSeatCleanup';
-import { diagnoseSeatState } from '@/utils/seatDiagnostics';
 
 const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = [] }) => {
   const [seatAvailability, setSeatAvailability] = useState({});
@@ -401,44 +400,6 @@ default:
           <div className="w-3 h-3 bg-gray-300 rounded border border-gray-300"></div>
           <span className="text-gray-600 font-medium">Blocked</span>
         </div>
-        
-        {/* Manual cleanup trigger for testing */}
-        <button
-          onClick={async () => {
-            console.log('🧹 Manual cleanup triggered...');
-            const result = await manualCleanup();
-            console.log('🔧 Manual cleanup result:', result);
-            if (result.success) {
-              toast.success(`Cleanup completed: ${result.cleanupCount} items processed`);
-            } else {
-              toast.error('Cleanup failed: ' + result.error);
-            }
-          }}
-          className="flex items-center gap-1 sm:gap-2 bg-orange-100 hover:bg-orange-200 px-2 py-1 rounded text-orange-700 font-medium transition-colors"
-        >
-          <span className="text-sm">🧹</span>
-          <span className="hidden sm:inline">Test Cleanup</span>
-          <span className="sm:hidden">Cleanup</span>
-        </button>
-        
-        {/* Seat diagnostics button */}
-        <button
-          onClick={async () => {
-            console.log('🔍 Starting seat diagnostics...');
-            const result = await diagnoseSeatState();
-            console.log('📊 Diagnostic result:', result);
-            if (result.success) {
-              toast.success(`Diagnostics completed: ${result.summary.problematicSeats} issues found`);
-            } else {
-              toast.error('Diagnostics failed: ' + result.error);
-            }
-          }}
-          className="flex items-center gap-1 sm:gap-2 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-blue-700 font-medium transition-colors"
-        >
-          <span className="text-sm">🔍</span>
-          <span className="hidden sm:inline">Diagnose</span>
-          <span className="sm:hidden">Check</span>
-        </button>
       </div>
 
       {/* Stage indicator */}

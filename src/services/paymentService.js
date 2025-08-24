@@ -75,6 +75,11 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
         await updateShowSeatAvailabilityAfterPayment(bookingData, true);
       }
       
+      // If it's a stall booking, update stall availability
+      if (bookingType === 'stall' && bookingData.stallIds) {
+        await updateStallAvailabilityAfterPayment(bookingData, true);
+      }
+      
       console.log('✅ Payment successful - confirming booking');
       
     } else {
@@ -90,6 +95,11 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
       
       if (bookingType === 'show' && (bookingData.showDetails?.selectedSeats || bookingData.selectedSeats)) {
         await updateShowSeatAvailabilityAfterPayment(bookingData, false);
+      }
+      
+      // Release stalls
+      if (bookingType === 'stall' && bookingData.stallIds) {
+        await updateStallAvailabilityAfterPayment(bookingData, false);
       }
       
       console.log('❌ Payment failed - cancelling booking');
@@ -157,6 +167,58 @@ async function updateSeatAvailabilityAfterPayment(bookingData, isPaymentSuccessf
     
   } catch (error) {
     console.error('❌ Error updating seat availability:', error);
+  }
+}
+
+/**
+ * Update stall availability after payment (for stall bookings)
+ */
+async function updateStallAvailabilityAfterPayment(bookingData, isPaymentSuccessful) {
+  try {
+    const { stallIds, bookingId } = bookingData;
+    const availabilityRef = doc(db, 'stallAvailability', 'current');
+    
+    const availabilityDoc = await getDoc(availabilityRef);
+    if (!availabilityDoc.exists()) {
+      console.log('⚠️ Stall availability document not found');
+      return;
+    }
+    
+    const currentAvailability = availabilityDoc.data().stalls || {};
+    const updatedAvailability = { ...currentAvailability };
+    
+    if (isPaymentSuccessful) {
+      // Payment successful - confirm stall bookings
+      stallIds.forEach(stallId => {
+        if (updatedAvailability[stallId]) {
+          updatedAvailability[stallId] = {
+            ...updatedAvailability[stallId],
+            booked: true,
+            blocked: false,
+            confirmedAt: serverTimestamp()
+          };
+        }
+      });
+      console.log(`✅ Marked ${stallIds.length} stalls as booked`);
+    } else {
+      // Payment failed - release stalls
+      stallIds.forEach(stallId => {
+        if (updatedAvailability[stallId] && updatedAvailability[stallId].bookingId === bookingId) {
+          delete updatedAvailability[stallId];
+        }
+      });
+      console.log(`✅ Released ${stallIds.length} stalls after payment failure`);
+    }
+    
+    await updateDoc(availabilityRef, {
+      stalls: updatedAvailability,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log(`✅ Stall availability updated for ${stallIds.length} stalls`);
+    
+  } catch (error) {
+    console.error('❌ Error updating stall availability:', error);
   }
 }
 
