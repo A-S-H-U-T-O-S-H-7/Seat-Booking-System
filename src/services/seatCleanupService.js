@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 /**
  * Clean up expired blocked seats and failed/cancelled bookings
@@ -10,10 +10,15 @@ export async function cleanupExpiredSeats() {
   try {
     const batch = writeBatch(db);
     let cleanupCount = 0;
+    let totalSeatsScanned = 0;
+    let blockedSeatsFound = 0;
+    let expiredSeatsFound = 0;
     
     // Get all seat availability documents
     const availabilityQuery = query(collection(db, 'seatAvailability'));
     const availabilitySnap = await getDocs(availabilityQuery);
+    
+    console.log(`📊 Found ${availabilitySnap.docs.length} seat availability documents`);
     
     for (const availabilityDoc of availabilitySnap.docs) {
       const availabilityData = availabilityDoc.data();
@@ -21,19 +26,59 @@ export async function cleanupExpiredSeats() {
       let hasExpiredSeats = false;
       const updatedSeats = { ...seats };
       
+      console.log(`🔍 Checking document: ${availabilityDoc.id}`);
+      console.log(`📋 Found ${Object.keys(seats).length} seats in document`);
+      
       for (const [seatId, seatData] of Object.entries(seats)) {
-        // Check if seat is blocked and has expired
-        if (seatData.blocked && seatData.expiryTime) {
-          const expiryTime = seatData.expiryTime instanceof Date 
-            ? seatData.expiryTime 
-            : new Date(seatData.expiryTime);
+        totalSeatsScanned++;
+        
+        // Enhanced debugging
+        console.log(`🪑 Seat ${seatId}:`, {
+          blocked: seatData.blocked,
+          booked: seatData.booked,
+          hasExpiryTime: !!seatData.expiryTime,
+          expiryTime: seatData.expiryTime,
+          bookingId: seatData.bookingId
+        });
+        
+        // Check if seat is blocked
+        if (seatData.blocked) {
+          blockedSeatsFound++;
+          console.log(`🔒 Found blocked seat: ${seatId}`);
           
-          if (expiryTime < new Date()) {
-            console.log(`🗑️ Releasing expired blocked seat: ${seatId}`);
-            delete updatedSeats[seatId];
-            hasExpiredSeats = true;
-            cleanupCount++;
+          if (seatData.expiryTime) {
+            const expiryTime = seatData.expiryTime instanceof Date 
+              ? seatData.expiryTime 
+              : new Date(seatData.expiryTime);
+            
+            const now = new Date();
+            console.log(`⏰ Expiry check for ${seatId}:`, {
+              expiryTime: expiryTime.toISOString(),
+              currentTime: now.toISOString(),
+              isExpired: expiryTime < now
+            });
+            
+            if (expiryTime < now) {
+              expiredSeatsFound++;
+              console.log(`🗑️ Releasing expired blocked seat: ${seatId}`);
+              delete updatedSeats[seatId];
+              hasExpiredSeats = true;
+              cleanupCount++;
+            } else {
+              const timeLeft = Math.round((expiryTime - now) / 1000 / 60);
+              console.log(`⏳ Seat ${seatId} expires in ${timeLeft} minutes`);
+            }
+          } else {
+            console.log(`⚠️ Blocked seat ${seatId} has no expiry time`);
           }
+        }
+        
+        // Also check for seats that are neither blocked nor booked (orphaned)
+        if (!seatData.blocked && !seatData.booked && seatData.bookingId) {
+          console.log(`🔍 Found orphaned seat data: ${seatId} - removing`);
+          delete updatedSeats[seatId];
+          hasExpiredSeats = true;
+          cleanupCount++;
         }
       }
       
@@ -44,6 +89,14 @@ export async function cleanupExpiredSeats() {
         });
       }
     }
+    
+    console.log(`📈 Cleanup summary:`, {
+      documentsScanned: availabilitySnap.docs.length,
+      totalSeatsScanned,
+      blockedSeatsFound,
+      expiredSeatsFound,
+      cleanupCount
+    });
     
     // Also clean up expired pending bookings
     const expiredBookingsQuery = query(
