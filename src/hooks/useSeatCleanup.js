@@ -9,31 +9,10 @@ export function useSeatCleanup() {
   useEffect(() => {
     let cleanupInterval;
     
-    // Start cleanup immediately when component mounts
-    const startCleanup = async () => {
-      try {
-        console.log('🧹 Initializing seat cleanup service...');
-        
-        // Clean up immediately
-        await cleanupExpiredSeats();
-        
-        // Set up interval for automatic cleanup every 2 minutes
-        cleanupInterval = setInterval(async () => {
-          try {
-            await cleanupExpiredSeats();
-          } catch (error) {
-            console.error('❌ Automatic seat cleanup failed:', error);
-          }
-        }, 2 * 60 * 1000); // 2 minutes
-        
-        console.log('✅ Seat cleanup service started');
-        
-      } catch (error) {
-        console.error('❌ Failed to start seat cleanup service:', error);
-      }
-    };
-    
-    startCleanup();
+    // TEMPORARILY DISABLED automatic cleanup to prevent damaging paid seats
+    // Only manual cleanup is allowed for now
+    console.log('⚠️ Automatic seat cleanup is DISABLED for safety');
+    console.log('🔧 Only manual cleanup via button is available');
     
     // Cleanup interval on component unmount
     return () => {

@@ -237,9 +237,9 @@ const PaymentProcess = ({ customerDetails }) => {
           }
         }
 
-        // Block seats temporarily (for 15 minutes)
+        // Block seats temporarily (for 5 minutes)
         const updatedAvailability = { ...currentAvailability };
-        const expiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+        const expiryTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
 
         selectedSeats.forEach(seatId => {
           updatedAvailability[seatId] = {

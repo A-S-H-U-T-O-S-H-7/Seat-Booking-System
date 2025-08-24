@@ -42,10 +42,55 @@ export async function cleanupExpiredSeats() {
           bookingId: seatData.bookingId
         });
         
-        // Check if seat is blocked
-        if (seatData.blocked) {
+        // ONLY clean up seats that are BLOCKED and EXPIRED
+        // NEVER touch seats that are booked (payment successful)
+        if (seatData.blocked && !seatData.booked) {
           blockedSeatsFound++;
           console.log(`🔒 Found blocked seat: ${seatId}`);
+          
+          // Check if we should verify booking status before cleanup
+          if (seatData.bookingId) {
+            try {
+              console.log(`🔎 Checking booking status for seat ${seatId}, booking: ${seatData.bookingId}`);
+              const bookingRef = doc(db, 'bookings', seatData.bookingId);
+              const bookingDoc = await getDoc(bookingRef);
+              
+              if (bookingDoc.exists()) {
+                const booking = bookingDoc.data();
+                console.log(`📋 Booking ${seatData.bookingId} status: ${booking.status}`);
+                
+                // If booking is confirmed, this seat should be booked, not blocked!
+                if (booking.status === 'confirmed') {
+                  console.log(`⚠️ CRITICAL: Seat ${seatId} is blocked but booking is confirmed! Fixing...`);
+                  updatedSeats[seatId] = {
+                    ...updatedSeats[seatId],
+                    blocked: false,
+                    booked: true,
+                    confirmedAt: serverTimestamp()
+                  };
+                  hasExpiredSeats = true;
+                  continue; // Don't delete this seat!
+                }
+                
+                // If booking is still pending, check expiry
+                if (booking.status === 'pending_payment') {
+                  console.log(`🕒 Booking ${seatData.bookingId} is still pending payment`);
+                  // Continue with expiry check below
+                } else if (booking.status === 'cancelled') {
+                  console.log(`🗑️ Booking ${seatData.bookingId} is cancelled, releasing seat`);
+                  delete updatedSeats[seatId];
+                  hasExpiredSeats = true;
+                  cleanupCount++;
+                  continue;
+                }
+              } else {
+                console.log(`⚠️ Booking document ${seatData.bookingId} not found`);
+              }
+            } catch (bookingError) {
+              console.error(`❌ Error checking booking for seat ${seatId}:`, bookingError);
+              // Continue with expiry check as fallback
+            }
+          }
           
           if (seatData.expiryTime) {
             let expiryTime;
@@ -100,21 +145,20 @@ export async function cleanupExpiredSeats() {
             }
           } else {
             console.log(`⚠️ Blocked seat ${seatId} has no expiry time`);
-            // Clean up blocked seats without expiry time (they shouldn't exist)
-            console.log(`🧹 Removing blocked seat without expiry: ${seatId}`);
-            delete updatedSeats[seatId];
-            hasExpiredSeats = true;
-            cleanupCount++;
+            // Only clean up blocked seats without expiry if booking is definitely failed
+            if (seatData.bookingId) {
+              console.log(`⏳ Seat has booking ID, keeping for safety: ${seatId}`);
+            } else {
+              console.log(`🧹 Removing blocked seat without expiry or booking: ${seatId}`);
+              delete updatedSeats[seatId];
+              hasExpiredSeats = true;
+              cleanupCount++;
+            }
           }
         }
         
-        // Also check for seats that are neither blocked nor booked (orphaned)
-        if (!seatData.blocked && !seatData.booked && seatData.bookingId) {
-          console.log(`🔍 Found orphaned seat data: ${seatId} - removing`);
-          delete updatedSeats[seatId];
-          hasExpiredSeats = true;
-          cleanupCount++;
-        }
+        // REMOVED: The dangerous orphaned seat cleanup that was deleting paid seats
+        // Never automatically delete seats that might be in payment processing
       }
       
       if (hasExpiredSeats) {
