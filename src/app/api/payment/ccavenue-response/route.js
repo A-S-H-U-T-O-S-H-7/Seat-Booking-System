@@ -78,9 +78,18 @@ export async function POST(request) {
       try {
         // Import and call the payment service
         const paymentService = await import('@/services/paymentService');
-        const bookingType = paymentService.getBookingTypeFromOrderId(
+        
+        // Debug: Log all available parameters
+        console.log('🔍 Payment info debug:', {
+          order_id: paymentInfo.order_id,
+          mer_param1: paymentInfo.mer_param1,
+          merchant_param1: paymentInfo.merchant_param1,
+          allParams: paymentInfo
+        });
+        
+        const bookingType = await paymentService.getBookingTypeFromOrderId(
           paymentInfo.order_id, 
-          paymentInfo.mer_param1
+          paymentInfo.mer_param1 || paymentInfo.merchant_param1
         );
         
         console.log('📋 Booking type detected:', bookingType);

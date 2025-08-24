@@ -240,22 +240,86 @@ function formatDateKey(date) {
 /**
  * Get booking type from order ID or purpose
  */
-export function getBookingTypeFromOrderId(orderId, purpose) {
+export async function getBookingTypeFromOrderId(orderId, purpose) {
+  console.log('🔍 Detecting booking type for:', { orderId, purpose });
+  
   if (purpose) {
-    if (purpose.includes('donation')) return 'donation';
-    if (purpose.includes('havan')) return 'havan';
-    if (purpose.includes('show')) return 'show';
-    if (purpose.includes('stall')) return 'stall';
+    if (purpose.includes('donation')) {
+      console.log('✅ Detected donation from purpose');
+      return 'donation';
+    }
+    if (purpose.includes('havan')) {
+      console.log('✅ Detected havan from purpose');
+      return 'havan';
+    }
+    if (purpose.includes('show')) {
+      console.log('✅ Detected show from purpose');
+      return 'show';
+    }
+    if (purpose.includes('stall')) {
+      console.log('✅ Detected stall from purpose');
+      return 'stall';
+    }
   }
   
   // Fallback to order ID pattern  
-  if (orderId.startsWith('DN')) return 'donation';
-  if (orderId.startsWith('BK')) return 'havan';
-  if (orderId.startsWith('SHOW-') || orderId.includes('show')) return 'show';
-  if (orderId.startsWith('STALL-') || orderId.includes('stall')) return 'stall';
+  if (orderId.startsWith('DN')) {
+    console.log('✅ Detected donation from ID prefix');
+    return 'donation';
+  }
+  if (orderId.startsWith('BK')) {
+    console.log('✅ Detected havan from ID prefix');
+    return 'havan';
+  }
+  if (orderId.startsWith('SHOW-') || orderId.includes('show')) {
+    console.log('✅ Detected show from ID pattern');
+    return 'show';
+  }
+  if (orderId.startsWith('STALL-') || orderId.includes('stall')) {
+    console.log('✅ Detected stall from ID pattern');
+    return 'stall';
+  }
   
-  // For show bookings, order IDs are auto-generated Firebase IDs
-  // So we need to check the purpose parameter or booking content
+  // For Firebase auto-generated IDs, try to check the actual collections
+  console.log('🔍 Checking Firebase collections for ID:', orderId);
   
+  try {
+    // Check show bookings first (most likely for Firebase IDs)
+    const showBookingRef = doc(db, 'showBookings', orderId);
+    const showDoc = await getDoc(showBookingRef);
+    if (showDoc.exists()) {
+      console.log('✅ Found in showBookings collection');
+      return 'show';
+    }
+    
+    // Check havan bookings
+    const havanBookingRef = doc(db, 'bookings', orderId);
+    const havanDoc = await getDoc(havanBookingRef);
+    if (havanDoc.exists()) {
+      console.log('✅ Found in bookings collection');
+      return 'havan';
+    }
+    
+    // Check stall bookings
+    const stallBookingRef = doc(db, 'stallBookings', orderId);
+    const stallDoc = await getDoc(stallBookingRef);
+    if (stallDoc.exists()) {
+      console.log('✅ Found in stallBookings collection');
+      return 'stall';
+    }
+    
+    // Check donations
+    const donationRef = doc(db, 'donations', orderId);
+    const donationDoc = await getDoc(donationRef);
+    if (donationDoc.exists()) {
+      console.log('✅ Found in donations collection');
+      return 'donation';
+    }
+    
+  } catch (error) {
+    console.error('❌ Error checking Firebase collections:', error);
+  }
+  
+  console.log('⚠️ Defaulting to havan booking type');
   return 'havan'; // Default
 }
