@@ -629,6 +629,10 @@ export const ShowSeatBookingProvider = ({ children }) => {
       
       // Create booking document
       const bookingRef = doc(collection(db, 'showBookings'));
+      const expiryTime = paymentDetails.method === 'pending_payment' 
+        ? new Date(Date.now() + 5 * 60 * 1000) 
+        : null;
+      
       const bookingData = {
         id: bookingRef.id,
         userId: user.uid,
@@ -652,6 +656,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
         paymentDetails,
         status: paymentDetails.method === 'pending_payment' ? 'pending' : 'confirmed',
         createdAt: serverTimestamp(),
+        expiryTime: expiryTime, // Add expiry time for cleanup service
         eventType: 'show'
       };
 
@@ -665,13 +670,19 @@ export const ShowSeatBookingProvider = ({ children }) => {
       
       const updatedSeats = { ...currentSeats };
       state.selectedSeats.forEach(seatId => {
+        // Set expiry time to 5 minutes from now for blocked seats
+        const expiryTime = paymentDetails.method === 'pending_payment' 
+          ? new Date(Date.now() + 5 * 60 * 1000) 
+          : null;
+        
         updatedSeats[seatId] = {
           booked: paymentDetails.method !== 'pending_payment', // Only mark as booked if payment is confirmed
           blocked: paymentDetails.method === 'pending_payment', // Block seats during pending payment
           bookingId: bookingRef.id,
           userId: user.uid,
           bookedAt: paymentDetails.method !== 'pending_payment' ? serverTimestamp() : null,
-          blockedAt: paymentDetails.method === 'pending_payment' ? serverTimestamp() : null
+          blockedAt: paymentDetails.method === 'pending_payment' ? serverTimestamp() : null,
+          expiryTime: expiryTime // Add expiry time for cleanup service
         };
       });
       

@@ -76,9 +76,11 @@ export async function POST(request) {
       console.log('💾 Updating booking status after cancellation...');
       
       try {
-        // Import and call the payment service
+        // Import cleanup services based on booking type
         const paymentService = await import('@/services/paymentService');
         const seatCleanupService = await import('@/services/seatCleanupService');
+        const stallCleanupService = await import('@/services/stallCleanupService');
+        const showSeatCleanupService = await import('@/services/showSeatCleanupService');
         
         // Debug: Log all available parameters
         console.log('🔍 Cancellation info debug:', {
@@ -94,11 +96,30 @@ export async function POST(request) {
         
         console.log('📋 Booking type detected:', bookingType);
         
-        // Cancel the booking and release seats immediately
-        const cancelResult = await seatCleanupService.cancelPendingBooking(
-          paymentInfo.order_id,
-          'Payment cancelled by user'
-        );
+        // Cancel the booking and release seats immediately based on booking type
+        let cancelResult;
+        if (bookingType === 'havan') {
+          cancelResult = await seatCleanupService.cancelPendingBooking(
+            paymentInfo.order_id,
+            'Payment cancelled by user'
+          );
+        } else if (bookingType === 'show') {
+          cancelResult = await showSeatCleanupService.cancelPendingShowBooking(
+            paymentInfo.order_id,
+            'Payment cancelled by user'
+          );
+        } else if (bookingType === 'stall') {
+          cancelResult = await stallCleanupService.cancelPendingStallBooking(
+            paymentInfo.order_id,
+            'Payment cancelled by user'
+          );
+        } else {
+          // Fallback to havan
+          cancelResult = await seatCleanupService.cancelPendingBooking(
+            paymentInfo.order_id,
+            'Payment cancelled by user'
+          );
+        }
         
         console.log('🔄 Booking cancellation result:', cancelResult);
         

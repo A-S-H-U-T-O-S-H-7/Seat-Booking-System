@@ -4,9 +4,13 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import ShowBookingFlow from '@/components/show/ShowBookingFlow';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useShowSeatCleanup } from '@/hooks/useShowSeatCleanup';
 
 export default function ShowBookingPage() {
   const router = useRouter();
+  
+  // Initialize show seat cleanup service to run every 2 minutes
+  useShowSeatCleanup();
   
     const handleBack = () => {
       router.back();
