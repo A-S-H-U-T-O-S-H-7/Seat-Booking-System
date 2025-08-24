@@ -70,7 +70,7 @@ const DonationBanner = () => {
             </div>
           </div>
 
-          <Link href="/donation">
+          <Link href="/donate">
             <button className="inline-flex cursor-pointer items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
               <Heart className="w-4 h-4 fill-current" />
               Make a Donation
