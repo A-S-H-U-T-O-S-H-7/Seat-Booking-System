@@ -74,10 +74,19 @@ function PaymentSuccessContent() {
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) bookingData = bookingSnap.data();
           } else {
-            detectedType = "havan";
-            const bookingRef = doc(db, "bookings", orderId);
-            const bookingSnap = await getDoc(bookingRef);
-            if (bookingSnap.exists()) bookingData = bookingSnap.data();
+            // Try show booking first (Firebase auto-generated IDs)
+            const showBookingRef = doc(db, "showBookings", orderId);
+            const showBookingSnap = await getDoc(showBookingRef);
+            if (showBookingSnap.exists()) {
+              detectedType = "show";
+              bookingData = showBookingSnap.data();
+            } else {
+              // Default to havan booking
+              detectedType = "havan";
+              const bookingRef = doc(db, "bookings", orderId);
+              const bookingSnap = await getDoc(bookingRef);
+              if (bookingSnap.exists()) bookingData = bookingSnap.data();
+            }
           }
 
           setBookingType(detectedType);
@@ -201,21 +210,18 @@ function PaymentSuccessContent() {
                         <div>
                           <p className="font-medium text-gray-700 mb-1">Selected Seats:</p>
                           <div className="flex flex-wrap gap-2">
-                            {(bookingDetails?.showDetails?.selectedSeats && bookingDetails.showDetails.selectedSeats.length > 0) ? (
-                              bookingDetails.showDetails.selectedSeats.map((seat, idx) => (
-                                <span key={idx} className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                  {seat}
-                                </span>
-                              ))
-                            ) : bookingDetails?.seats && bookingDetails.seats.length > 0 ? (
-                              bookingDetails.seats.map((seat, idx) => (
-                                <span key={idx} className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                  {typeof seat === 'object' ? seat.seatId : seat}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="text-gray-500">No seats selected</span>
-                            )}
+                            {(() => {
+                              const selectedSeats = bookingDetails?.showDetails?.selectedSeats || [];
+                              if (selectedSeats.length > 0) {
+                                return selectedSeats.map((seat, idx) => (
+                                  <span key={idx} className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">
+                                    {seat}
+                                  </span>
+                                ));
+                              } else {
+                                return <span className="text-gray-500">No seats selected</span>;
+                              }
+                            })()}
                           </div>
                         </div>
                         
@@ -223,7 +229,7 @@ function PaymentSuccessContent() {
                           <div>
                             <p className="font-medium text-gray-700">Show Name:</p>
                             <p className="text-gray-900 font-semibold">
-                              {bookingDetails?.showDetails?.name || 'Cultural Event'}
+                              Cultural Show
                             </p>
                           </div>
                           
@@ -262,7 +268,7 @@ function PaymentSuccessContent() {
                           <div>
                             <p className="font-medium text-gray-700">Show Time:</p>
                             <p className="text-gray-900">
-                              {bookingDetails?.showDetails?.time || 'Time not available'}
+                              5:00 PM - 10:00 PM
                             </p>
                           </div>
                           
@@ -271,7 +277,6 @@ function PaymentSuccessContent() {
                             <p className="text-gray-900 font-semibold">
                               {(() => {
                                 const seatCount = bookingDetails?.showDetails?.selectedSeats?.length || 
-                                                  bookingDetails?.seats?.length || 
                                                   bookingDetails?.showDetails?.totalCapacity || 0;
                                 return `${seatCount} seat${seatCount !== 1 ? 's' : ''}`;
                               })()}

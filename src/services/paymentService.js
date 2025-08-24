@@ -13,7 +13,8 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
   console.log('🔄 Updating booking status after payment:', {
     orderId,
     paymentStatus: paymentData.order_status,
-    bookingType
+    bookingType,
+    purpose: paymentData.mer_param1 || paymentData.merchant_param1
   });
 
   try {
@@ -35,13 +36,13 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
     const updateData = {
       updatedAt: serverTimestamp(),
       payment: {
-        ...bookingData.payment,
+        ...(bookingData.payment || {}),
         gateway: 'ccavenue',
         status: paymentData.order_status,
         transactionId: paymentData.tracking_id || paymentData.order_id,
         bankRefNo: paymentData.bank_ref_no,
         paymentMode: paymentData.payment_mode,
-        amount: parseFloat(paymentData.amount) || bookingData.totalAmount,
+        amount: parseFloat(paymentData.amount) || bookingData.showDetails?.totalPrice || bookingData.totalAmount,
         currency: paymentData.currency || 'INR',
         processedAt: serverTimestamp(),
         ccavenueData: {

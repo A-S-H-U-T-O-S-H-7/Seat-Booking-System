@@ -53,7 +53,7 @@ const ShowPaymentProcess = () => {
         // Prepare payment data for CCAvenue
         const paymentData = {
           order_id: bookingId,
-          purpose: 'show_booking', // Required to identify payment type
+          purpose: 'show', // Required to identify payment type
           amount: totalPrice.toString(),
           name: userDetails.name,
           email: userDetails.email,
