@@ -38,6 +38,7 @@ export async function cleanupExpiredSeats() {
           booked: seatData.booked,
           hasExpiryTime: !!seatData.expiryTime,
           expiryTime: seatData.expiryTime,
+          expiryTimeType: typeof seatData.expiryTime,
           bookingId: seatData.bookingId
         });
         
@@ -47,29 +48,63 @@ export async function cleanupExpiredSeats() {
           console.log(`🔒 Found blocked seat: ${seatId}`);
           
           if (seatData.expiryTime) {
-            const expiryTime = seatData.expiryTime instanceof Date 
-              ? seatData.expiryTime 
-              : new Date(seatData.expiryTime);
+            let expiryTime;
             
-            const now = new Date();
-            console.log(`⏰ Expiry check for ${seatId}:`, {
-              expiryTime: expiryTime.toISOString(),
-              currentTime: now.toISOString(),
-              isExpired: expiryTime < now
-            });
-            
-            if (expiryTime < now) {
-              expiredSeatsFound++;
-              console.log(`🗑️ Releasing expired blocked seat: ${seatId}`);
-              delete updatedSeats[seatId];
-              hasExpiredSeats = true;
-              cleanupCount++;
-            } else {
-              const timeLeft = Math.round((expiryTime - now) / 1000 / 60);
-              console.log(`⏳ Seat ${seatId} expires in ${timeLeft} minutes`);
+            try {
+              // Handle different possible formats
+              if (seatData.expiryTime instanceof Date) {
+                expiryTime = seatData.expiryTime;
+              } else if (seatData.expiryTime?.toDate) {
+                // Firestore Timestamp
+                expiryTime = seatData.expiryTime.toDate();
+              } else if (seatData.expiryTime?.seconds) {
+                // Firestore Timestamp object
+                expiryTime = new Date(seatData.expiryTime.seconds * 1000);
+              } else if (typeof seatData.expiryTime === 'string' || typeof seatData.expiryTime === 'number') {
+                expiryTime = new Date(seatData.expiryTime);
+              } else {
+                throw new Error(`Unknown expiryTime format: ${typeof seatData.expiryTime}`);
+              }
+              
+              // Validate the parsed date
+              if (isNaN(expiryTime.getTime())) {
+                throw new Error(`Invalid date value: ${seatData.expiryTime}`);
+              }
+              
+              const now = new Date();
+              console.log(`⏰ Expiry check for ${seatId}:`, {
+                expiryTime: expiryTime.toISOString(),
+                currentTime: now.toISOString(),
+                isExpired: expiryTime < now,
+                rawExpiryTime: seatData.expiryTime
+              });
+              
+              if (expiryTime < now) {
+                expiredSeatsFound++;
+                console.log(`🗑️ Releasing expired blocked seat: ${seatId}`);
+                delete updatedSeats[seatId];
+                hasExpiredSeats = true;
+                cleanupCount++;
+              } else {
+                const timeLeft = Math.round((expiryTime - now) / 1000 / 60);
+                console.log(`⏳ Seat ${seatId} expires in ${timeLeft} minutes`);
+              }
+              
+            } catch (dateError) {
+              console.error(`❌ Error parsing expiryTime for seat ${seatId}:`, {
+                error: dateError.message,
+                expiryTime: seatData.expiryTime,
+                type: typeof seatData.expiryTime
+              });
+              // Skip this seat's expiry check but continue with others
             }
           } else {
             console.log(`⚠️ Blocked seat ${seatId} has no expiry time`);
+            // Clean up blocked seats without expiry time (they shouldn't exist)
+            console.log(`🧹 Removing blocked seat without expiry: ${seatId}`);
+            delete updatedSeats[seatId];
+            hasExpiredSeats = true;
+            cleanupCount++;
           }
         }
         
