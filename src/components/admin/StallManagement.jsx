@@ -212,6 +212,7 @@ export default function StallManagement() {
           stalls[stallId] = {
             ...(stalls[stallId] || {}),
             blocked: true,
+            blockedReason: 'Blocked by admin',
             blockedAt: new Date(),
             booked: false,
             userId: null,
@@ -222,6 +223,7 @@ export default function StallManagement() {
           stalls[stallId] = {
             ...(stalls[stallId] || {}),
             blocked: false,
+            blockedReason: null,
             blockedAt: null,
             booked: false,
             userId: null,

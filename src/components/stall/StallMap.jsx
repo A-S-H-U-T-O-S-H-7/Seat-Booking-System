@@ -5,7 +5,6 @@ import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { useStallBooking } from '@/context/StallBookingContext';
-import { useStallCleanup } from '@/hooks/useStallCleanup';
 
 const StallMap = () => {
   const [stallAvailability, setStallAvailability] = useState({});
@@ -26,8 +25,6 @@ const StallMap = () => {
     getNextMilestone
   } = useStallBooking();
   
-  // Initialize stall cleanup for expired blocked stalls
-  const { manualCleanup } = useStallCleanup();
   
   // Generate stalls based on actual settings from admin
   const generateStalls = () => {

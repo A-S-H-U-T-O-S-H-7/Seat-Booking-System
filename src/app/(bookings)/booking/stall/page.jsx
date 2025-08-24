@@ -5,9 +5,13 @@ import StallBookingFlow from '@/components/stall/StallBookingFlow';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+import { useStallCleanup } from '@/hooks/useStallCleanup';
 
 export default function StallBookingPage() {
   const router = useRouter();
+  
+  // Initialize stall cleanup service - runs continuously for the entire stall booking session
+  const { manualCleanup } = useStallCleanup();
 
   const handleBack = () => {
     router.back();
