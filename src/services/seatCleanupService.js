@@ -42,11 +42,18 @@ export async function cleanupExpiredSeats() {
           bookingId: seatData.bookingId
         });
         
-        // ONLY clean up seats that are BLOCKED and EXPIRED
+        // ONLY clean up seats that are BLOCKED, EXPIRED, and NOT admin-blocked
         // NEVER touch seats that are booked (payment successful)
+        // NEVER touch admin-blocked seats (they don't have expiryTime and have blockedReason)
         if (seatData.blocked && !seatData.booked) {
           blockedSeatsFound++;
           console.log(`🔒 Found blocked seat: ${seatId}`);
+          
+          // Check if this is an admin-blocked seat - NEVER clean these up!
+          if (seatData.blockedReason === 'Blocked by admin') {
+            console.log(`🚫 Seat ${seatId} is admin-blocked - NEVER cleanup`);
+            continue; // Skip this seat entirely
+          }
           
           // Check if we should verify booking status before cleanup
           if (seatData.bookingId) {
@@ -92,6 +99,7 @@ export async function cleanupExpiredSeats() {
             }
           }
           
+          // Only process seats with expiry time (payment-blocked seats)
           if (seatData.expiryTime) {
             let expiryTime;
             
@@ -145,14 +153,15 @@ export async function cleanupExpiredSeats() {
             }
           } else {
             console.log(`⚠️ Blocked seat ${seatId} has no expiry time`);
-            // Only clean up blocked seats without expiry if booking is definitely failed
-            if (seatData.bookingId) {
-              console.log(`⏳ Seat has booking ID, keeping for safety: ${seatId}`);
-            } else {
-              console.log(`🧹 Removing blocked seat without expiry or booking: ${seatId}`);
+            // For blocked seats without expiry time that are NOT admin-blocked,
+            // only clean up if they have no booking ID (orphaned temporary blocks)
+            if (!seatData.bookingId && seatData.blockedReason !== 'Blocked by admin') {
+              console.log(`🧹 Removing orphaned blocked seat without expiry or booking: ${seatId}`);
               delete updatedSeats[seatId];
               hasExpiredSeats = true;
               cleanupCount++;
+            } else {
+              console.log(`⏳ Seat has booking ID or is admin-blocked, keeping for safety: ${seatId}`);
             }
           }
         }
