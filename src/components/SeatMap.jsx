@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { useBooking } from '@/context/BookingContext';
 import { formatDateKey } from '@/utils/dateUtils';
 import { Info, ChevronDown } from 'lucide-react';
+import { useSeatCleanup } from '@/hooks/useSeatCleanup';
 
 const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = [] }) => {
   const [seatAvailability, setSeatAvailability] = useState({});
@@ -23,6 +24,9 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
   
   // Get pricing information from booking context
   const { priceSettings, getTotalAmount, getCurrentDiscountInfo, getNextMilestone } = useBooking();
+  
+  // Initialize seat cleanup for expired blocked seats
+  const { manualCleanup } = useSeatCleanup();
   
   // Listen to layout settings changes in real-time
   useEffect(() => {

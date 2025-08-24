@@ -57,7 +57,7 @@ const PaymentProcess = ({ customerDetails }) => {
       // Step 2: Prepare payment data for CCAvenue
       const paymentData = {
         order_id: bookingId,
-        purpose: 'havan_booking', // Required to identify payment type
+        purpose: 'havan', // Required to identify payment type
         amount: getTotalAmount(),
         name: customerDetails.name,
         email: customerDetails.email,

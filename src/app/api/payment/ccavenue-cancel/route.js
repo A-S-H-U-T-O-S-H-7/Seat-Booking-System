@@ -69,15 +69,49 @@ export async function POST(request) {
       timestamp: new Date().toISOString()
     });
 
-    // If we have valid data, redirect to failure page
+    // If we have valid data, update Firebase and redirect
     if (data.status && data.data) {
       const paymentInfo = data.data;
       
-      // Redirect to payment success page with failure status
+      console.log('💾 Updating booking status after cancellation...');
+      
+      try {
+        // Import and call the payment service
+        const paymentService = await import('@/services/paymentService');
+        const seatCleanupService = await import('@/services/seatCleanupService');
+        
+        // Debug: Log all available parameters
+        console.log('🔍 Cancellation info debug:', {
+          order_id: paymentInfo.order_id,
+          order_status: paymentInfo.order_status,
+          allParams: paymentInfo
+        });
+        
+        const bookingType = await paymentService.getBookingTypeFromOrderId(
+          paymentInfo.order_id, 
+          paymentInfo.mer_param1 || paymentInfo.merchant_param1
+        );
+        
+        console.log('📋 Booking type detected:', bookingType);
+        
+        // Cancel the booking and release seats immediately
+        const cancelResult = await seatCleanupService.cancelPendingBooking(
+          paymentInfo.order_id,
+          'Payment cancelled by user'
+        );
+        
+        console.log('🔄 Booking cancellation result:', cancelResult);
+        
+      } catch (error) {
+        console.error('❌ Error updating Firebase after cancellation:', error);
+        // Continue with redirect even if Firebase update fails
+      }
+      
+      // Redirect to payment success page with cancelled status
       const redirectUrl = new URL('/payment/success', 'https://donate.svsamiti.com');
       redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
       redirectUrl.searchParams.set('status', 'cancelled');
-      redirectUrl.searchParams.set('message', 'Payment was cancelled by user');
+      redirectUrl.searchParams.set('message', 'Payment was cancelled by user. Seats have been released.');
       
       // Return redirect response
       return NextResponse.json({
