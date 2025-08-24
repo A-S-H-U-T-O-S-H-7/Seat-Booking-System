@@ -94,7 +94,7 @@ function HeroSection({ user }) {
               <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 lg:p-8 shadow-2xl border border-orange-200/30 hover:shadow-3xl transition-all duration-500">
                 <div className="text-center lg:text-left space-y-3">
                   <p className="text-lg sm:text-xl lg:text-xl text-gray-800 leading-relaxed font-bold">
-                                      <Link href="/"> <span className='font-black underline animate-pulse text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text'> Donate Now!  </span></Link>
+                                      <Link href="/donation"> <span className='font-black underline animate-pulse text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text'> Donate Now!  </span></Link>
                     Be a <span className="font-black text-transparent bg-gradient-to-r from-orange-600 via-red-600 to-yellow-600 bg-clip-text">SVS member</span> and join us for a divine 5-day ceremony.
                   </p>
                   

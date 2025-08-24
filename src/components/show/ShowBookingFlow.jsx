@@ -6,6 +6,7 @@ import ShowDateSelection from "./ShowDateSelection";
 import ShowSeatSelection from "./ShowSeatSelection";
 import ShowUserDetails from "./ShowUserDetails";
 import ShowPaymentProcess from "./ShowPaymentProcess";
+import DonateBar from "../donation/DonationBar";
 
 const ShowBookingFlow = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -116,63 +117,56 @@ const ShowBookingFlow = () => {
       <div className="container mx-auto px-2 py-2 md:py-8">
         <div className={`${getContainerMaxWidth()} pb-5 md:pb-10 mx-auto`}>
 
-        <div className="text-center mb-8">
+       <div className="text-center border border-rose-400 rounded-2xl mb-8">
   <div className="relative bg-gradient-to-br from-pink-200 via-white to-fuchsia-200 backdrop-blur-sm rounded-2xl p-3 md:p-8 shadow-2xl border border-white/60 overflow-hidden">
     {/* Background Decoration */}
     <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
     <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
     <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
     
-    {/* Corner Mandala Decorations - Larger and properly positioned */}
+    {/* Odissi Image on Left Side */}
+    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 hidden md:block z-10">
+      <img 
+        src="/odishi2.png" 
+        alt="Odissi Dance" 
+        className="w-20 h-32 md:w-74 md:h-79 object-contain "
+      />
+    </div>
+    
+    {/* Corner Mandala Decorations - Bigger and more visible */}
     {/* Top Left Corner */}
-    <div className="absolute top-0 left-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+    <div className="absolute -top-11 -left-11 md:-top-16 md:-left-16 w-26 h-26 md:w-42 md:h-42 z-0">
       <img 
         src="/showmandala.png" 
         alt="" 
-        className="w-40 h-40 md:w-56 md:h-56 object-contain"
-        style={{ 
-          transform: 'translate(-50%, -50%)',
-          transformOrigin: 'top left'
-        }}
+        className="w-full h-full object-contain opacity-70 filter contrast-125 brightness-110"
       />
     </div>
     
     {/* Top Right Corner */}
-    <div className="absolute top-0 right-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+    <div className="absolute -top-11 -right-11 md:-top-16 md:-right-16 w-26 h-26 md:w-42 md:h-42 z-0">
       <img 
         src="/showmandala.png" 
         alt="" 
-        className="w-40 h-40 md:w-56 md:h-56 object-contain"
-        style={{ 
-          transform: 'translate(50%, -50%)',
-          transformOrigin: 'top right'
-        }}
+        className="w-full h-full object-contain opacity-70 filter contrast-125 brightness-110 transform rotate-90"
       />
     </div>
     
     {/* Bottom Left Corner */}
-    <div className="absolute bottom-0 left-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+    <div className="absolute -bottom-11 -left-11 md:-bottom-16 md:-left-16 w-26 h-26 md:w-42 md:h-42 z-0">
       <img 
         src="/showmandala.png" 
         alt="" 
-        className="w-40 h-40 md:w-56 md:h-56 object-contain"
-        style={{ 
-          transform: 'translate(-50%, 50%)',
-          transformOrigin: 'bottom left'
-        }}
+        className="w-full h-full object-contain opacity-70 filter contrast-125 brightness-110 transform rotate-270"
       />
     </div>
     
     {/* Bottom Right Corner */}
-    <div className="absolute bottom-0 right-0 w-20 h-20 md:w-28 md:h-28 overflow-hidden opacity-50">
+    <div className="absolute -bottom-11 -right-11 md:-bottom-16 md:-right-16 w-26 h-26 md:w-42 md:h-42 z-0">
       <img 
         src="/showmandala.png" 
         alt="" 
-        className="w-40 h-40 md:w-56 md:h-56 object-contain"
-        style={{ 
-          transform: 'translate(50%, 50%)',
-          transformOrigin: 'bottom right'
-        }}
+        className="w-full h-full object-contain opacity-70 filter contrast-125 brightness-110 transform rotate-180"
       />
     </div>
     
@@ -182,6 +176,12 @@ const ShowBookingFlow = () => {
         <img src="/show.png" alt="Show" className="w-12 h-12 object-contain" />
       </div>
       
+       {/* DonateBar - Break out of padding constraint */}
+              <div className=' mb-4'>
+                <div className='max-w-lg md:max-w-md mx-auto px-2'>
+                  <DonateBar/>
+                </div>
+              </div>
       {/* Title */}
       <h1 className="text-3xl md:text-5xl font-bold mb-3">
         <span className="bg-gradient-to-r from-rose-900 via-pink-600 to-fuchsia-600 bg-clip-text text-transparent">

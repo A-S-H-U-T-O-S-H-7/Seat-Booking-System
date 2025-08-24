@@ -219,6 +219,8 @@ function getCollectionName(bookingType) {
       return 'showBookings';
     case 'stall':
       return 'stallBookings';
+    case 'donation':
+      return 'donations';
     default:
       return 'bookings';
   }
@@ -239,12 +241,14 @@ function formatDateKey(date) {
  */
 export function getBookingTypeFromOrderId(orderId, purpose) {
   if (purpose) {
+    if (purpose.includes('donation')) return 'donation';
     if (purpose.includes('havan')) return 'havan';
     if (purpose.includes('show')) return 'show';
     if (purpose.includes('stall')) return 'stall';
   }
   
   // Fallback to order ID pattern  
+  if (orderId.startsWith('DN')) return 'donation';
   if (orderId.startsWith('BK')) return 'havan';
   if (orderId.startsWith('SHOW-') || orderId.includes('show')) return 'show';
   if (orderId.startsWith('STALL-') || orderId.includes('stall')) return 'stall';

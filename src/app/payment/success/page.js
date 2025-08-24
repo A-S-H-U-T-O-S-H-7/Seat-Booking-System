@@ -68,6 +68,11 @@ function PaymentSuccessContent() {
             const bookingRef = doc(db, "stallBookings", orderId);
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) bookingData = bookingSnap.data();
+          } else if (orderId.startsWith("DN")) {
+            detectedType = "donation";
+            const bookingRef = doc(db, "donations", orderId);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) bookingData = bookingSnap.data();
           } else {
             detectedType = "havan";
             const bookingRef = doc(db, "bookings", orderId);
@@ -324,6 +329,60 @@ function PaymentSuccessContent() {
                               {bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || 0} stall{(bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || 0) !== 1 ? 's' : ''}
                             </p>
                           </div>
+                        </div>
+                      </>
+                  );
+                  }
+                  
+                  // Donation details
+                  if (bookingType === 'donation') {
+                    return (
+                      <>
+                        <div>
+                          <p className="font-medium text-gray-700 mb-1">Donation Type:</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="inline-block bg-rose-100 text-rose-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              {bookingDetails?.donorDetails?.donorType === 'indian' ? 'Indian Donor' : 'NRI/Foreign Donor'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Donor Name:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.donorDetails?.name || 'N/A'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium text-gray-700">Email:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.donorDetails?.email || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Mobile:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.donorDetails?.mobile || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Tax Exemption:</p>
+                            <p className="text-gray-900 font-semibold text-green-700">
+                              ✅ Section 80G Eligible
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-gray-700 mb-1">Address:</p>
+                          <p className="text-gray-900 text-sm">
+                            {bookingDetails?.donorDetails?.address}, {bookingDetails?.donorDetails?.city}, {bookingDetails?.donorDetails?.state} - {bookingDetails?.donorDetails?.pincode}
+                          </p>
                         </div>
                       </>
                     );

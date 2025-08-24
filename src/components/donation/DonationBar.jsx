@@ -48,7 +48,7 @@ const DonateBar = ({
             {/* Emoji separated from gradient text */}
             <span className="text-xl animate-pulse">😊</span>
           </div>
-          <p className="text-sm md:text-base font-medium text-slate-600 leading-relaxed mb-1">
+          <p className="text-xs md:text-base font-medium text-slate-600 leading-relaxed mb-1">
             {subtitle}
           </p>
         </div>

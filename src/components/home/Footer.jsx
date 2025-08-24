@@ -9,11 +9,10 @@ function Footer() {
     <footer className="w-full">
       {/* Main Footer Section */}
       <div className="bg-gradient-to-b from-slate-900 to-blue-950 text-gray-300">
-      
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 md:gap-8 mb-2">
           
-          {/* Company Logo and About */}
+          {/* Company Logo and About - Takes 2 columns on large screens */}
           <div className="lg:col-span-2 space-y-4">
             {/* Logo */}
             <div className="flex items-center gap-3 mb-4">
@@ -30,7 +29,6 @@ function Footer() {
                 />
                 <span className="text-white font-bold text-lg hidden">SVS</span>
               </div>
-              
             </div>
             
             {/* About Company */}
@@ -133,6 +131,29 @@ function Footer() {
               </div>
             </div>
           </div>
+
+          {/* Important Links - New Column */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-semibold text-white relative pb-2 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:w-16 after:bg-teal-500 mb-4">Important Links</h4>
+            <div className="space-y-3">
+              <Link href="/faqs" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
+                FAQs
+              </Link>
+              <Link href="/privacy-policy" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
+                Privacy Policy
+              </Link>
+              <Link href="/terms-and-conditions" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
+                Terms & Conditions
+              </Link>
+              <Link href="/notice" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
+                Notice
+              </Link>
+              <Link href="/refund-cancel-policy" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
+                Refund & Cancellation Policy
+              </Link>
+            </div>
+          </div>
+
           </div>
         </div>
       </div>
@@ -140,22 +161,9 @@ function Footer() {
       {/* Bottom Footer Section */}
       <div className="bg-slate-950 text-gray-400">
         <div className="container mx-auto">
-          {/* Footer Links */}
-            <div className="flex flex-wrap justify-center md:justify-between gap-4 py-4 px-4 border-b border-slate-800 text-sm">
-            <Link href="/privacy-policy" className="hover:text-teal-300 transition-colors duration-300">
-              Privacy Policy
-            </Link>
-            <Link href="/faqs" className="hover:text-teal-300 transition-colors duration-300">
-              FAQs
-            </Link>
-            <Link href="/terms-and-conditions" className="hover:text-teal-300 transition-colors duration-300">
-              Terms and Conditions
-            </Link>
-          </div>
-
           {/* Copyright */}
-          <div className="text-center py-4 text-xs space-y-1">
-            <p>
+          <div className="text-center py-6 text-xs space-y-2">
+            <p className="text-sm">
               &copy; {currentYear} Samudayik Vikas Samiti. All Rights Reserved.
             </p>
             <p className="text-gray-500">
@@ -164,6 +172,7 @@ function Footer() {
                 info@svsamiti.com
               </a>
             </p>
+            
           </div>
         </div>
       </div>

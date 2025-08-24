@@ -3,7 +3,6 @@ import { useAuth } from '@/context/AuthContext';
 
 import HeroSection from '@/components/home/HeroSection';
 import BookingSection from '@/components/home/BookingSection';
-import Footer from '@/components/home/Footer';
 import DonationBanner from '@/components/home/DonationBanner';
 
 function HomePage() {

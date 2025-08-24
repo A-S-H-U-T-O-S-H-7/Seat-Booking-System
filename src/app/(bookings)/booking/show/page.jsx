@@ -20,16 +20,11 @@ export default function ShowBookingPage() {
             <div className="flex justify-between items-center">
               <Link href="/" className="flex items-center gap-3">
                 <img 
-                  src="/show.png" 
-                  alt="Havan Logo" 
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-md"
+                  src="/header-logo.png"  
+                  alt="Header Logo" 
+                  className=" object-cover shadow-md"
                 />
-                <div>
-                  <h1 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-fuchsia-600 via-rose-600 to-pink-700 bg-clip-text text-transparent">
-                    Reserve Your Show Place
-                  </h1>
-                  <p className="text-xs sm:text-sm text-gray-600">  Reserve your place for an evening of culture and celebration</p>
-                </div>
+                
               </Link>
               <button 
                 onClick={handleBack}

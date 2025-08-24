@@ -4,6 +4,7 @@ import { AdminProvider } from "@/context/AdminContext";
 import { BookingProvider } from "@/context/BookingContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from 'react-hot-toast';
+import AuthDebugger from '@/components/AuthDebugger';
 
 export const metadata = {
   title: "svsamiti",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
                     },
                   }}
                 />
+                {/* <AuthDebugger /> */}
               </BookingProvider>
             </AdminProvider>
           </AuthProvider>

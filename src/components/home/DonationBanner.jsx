@@ -1,5 +1,6 @@
 import React from 'react';
 import { Heart, Sparkles, BookOpen, Users, Shield } from 'lucide-react';
+import Link from 'next/link';
 
 const DonationBanner = () => {
   return (
@@ -68,11 +69,13 @@ const DonationBanner = () => {
               </div>
             </div>
           </div>
-          
-          <button className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
-            <Heart className="w-4 h-4 fill-current" />
-            Make a Donation
-          </button>
+
+          <Link href="/donation">
+            <button className="inline-flex cursor-pointer items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
+              <Heart className="w-4 h-4 fill-current" />
+              Make a Donation
+            </button>
+          </Link>
         </div>
       </div>
       

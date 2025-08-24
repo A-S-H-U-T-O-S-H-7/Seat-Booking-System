@@ -53,8 +53,14 @@ export async function POST(request) {
       email: email.trim().toLowerCase(),
       phone: phone.replace(/\D/g, ''), // Remove non-digits
       address: (address || 'Delhi, India').trim(),
-      redirect_url: `https://donate.svsamiti.com/api/payment/ccavenue-response`,
-      cancel_url: `https://donate.svsamiti.com/api/payment/ccavenue-cancel`
+      donor_type: body.donor_type || 'indian',
+      country: body.country || 'india',
+      redirect_url: purpose === 'donation' 
+        ? `https://donate.svsamiti.com/api/payment/donation-response`
+        : `https://donate.svsamiti.com/api/payment/ccavenue-response`,
+      cancel_url: purpose === 'donation'
+        ? `https://donate.svsamiti.com/api/payment/donation-cancel`
+        : `https://donate.svsamiti.com/api/payment/ccavenue-cancel`
     };
 
     console.log('🚀 Proxying payment request to CCAvenue:', {
