@@ -1,7 +1,7 @@
 import DonationBankDetails from '@/components/donation/DonationPage'
 import React from 'react'
 
-function Page() {
+function page() {
   return (
     <div>
       <DonationBankDetails/>
@@ -9,4 +9,4 @@ function Page() {
   )
 }
 
-export default Page
+export default page

@@ -53,25 +53,20 @@ const ShowBookingFlow = () => {
         case 1:
           // Check if a date is selected (either Date object or string)
           const dateSelected = selectedDate !== null && selectedDate !== "" && selectedDate !== undefined;
-          console.log('Step 1 validation:', { selectedDate, dateSelected });
           return dateSelected;
         case 2:
           const seatsSelected = Array.isArray(selectedSeats) && selectedSeats.length > 0;
-          console.log('Step 2 validation:', { selectedSeats, seatsSelected });
           return seatsSelected;
         case 3:
           // Use validation state from ShowUserDetails component
-          console.log('Step 3 validation:', { userDetails, isUserDetailsValid });
           return isUserDetailsValid;
         case 4:
-          console.log('Step 4 validation: always true');
           return true; // On payment step, can proceed
         default:
           return false;
       }
     })();
     
-    console.log(`Step ${currentStep} can proceed:`, canProceed);
     return canProceed;
   };
 

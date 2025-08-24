@@ -119,8 +119,6 @@ const getSeatPrice = (seatId) => {
 
 // Reducer function
 const showSeatBookingReducer = (state, action) => {
-  console.log('Reducer called with action:', action.type, 'payload:', action.payload);
-  
   let newState;
   
   switch (action.type) {
@@ -151,14 +149,12 @@ const showSeatBookingReducer = (state, action) => {
       } else {
         // Select seat
         if (currentSelectedSeats.length >= 10) {
-          console.log('Maximum seats reached');
           return state; // Maximum seats reached
         }
         
         // Check availability
         const seatAvailability = state.seatAvailability[seatId] || {};
         if (seatAvailability.booked || seatAvailability.blocked) {
-          console.log('Seat not available for selection');
           return state;
         }
         
@@ -274,11 +270,9 @@ const showSeatBookingReducer = (state, action) => {
       break;
 
     default:
-      console.warn('Unknown action type:', action.type);
       return state;
   }
   
-  console.log('New state:', newState);
   return newState;
 };
 
@@ -336,9 +330,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
         dispatch({ type: ACTIONS.SET_PRICE_SETTINGS, payload: newPriceSettings });
         
         // Only show toast when prices actually change and user has selections
-        if (state.selectedSeats && state.selectedSeats.length > 0) {
-          console.log('Pricing updated - seats selected, recalculating totals');
-        }
       } else {
         // Set default values if document doesn't exist
         const defaultSettings = {
@@ -391,19 +382,16 @@ export const ShowSeatBookingProvider = ({ children }) => {
           const eventDate = new Date(data.eventDates.startDate);
           if (!isNaN(eventDate.getTime())) {
             dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: eventDate });
-            console.log('ShowSeatBookingContext: Set event date for early bird calculation:', eventDate);
           }
         } else {
           // Fallback to default event date if not set in Firebase
           const defaultEventDate = new Date('2025-11-15');
           dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: defaultEventDate });
-          console.log('ShowSeatBookingContext: Using default event date:', defaultEventDate);
         }
       } else {
         // Use default event date if document doesn't exist
         const defaultEventDate = new Date('2025-11-15');
         dispatch({ type: ACTIONS.SET_SELECTED_EVENT_DATE, payload: defaultEventDate });
-        console.log('ShowSeatBookingContext: No show settings found, using default event date:', defaultEventDate);
       }
     }, (error) => {
       console.error('Error listening to show settings:', error);
@@ -420,15 +408,12 @@ export const ShowSeatBookingProvider = ({ children }) => {
   // Listen to real-time seat availability updates
   useEffect(() => {
     if (!state.selectedDate || !state.selectedShift) {
-      console.log('No date or shift selected, skipping listener');
       return;
     }
 
     // Convert to consistent date string
     const dateObj = new Date(state.selectedDate);
     const dateKey = formatDateKey(dateObj);
-    
-    console.log('Setting up real-time listener for:', { dateKey, shift: state.selectedShift });
     
     // Listen to seat availability (show bookings don't use shifts)
     const availabilityRef = doc(db, 'showSeatAvailability', dateKey);
@@ -454,7 +439,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
 
   // Actions
   const selectSeat = (seatId) => {
-    console.log('selectSeat called with seatId:', seatId);
     dispatch({ type: ACTIONS.SELECT_SEAT, payload: seatId });
   };
 
@@ -520,6 +504,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
     // Use average price for discount calculations but preserve the actual total amount
     const averagePrice = baseAmount / quantity;
     
+    
     const breakdown = calculatePriceBreakdown({
       basePrice: averagePrice,
       quantity: quantity,
@@ -532,13 +517,15 @@ export const ShowSeatBookingProvider = ({ children }) => {
     
     // Override baseAmount to use actual sum instead of calculated average * quantity
     // This ensures that mixed-price seats are calculated correctly
-    return {
+    const result = {
       ...breakdown,
       baseAmount: baseAmount,
       discountAmount: Math.round((baseAmount * breakdown.discounts.best.percent) / 100),
       discountedAmount: baseAmount - Math.round((baseAmount * breakdown.discounts.best.percent) / 100),
       totalAmount: baseAmount - Math.round((baseAmount * breakdown.discounts.best.percent) / 100) + breakdown.taxAmount
     };
+    
+    return result;
   };
   
   const getBaseAmount = () => {
@@ -601,7 +588,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
 
   // Process the booking
   const processBooking = async (userDetails, paymentDetails) => {
-    console.log('processBooking called with:', { userDetails, paymentDetails, state });
     
     if (!user) {
       toast.error('Please login to book seats');
@@ -621,7 +607,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
     dispatch({ type: ACTIONS.SET_LOADING, payload: true });
 
     try {
-      console.log('Starting booking process...');
       
       // Convert to consistent date string
       const dateObj = new Date(state.selectedDate);
@@ -660,7 +645,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
         eventType: 'show'
       };
 
-      console.log('Creating booking document:', bookingData);
       await setDoc(bookingRef, bookingData);
       
       // Update seat availability (show bookings don't use shifts)
@@ -686,7 +670,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
         };
       });
       
-      console.log('Updating availability document');
       await setDoc(availabilityRef, {
         seats: updatedSeats,
         lastUpdated: serverTimestamp()
@@ -702,8 +685,6 @@ export const ShowSeatBookingProvider = ({ children }) => {
         lastUpdated: serverTimestamp()
       }, { merge: true });
 
-      console.log('Booking successful!');
-      
       // Clear selection
       dispatch({ type: ACTIONS.CLEAR_SELECTION });
       

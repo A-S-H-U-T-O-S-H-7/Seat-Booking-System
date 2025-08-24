@@ -15,7 +15,12 @@ const ShowPaymentProcess = () => {
   const {
     selectedDate,
     selectedSeats,
-    totalPrice,  
+    totalPrice,
+    getTotalAmount,
+    getDiscountAmount,
+    getBaseAmount,
+    getEarlyBirdDiscount,
+    getBulkDiscount,
     clearSelection,
     processBooking,
     bookingData
@@ -24,7 +29,6 @@ const ShowPaymentProcess = () => {
   const userDetails = bookingData.userDetails || {};
 
   const completeBooking = async () => {
-    console.log('completeBooking called with userDetails:', userDetails);
     
     // Validate that all required user details are filled
     const requiredFields = ['name', 'email', 'phone', 'aadhar', 'address'];
@@ -36,32 +40,29 @@ const ShowPaymentProcess = () => {
     setProcessing(true);
     
     try {
-      console.log('Creating pending show booking...');
       
       // Create pending booking first
       const result = await processBooking(userDetails, {
         method: 'pending_payment',
         transactionId: 'pending_' + Date.now()
       });
-      
-      console.log('processBooking result:', result);
         
       if (result.success) {
         const bookingId = result.bookingId;
-        console.log('✅ Show booking created:', bookingId);
+        
+        // Use discounted total amount for payment
+        const finalAmount = getTotalAmount();
         
         // Prepare payment data for CCAvenue
         const paymentData = {
           order_id: bookingId,
           purpose: 'show', // Required to identify payment type
-          amount: totalPrice.toString(),
+          amount: finalAmount.toString(),
           name: userDetails.name,
           email: userDetails.email,
           phone: userDetails.phone,
           address: userDetails.address || 'Delhi, India'
         };
-        
-        console.log('💳 Sending request to CCAvenue API...', paymentData);
         
         // Send request to CCAvenue API
         const response = await fetch('/api/payment/ccavenue-request', {
@@ -77,7 +78,6 @@ const ShowPaymentProcess = () => {
         }
         
         const data = await response.json();
-        console.log('CCAvenue API Response:', data);
         
         if (!data.status) {
           const errorMessage = data.errors ? data.errors.join(', ') : 'Payment request failed';
@@ -88,17 +88,13 @@ const ShowPaymentProcess = () => {
           throw new Error('Invalid response from payment API');
         }
         
-        console.log('✅ CCAvenue request prepared successfully');
-        
         // Redirect to CCAvenue
         submitToCCAvenue(data.encRequest, data.access_code, bookingId);
         
       } else {
-        console.error('Booking failed:', result.error);
         toast.error(result.error || 'Booking failed. Please try again.');
       }
     } catch (error) {
-      console.error('Booking/Payment failed:', error);
       toast.error(error.message || 'Failed to initiate payment. Please try again.');
     } finally {
       setProcessing(false);
@@ -107,7 +103,6 @@ const ShowPaymentProcess = () => {
 
   // Submit form to CCAvenue payment gateway
   const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
-    console.log('🌐 Creating CCAvenue payment form...');
     
     try {
       // Create form dynamically
@@ -134,11 +129,6 @@ const ShowPaymentProcess = () => {
       // Append form to body and submit
       document.body.appendChild(form);
       
-      console.log('🚀 Submitting to CCAvenue...', {
-        action: form.action,
-        bookingId: bookingId
-      });
-      
       // Submit form
       form.submit();
       
@@ -150,7 +140,6 @@ const ShowPaymentProcess = () => {
       }, 1000);
       
     } catch (error) {
-      console.error('Form submission error:', error);
       toast.error('Failed to redirect to payment gateway');
       setProcessing(false);
     }
@@ -210,15 +199,64 @@ const ShowPaymentProcess = () => {
               </div>
             </div>
 
-            {/* Total Amount - Highlighted */}
+            {/* Pricing Breakdown */}
             <div className="bg-gradient-to-r from-pink-100 via-white to-rose-100 border border-pink-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
-              <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
-                <div className="mb-2 sm:mb-0">
-                  <h4 className="text-base sm:text-lg font-semibold text-rose-800">Total Amount to Pay</h4>
-                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-orange-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.</p>
+              <div className="flex flex-col sm:flex-row justify-between items-start text-center sm:text-left gap-4">
+                <div className="flex-1">
+                  <h4 className="text-base sm:text-lg font-semibold text-rose-800 mb-3">Pricing Breakdown</h4>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">Base Amount:</span>
+                      <span className="font-medium text-gray-900">₹{getBaseAmount()?.toLocaleString('en-IN') || 0}</span>
+                    </div>
+                    
+                    {getDiscountAmount() > 0 && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-green-600">
+                          <span>Discount Applied:</span>
+                          <span className="font-medium">-₹{getDiscountAmount()?.toLocaleString('en-IN') || 0}</span>
+                        </div>
+                        
+                        {/* Discount badges */}
+                        <div className="flex flex-wrap gap-1 justify-end">
+                          {getEarlyBirdDiscount() > 0 && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              🎉 {getEarlyBirdDiscount()}% Early Bird
+                            </span>
+                          )}
+                          {getBulkDiscount() > 0 && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                              🎯 {getBulkDiscount()}% Bulk
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <hr className="border-gray-300" />
+                    
+                    <div className="flex justify-between items-center font-bold text-lg">
+                      <span className="text-rose-800">Total Amount:</span>
+                      <span className="text-rose-800">₹{getTotalAmount()?.toLocaleString('en-IN') || 0}</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs max-w-lg mt-3 text-orange-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.</p>
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-rose-800 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl shadow-md">
-                  ₹{totalPrice?.toLocaleString('en-IN') || 0}
+                
+                <div className="bg-white px-4 py-6 sm:px-6 rounded-lg sm:rounded-xl shadow-md border-2 border-rose-200">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-rose-600 mb-1">Final Amount</p>
+                    <div className="text-2xl sm:text-3xl font-bold text-rose-800">
+                      ₹{getTotalAmount()?.toLocaleString('en-IN') || 0}
+                    </div>
+                    {getDiscountAmount() > 0 && (
+                      <p className="text-xs text-green-600 mt-1">
+                        You saved ₹{getDiscountAmount()?.toLocaleString('en-IN') || 0}!
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -265,7 +303,7 @@ const ShowPaymentProcess = () => {
               ) : (
                 <span className="flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-                  Pay ₹{totalPrice?.toLocaleString('en-IN') || 0}
+                  Pay ₹{getTotalAmount()?.toLocaleString('en-IN') || 0}
                 </span>
               )}
             </button>

@@ -50,7 +50,6 @@ export default function ShowAuditorium() {
           setShowSettings(data);
         }
       } catch (error) {
-        console.error('Error fetching show settings:', error);
         toast.error('Failed to load show settings, using defaults');
       } finally {
         setLoading(false);

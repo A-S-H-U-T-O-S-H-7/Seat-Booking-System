@@ -13,7 +13,6 @@ export default function ShowDateSelection() {
 
   // Real-time listener for show settings from Firebase
   useEffect(() => {
-    console.log('ShowDateSelection: Setting up real-time listener for show settings');
     setLoading(true);
     
     const showSettingsRef = doc(db, 'settings', 'shows');
@@ -23,18 +22,13 @@ export default function ShowDateSelection() {
       (doc) => {
         if (doc.exists()) {
           const data = doc.data();
-          console.log('ShowDateSelection: Show settings updated:', data);
-          console.log('ShowDateSelection: Event dates structure:', data.eventDates);
-          console.log('ShowDateSelection: Shows array:', data.shows);
           setShowSettings(data);
         } else {
-          console.log('ShowDateSelection: No show settings document found');
           setShowSettings(null);
         }
         setLoading(false);
       },
       (error) => {
-        console.error('ShowDateSelection: Error listening to show settings:', error);
         setLoading(false);
       }
     );
@@ -46,20 +40,15 @@ export default function ShowDateSelection() {
   const generateAvailableDates = () => {
     const dates = [];
     
-    console.log('ShowDateSelection: Generating dates with showSettings:', showSettings);
-    
     // Check different possible structures for event dates configuration
     const eventDates = showSettings?.eventDates;
     
     if (eventDates) {
-      console.log('ShowDateSelection: Event dates found:', eventDates);
       
       // If we have specific start and end dates, use them
       if (eventDates.startDate && eventDates.endDate) {
         const startDate = new Date(eventDates.startDate);
         const endDate = new Date(eventDates.endDate);
-        
-        console.log('ShowDateSelection: Using date range from', startDate, 'to', endDate);
         
         const currentDate = new Date(startDate);
         while (currentDate <= endDate) {
@@ -94,8 +83,6 @@ export default function ShowDateSelection() {
       }
     }
     
-    console.log('ShowDateSelection: Using dayCount fallback:', dayCount);
-    
     for (let i = 1; i <= dayCount; i++) {
       dates.push(addDays(today, i));
     }
@@ -108,12 +95,8 @@ export default function ShowDateSelection() {
   const activeShows = showSettings?.shows?.filter(show => 
     show.active === true || show.isActive === true
   ) || [];
-  
-  console.log('ShowDateSelection: Active shows found:', activeShows);
 
   const handleDateSelect = (date) => {
-    console.log('ShowDateSelection: Date selected:', date);
-    console.log('ShowDateSelection: Available active shows:', activeShows);
     
     // Set both date and shift in the context
     // Use the first active show or default to "evening"
@@ -121,7 +104,6 @@ export default function ShowDateSelection() {
       (activeShows[0].name || activeShows[0].label || 'evening').toLowerCase() : 
       "evening";
     
-    console.log('ShowDateSelection: Setting shift to:', firstShow);
     setDateAndShift(date, firstShow);
   };
   
