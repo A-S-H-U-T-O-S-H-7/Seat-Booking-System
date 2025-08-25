@@ -160,9 +160,9 @@ const StallBookingCard = ({ booking, onCancel }) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
           <div className="text-xs text-gray-500 space-y-1">
             <p>🕐 Booked: {booking.createdAt ? format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a') : 'Unknown'}</p>
-            {booking.vendorDetails?.phone && (
+            {/* {booking.vendorDetails?.phone && (
               <p>📞 Contact: {booking.vendorDetails.phone}</p>
-            )}
+            )} */}
           </div>
 
           {/* {booking.status === 'confirmed' && (

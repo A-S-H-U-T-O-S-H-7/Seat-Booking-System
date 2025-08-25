@@ -409,9 +409,9 @@ const ProfilePage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
             <div className="text-xs text-gray-500 space-y-1">
               <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
-              {booking.customerDetails && (
+              {/* {booking.customerDetails && (
                 <p>📞 Contact: {booking.customerDetails.phone}</p>
-              )}
+              )} */}
             </div>
 
             {/* {booking.status === 'confirmed' && (
