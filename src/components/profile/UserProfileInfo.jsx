@@ -129,69 +129,67 @@ const UserProfileInfo = ({ user, onEdit }) => {
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-8">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
-          {/* Avatar */}
-          <div className="relative">
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-2xl font-bold text-white">
-                {initials}
-              </span>
-            </div>
-            {profileCompletion?.isComplete && (
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-4 h-4 text-white" />
-              </div>
-            )}
-          </div>
-
-          {/* Basic Info */}
-          <div className="flex-1 text-center sm:text-left">
-            <h2 className="text-2xl font-bold text-white mb-1">
-              {userProfile?.name || 'Welcome!'}
-            </h2>
-            <p className="text-orange-100 text-sm mb-3">
-              {userProfile?.email || 'No email available'}
-            </p>
-            
-            {/* Profile Completion */}
-            {profileCompletion && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 inline-block">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Shield className="w-4 h-4 text-white" />
-                  <span className="text-white text-sm font-medium">
-                    Profile {profileCompletion.completionPercentage}% Complete
-                  </span>
-                </div>
-                <div className="w-32 bg-white/20 rounded-full h-2">
-                  <div 
-                    className="bg-white rounded-full h-2 transition-all duration-300"
-                    style={{ width: `${profileCompletion.completionPercentage}%` }}
-                  ></div>
-                </div>
-                {!profileCompletion.isComplete && (
-                  <p className="text-orange-100 text-xs mt-1">
-                    Complete your profile for better booking experience
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Edit Button */}
-          <button
-            onClick={() => {
-              setShowEditModal(true);
-              onEdit?.();
-            }}
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            <Edit3 className="w-4 h-4" />
-            <span className="text-sm font-medium">Edit Profile</span>
-          </button>
-        </div>
+<div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-8">
+  <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+    {/* Avatar */}
+    <div className="relative">
+      <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
+        <span className="text-2xl font-bold text-white">
+          {initials}
+        </span>
       </div>
+      {profileCompletion?.isComplete && (
+        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+          <CheckCircle className="w-4 h-4 text-white" />
+        </div>
+      )}
+    </div>
 
+    {/* Basic Info */}
+    <div className="flex-1 text-center sm:text-left">
+      <h2 className="text-2xl font-bold text-white mb-1">
+        {userProfile?.name || 'Welcome!'}
+      </h2>
+      <p className="text-orange-100 text-sm mb-3">
+        {userProfile?.email || 'No email available'}
+      </p>
+      
+      {/* Profile Completion */}
+      {profileCompletion && (
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 inline-block">
+          <div className="flex items-center space-x-2 mb-2">
+            <Shield className="w-4 h-4 text-white" />
+            <span className="text-white text-sm font-medium">
+              Profile {profileCompletion.completionPercentage}% Complete
+            </span>
+          </div>
+          <div className="w-32 bg-white/20 rounded-full h-2">
+            <div 
+              className="bg-white rounded-full h-2 transition-all duration-300"
+              style={{ width: `${profileCompletion.completionPercentage}%` }}
+            ></div>
+          </div>
+          {!profileCompletion.isComplete && (
+            <p className="text-orange-100 text-xs mt-1">
+              Complete your profile for better booking experience
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* Event Layout Button */}
+    <div className="flex items-center">
+      <button
+        onClick={onShowEventLayout}
+        className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2"
+      >
+        <MapPin className="w-4 h-4" />
+        <span>Event Layout</span>
+      </button>
+    </div>
+  </div>
+</div>
       {/* Information Grid */}
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

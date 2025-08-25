@@ -12,6 +12,7 @@ import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import ShowBookingCard from '@/components/show/ShowBookingCard';
 import StallBookingCard from '@/components/stall/StallBookingCard';
+import ImageModal from '@/components/ImageModal';
 import { useShifts } from '@/hooks/useShifts';
 import { cancelBooking } from '@/utils/cancellationUtils';
 
@@ -24,6 +25,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [cancellingBooking, setCancellingBooking] = useState(null);
   const [activeTab, setActiveTab] = useState('havan');
+  const [showEventLayoutModal, setShowEventLayoutModal] = useState(false);
 
   const { getShiftLabel, getShiftTime } = useShifts();
 
@@ -538,7 +540,16 @@ const ProfilePage = () => {
           </div>
               </Link>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowEventLayoutModal(true)}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                  <span className="hidden sm:inline">Event Layout</span>
+                </button>
                 
                 <button
                   onClick={handleLogout}
@@ -746,6 +757,14 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* Event Layout Modal */}
+        <ImageModal
+          show={showEventLayoutModal}
+          onClose={() => setShowEventLayoutModal(false)}
+          imageSrc="/eventlayout.jpg"
+          imageAlt="Event Layout - Seating Arrangement"
+          title="Event Layout"
+        />
       </div>
     </ProtectedRoute>
   );

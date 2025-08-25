@@ -1,4 +1,5 @@
 // Next.js App Router API route to handle CCAvenue response processing
+// Updated: 2025-08-25 - Fixed black screen issue for failed payments
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {

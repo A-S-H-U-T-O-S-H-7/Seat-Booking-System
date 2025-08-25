@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-function Header({ user, handleLogout }) {
+function Header({ user, handleLogout, onShowEventLayout }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
@@ -86,6 +86,27 @@ function Header({ user, handleLogout }) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </Link>
+
+                      {/* Event Layout Button */}
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          onShowEventLayout && onShowEventLayout();
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 hover:text-purple-700 transition-all duration-200 group w-full text-left"
+                      >
+                        <div className="w-8 h-8 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors duration-200">
+                          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Event Layout</p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-400 group-hover:text-purple-600 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
 
                       <div className="border-t border-gray-100 my-2"></div>
 

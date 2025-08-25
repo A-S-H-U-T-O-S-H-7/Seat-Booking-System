@@ -377,7 +377,7 @@ function PaymentSuccessContent() {
                           </div>
                           <div>
                             <p className="font-medium text-gray-700">Tax Exemption:</p>
-                            <p className="text-gray-900 font-semibold text-green-700">
+                            <p className=" font-semibold text-green-700">
                               ✅ Section 80G Eligible
                             </p>
                           </div>
