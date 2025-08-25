@@ -6,9 +6,9 @@ import Banner from './Banner';
 
 export default function DonationComponent() {
   return (
-    <div className="w-full  p-2 sm:p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div className="w-full p-2 sm:p-4 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
       <Banner/>
-      <div className="grid grid-cols-1 lg:grid-cols-5 mb-10 gap-4 max-w-8xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-5 mb-10 gap-4 px-0 md:px-15 mx-auto">
         {/* Donation Form - More Compact */}
         <DonationForm />
 

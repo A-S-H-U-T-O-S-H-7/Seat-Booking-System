@@ -145,9 +145,9 @@ function Footer() {
               <Link href="/terms-and-conditions" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
                 Terms & Conditions
               </Link>
-              <Link href="/notice" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
+              {/* <Link href="/notice" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
                 Notice
-              </Link>
+              </Link> */}
               <Link href="/refund-cancel-policy" className="block text-gray-400 text-sm lg:text-base hover:text-teal-300 hover:translate-x-1 transition-all duration-300">
                 Refund & Cancellation Policy
               </Link>

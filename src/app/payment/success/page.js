@@ -500,12 +500,18 @@ function PaymentSuccessContent() {
         {/* Failed Payment Details */}
         {(paymentInfo.order_id && !isSuccess) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-6">
-            <h3 className="text-lg font-semibold text-red-800 mb-4">Payment Details</h3>
+            <h3 className="text-lg font-semibold text-red-800 mb-4">Transaction Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="font-medium text-gray-700">Reservation ID:</p>
-                <p className="text-gray-900 font-mono">{paymentInfo.order_id}</p>
+                <p className="font-medium text-gray-700">Order ID:</p>
+                <p className="text-gray-900 font-mono text-xs break-all">{paymentInfo.order_id}</p>
               </div>
+              {paymentInfo.tracking_id && (
+                <div>
+                  <p className="font-medium text-gray-700">Tracking ID:</p>
+                  <p className="text-gray-900 font-mono text-xs">{paymentInfo.tracking_id}</p>
+                </div>
+              )}
               {paymentInfo.amount && (
                 <div>
                   <p className="font-medium text-gray-700">Amount:</p>
@@ -518,8 +524,55 @@ function PaymentSuccessContent() {
               </div>
               <div>
                 <p className="font-medium text-gray-700">Date & Time:</p>
-                <p className="text-gray-900">{new Date().toLocaleString('en-IN')}</p>
+                <p className="text-gray-900">{new Date().toLocaleString('en-IN', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</p>
               </div>
+              {paymentInfo.failure_message && (
+                <div className="sm:col-span-2">
+                  <p className="font-medium text-gray-700">Failure Reason:</p>
+                  <div className="bg-red-100 border border-red-300 rounded p-2 mt-1">
+                    <p className="text-red-800 text-sm">{paymentInfo.failure_message}</p>
+                  </div>
+                </div>
+              )}
+              {paymentInfo.status_message && (
+                <div className="sm:col-span-2">
+                  <p className="font-medium text-gray-700">Status Message:</p>
+                  <div className="bg-red-100 border border-red-300 rounded p-2 mt-1">
+                    <p className="text-red-800 text-sm">{paymentInfo.status_message}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Redirect Notice */}
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-blue-800 text-sm">
+                💡 <strong>Note:</strong> For better experience with failed payments, we recommend using our dedicated failed payment page.
+              </p>
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    order_id: paymentInfo.order_id,
+                    status: paymentInfo.status,
+                    ...(paymentInfo.message && { message: paymentInfo.message }),
+                    ...(paymentInfo.amount && { amount: paymentInfo.amount }),
+                    ...(paymentInfo.tracking_id && { tracking_id: paymentInfo.tracking_id }),
+                    ...(paymentInfo.failure_message && { failure_message: paymentInfo.failure_message }),
+                    ...(paymentInfo.status_message && { status_message: paymentInfo.status_message })
+                  });
+                  router.push(`/payment/failed?${params.toString()}`);
+                }}
+                className="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded"
+              >
+                View on Failed Payment Page
+              </button>
             </div>
           </div>
         )}

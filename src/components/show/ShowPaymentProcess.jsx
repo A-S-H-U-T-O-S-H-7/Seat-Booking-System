@@ -203,42 +203,13 @@ const ShowPaymentProcess = () => {
             <div className="bg-gradient-to-r from-pink-100 via-white to-rose-100 border border-pink-300 rounded-lg sm:rounded-xl p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row justify-between items-start text-center sm:text-left gap-4">
                 <div className="flex-1">
-                  <h4 className="text-base sm:text-lg font-semibold text-rose-800 mb-3">Pricing Breakdown</h4>
                   
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">Base Amount:</span>
-                      <span className="font-medium text-gray-900">₹{getBaseAmount()?.toLocaleString('en-IN') || 0}</span>
-                    </div>
                     
-                    {getDiscountAmount() > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between items-center text-green-600">
-                          <span>Discount Applied:</span>
-                          <span className="font-medium">-₹{getDiscountAmount()?.toLocaleString('en-IN') || 0}</span>
-                        </div>
-                        
-                        {/* Discount badges */}
-                        <div className="flex flex-wrap gap-1 justify-end">
-                          {getEarlyBirdDiscount() > 0 && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                              🎉 {getEarlyBirdDiscount()}% Early Bird
-                            </span>
-                          )}
-                          {getBulkDiscount() > 0 && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                              🎯 {getBulkDiscount()}% Bulk
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <hr className="border-gray-300" />
                     
                     <div className="flex justify-between items-center font-bold text-lg">
                       <span className="text-rose-800">Total Amount:</span>
-                      <span className="text-rose-800">₹{getTotalAmount()?.toLocaleString('en-IN') || 0}</span>
+                      {/* <span className="text-rose-800">₹{getTotalAmount()?.toLocaleString('en-IN') || 0}</span> */}
                     </div>
                   </div>
                   

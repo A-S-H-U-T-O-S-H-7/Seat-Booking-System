@@ -86,10 +86,14 @@ function PaymentStatusContent() {
               order_id: paymentInfo.order_id,
               status: 'failed',
               message: paymentInfo.failure_message || 'Payment failed',
+              failure_message: paymentInfo.failure_message || 'Payment processing failed',
+              status_message: paymentInfo.status_message || 'Failed',
+              payment_method: paymentInfo.payment_mode || 'Unified Payments (UPI)',
               ...(paymentInfo.amount && { amount: paymentInfo.amount }),
-              ...(paymentInfo.tracking_id && { tracking_id: paymentInfo.tracking_id })
+              ...(paymentInfo.tracking_id && { tracking_id: paymentInfo.tracking_id }),
+              ...(paymentInfo.bank_ref_no && { bank_ref_no: paymentInfo.bank_ref_no })
             });
-            router.push(`/payment/success?${params.toString()}`);
+            router.push(`/payment/failed?${params.toString()}`);
           }, 3000);
         }
       } else {

@@ -328,15 +328,15 @@ const ShowBookingFlow = () => {
 
             <button
               onClick={handleNext}
-              disabled={!canProceedToNext()}
+              disabled={!canProceedToNext() || currentStep === steps.length}
               className={`flex items-center justify-center px-6 py-3 rounded-xl font-medium transition-all duration-200 w-full sm:w-auto ${
-                !canProceedToNext()
+                !canProceedToNext() || currentStep === steps.length
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-gradient-to-r from-pink-500 to-pink-600 cursor-pointer text-white hover:from-pink-600 hover:to-pink-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               }`}
             >
               {currentStep === steps.length
-                ? "Complete Booking"
+                ? "Use Payment Button Above"
                 : "Next →"}
             </button>
           </div>
