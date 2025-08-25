@@ -414,7 +414,7 @@ const ProfilePage = () => {
               )}
             </div>
 
-            {booking.status === 'confirmed' && (
+            {/* {booking.status === 'confirmed' && (
               <div className="flex flex-col sm:flex-row items-center gap-2">
                 {canCancelBooking(booking.eventDetails?.date) ? (
                   <div className="text-center">
@@ -475,7 +475,7 @@ const ProfilePage = () => {
                   </div>
                 )}
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>

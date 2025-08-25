@@ -148,7 +148,7 @@ const ShowBookingCard = ({ booking, onCancel }) => {
             )}
           </div>
 
-          {booking.status === 'confirmed' && (
+          {/* {booking.status === 'confirmed' && (
             <div className="flex flex-col sm:flex-row items-center gap-2">
               {booking.showDetails?.date && canCancelBooking(booking.showDetails.date) ? (
                 <div className="text-center">
@@ -214,7 +214,7 @@ const ShowBookingCard = ({ booking, onCancel }) => {
                 </div>
               )}
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </div>
