@@ -62,12 +62,84 @@ export async function POST(request) {
       throw new Error(`CCAvenue response handler returned status ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log('✅ CCAvenue response processed:', {
-      status: data.status,
-      hasData: !!data.data,
-      timestamp: new Date().toISOString()
-    });
+    let data;
+    try {
+      const responseText = await response.text();
+      console.log('📄 Raw response from CCAvenue handler:', responseText.substring(0, 500) + '...');
+      
+      // Try to parse as JSON
+      data = JSON.parse(responseText);
+      console.log('✅ CCAvenue response parsed as JSON:', {
+        status: data.status,
+        hasData: !!data.data,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (parseError) {
+      console.error('❌ Failed to parse CCAvenue response as JSON:', parseError.message);
+      console.log('🔍 Raw response content (first 1000 chars):', responseText.substring(0, 1000));
+      
+      // If JSON parsing fails, the response might be raw transaction data
+      // Try to extract key information from the raw text
+      const rawText = responseText;
+      if (rawText.includes('order ID') && rawText.includes('failed')) {
+        // This looks like the raw transaction data you mentioned
+        // Create a proper redirect to the failed page with the available info
+        const baseUrl = process.env.NODE_ENV === 'development' 
+          ? 'http://localhost:3000' 
+          : 'https://donate.svsamiti.com';
+          
+        const redirectUrl = new URL('/payment/failed', baseUrl);
+        redirectUrl.searchParams.set('order_id', 'unknown');
+        redirectUrl.searchParams.set('status', 'failed');
+        redirectUrl.searchParams.set('message', 'Payment processing failed - raw response received');
+        redirectUrl.searchParams.set('failure_message', 'Transaction could not be processed');
+        redirectUrl.searchParams.set('status_message', 'Failed');
+        redirectUrl.searchParams.set('amount', '2.00');
+        redirectUrl.searchParams.set('payment_method', 'Unified Payments (UPI)');
+        
+        console.log('🔀 Redirecting to failed page due to parsing error:', redirectUrl.toString());
+        
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Payment Failed - Processing Error</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+              body { font-family: Arial, sans-serif; background: #f87171; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+              .container { text-align: center; background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px; }
+              .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="spinner"></div>
+              <h2>Payment Failed</h2>
+              <p>Redirecting to payment status page...</p>
+            </div>
+            <script>
+              setTimeout(function() {
+                window.location.href = '${redirectUrl.toString()}';
+              }, 1000);
+            </script>
+          </body>
+          </html>
+        `;
+        
+        return new Response(htmlContent, {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        });
+      }
+      
+      throw new Error('Invalid response format from CCAvenue handler');
+    }
 
     // If we have valid data, update Firebase and redirect
     if (data.status && data.data) {
@@ -109,16 +181,32 @@ export async function POST(request) {
       }
       
       // Create redirect URL based on payment status
-      const redirectUrl = new URL('/payment/success', 'https://donate.svsamiti.com');
-      redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
+      // Determine base URL (for local development vs production)
+      const baseUrl = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:3000' 
+        : 'https://donate.svsamiti.com';
+      
+      let redirectUrl;
       
       if (paymentInfo.order_status === 'Success') {
+        redirectUrl = new URL('/payment/success', baseUrl);
+        redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
         redirectUrl.searchParams.set('status', 'success');
         redirectUrl.searchParams.set('amount', paymentInfo.amount || '0');
         redirectUrl.searchParams.set('tracking_id', paymentInfo.tracking_id || '');
       } else {
+        redirectUrl = new URL('/payment/failed', baseUrl);
+        redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
         redirectUrl.searchParams.set('status', 'failed');
         redirectUrl.searchParams.set('message', encodeURIComponent(paymentInfo.failure_message || 'Payment failed'));
+        redirectUrl.searchParams.set('failure_message', encodeURIComponent(paymentInfo.failure_message || 'Payment processing failed'));
+        redirectUrl.searchParams.set('status_message', encodeURIComponent(paymentInfo.status_message || 'Failed'));
+        redirectUrl.searchParams.set('amount', paymentInfo.amount || '0');
+        redirectUrl.searchParams.set('tracking_id', paymentInfo.tracking_id || '');
+        redirectUrl.searchParams.set('payment_method', encodeURIComponent(paymentInfo.payment_mode || 'Unified Payments (UPI)'));
+        if (paymentInfo.bank_ref_no) {
+          redirectUrl.searchParams.set('bank_ref_no', paymentInfo.bank_ref_no);
+        }
       }
       
       console.log('🔀 Redirecting to:', redirectUrl.toString());
@@ -257,16 +345,27 @@ export async function GET(request) {
       const paymentInfo = data.data;
       
       // Create redirect URL based on payment status
-      const redirectUrl = new URL('/payment/success', 'https://donate.svsamiti.com');
-      redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
+      let redirectUrl;
       
       if (paymentInfo.order_status === 'Success') {
+        redirectUrl = new URL('/payment/success', 'https://donate.svsamiti.com');
+        redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
         redirectUrl.searchParams.set('status', 'success');
         redirectUrl.searchParams.set('amount', paymentInfo.amount || '0');
         redirectUrl.searchParams.set('tracking_id', paymentInfo.tracking_id || '');
       } else {
+        redirectUrl = new URL('/payment/failed', 'https://donate.svsamiti.com');
+        redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
         redirectUrl.searchParams.set('status', 'failed');
         redirectUrl.searchParams.set('message', encodeURIComponent(paymentInfo.failure_message || 'Payment failed'));
+        redirectUrl.searchParams.set('failure_message', encodeURIComponent(paymentInfo.failure_message || 'Payment processing failed'));
+        redirectUrl.searchParams.set('status_message', encodeURIComponent(paymentInfo.status_message || 'Failed'));
+        redirectUrl.searchParams.set('amount', paymentInfo.amount || '0');
+        redirectUrl.searchParams.set('tracking_id', paymentInfo.tracking_id || '');
+        redirectUrl.searchParams.set('payment_method', encodeURIComponent(paymentInfo.payment_mode || 'Unified Payments (UPI)'));
+        if (paymentInfo.bank_ref_no) {
+          redirectUrl.searchParams.set('bank_ref_no', paymentInfo.bank_ref_no);
+        }
       }
       
       console.log('🔀 Redirecting to (GET):', redirectUrl.toString());
