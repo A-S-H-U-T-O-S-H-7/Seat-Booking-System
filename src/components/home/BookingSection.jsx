@@ -61,7 +61,7 @@ function BookingSection({ user }) {
                   Reserve a stall space for your business. 5-day reserve with prime locations available.
                 </p>
               </Link>
-
+ 
               {/* Show Seat Booking */}
               <Link
                 href="/booking/show"

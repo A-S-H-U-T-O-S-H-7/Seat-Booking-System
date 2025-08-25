@@ -1,9 +1,11 @@
 import React from 'react';
 import { Heart, Sparkles, BookOpen, Users, Shield } from 'lucide-react';
-import Link from 'next/link';
+import Link from 'next/link'; 
 
-const DonationBanner = () => {
+const DonationBanner = ({ user }) => {
   return (
+    <>
+    {user && (
     <div className="mx-3  md:mx-10 mb-2 md:mb-10 bg-gradient-to-br from-rose-100 via-pink-50 to-purple-100 border-2 border-rose-100/50 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 relative group">
       {/* Shine Effect */}
       <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
@@ -83,6 +85,8 @@ const DonationBanner = () => {
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-pink-200/20 to-purple-200/20 rounded-full -translate-y-12 translate-x-12 z-0"></div>
       <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-rose-200/20 to-pink-200/20 rounded-full translate-y-8 -translate-x-8 z-0"></div>
     </div>
+    )}
+    </>
   );
 };
 
