@@ -229,8 +229,8 @@ export default function DonationForm() {
   };
 
   return (
-    <div className="lg:col-span-3 bg-gradient-to-br from-pink-50  to-purple-100 rounded-xl shadow-lg p-4 border border-gray-100 h-fit">
-      <h2 className="text-xl font-bold text-purple-500 mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+    <div className="lg:col-span-3  bg-gradient-to-br from-pink-50  to-purple-100 rounded-xl shadow-lg p-4 border-2 border-purple-300 h-fit">
+      <h2 className="text-2xl py-6 font-bold text-purple-500 mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
         Make a Difference Today
       </h2>
       
