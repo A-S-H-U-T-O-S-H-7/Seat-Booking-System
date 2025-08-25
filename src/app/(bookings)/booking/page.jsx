@@ -159,7 +159,7 @@ export default function BookingPage() {
           <ImageModal
             show={showEventLayoutModal}
             onClose={() => setShowEventLayoutModal(false)}
-            imageSrc="/eventlayout.jpg"
+            imageSrc="/eventlayout2.jpg"
             imageAlt="Event Layout - Seating Arrangement"
             title="Event Layout"
           />
