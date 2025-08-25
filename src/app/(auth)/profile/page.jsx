@@ -761,8 +761,8 @@ const ProfilePage = () => {
         <ImageModal
           show={showEventLayoutModal}
           onClose={() => setShowEventLayoutModal(false)}
-          imageSrc="/eventlayout.jpg"
-          imageAlt="Event Layout - Seating Arrangement"
+          imageSrc="/eventlayout2.jpg"
+          imageAlt="Event Layout"
           title="Event Layout"
         />
       </div>
