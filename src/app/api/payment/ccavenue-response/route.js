@@ -79,66 +79,120 @@ export async function POST(request) {
       console.error('❌ Failed to parse CCAvenue response as JSON:', parseError.message);
       console.log('🔍 Raw response content (first 1000 chars):', responseText.substring(0, 1000));
       
-      // If JSON parsing fails, the response might be raw transaction data
-      // Try to extract key information from the raw text
+      // If JSON parsing fails, it's likely raw transaction data from failed payment
+      // Extract key information from the raw text if possible
       const rawText = responseText;
-      if (rawText.includes('order ID') && rawText.includes('failed')) {
-        // This looks like the raw transaction data you mentioned
-        // Create a proper redirect to the failed page with the available info
-        const baseUrl = process.env.NODE_ENV === 'development' 
-          ? 'http://localhost:3000' 
-          : 'https://donate.svsamiti.com';
-          
-        const redirectUrl = new URL('/payment/failed', baseUrl);
-        redirectUrl.searchParams.set('order_id', 'unknown');
-        redirectUrl.searchParams.set('status', 'failed');
-        redirectUrl.searchParams.set('message', 'Payment processing failed - raw response received');
-        redirectUrl.searchParams.set('failure_message', 'Transaction could not be processed');
-        redirectUrl.searchParams.set('status_message', 'Failed');
-        redirectUrl.searchParams.set('amount', '2.00');
-        redirectUrl.searchParams.set('payment_method', 'Unified Payments (UPI)');
-        
-        console.log('🔀 Redirecting to failed page due to parsing error:', redirectUrl.toString());
-        
-        const htmlContent = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Payment Failed - Processing Error</title>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-              body { font-family: Arial, sans-serif; background: #f87171; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-              .container { text-align: center; background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px; }
-              .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid white; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
-              @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="spinner"></div>
-              <h2>Payment Failed</h2>
-              <p>Redirecting to payment status page...</p>
-            </div>
-            <script>
-              setTimeout(function() {
-                window.location.href = '${redirectUrl.toString()}';
-              }, 1000);
-            </script>
-          </body>
-          </html>
-        `;
-        
-        return new Response(htmlContent, {
-          status: 200,
-          headers: {
-            'Content-Type': 'text/html',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-          }
-        });
+      let extractedOrderId = 'unknown';
+      let extractedTrackingId = '';
+      let extractedAmount = '2.00';
+      
+      // Try to extract order ID
+      const orderIdMatch = rawText.match(/order ID ([A-Za-z0-9]+)/);
+      if (orderIdMatch) {
+        extractedOrderId = orderIdMatch[1];
       }
       
-      throw new Error('Invalid response format from CCAvenue handler');
+      // Try to extract tracking ID
+      const trackingIdMatch = rawText.match(/tracking ID ([0-9]+)/);
+      if (trackingIdMatch) {
+        extractedTrackingId = trackingIdMatch[1];
+      }
+      
+      // Try to extract amount
+      const amountMatch = rawText.match(/₹([0-9]+\.?[0-9]*)/);
+      if (amountMatch) {
+        extractedAmount = amountMatch[1];
+      }
+      
+      console.log('🔍 Extracted from raw response:', {
+        order_id: extractedOrderId,
+        tracking_id: extractedTrackingId,
+        amount: extractedAmount
+      });
+      
+      // Always redirect to failed page when JSON parsing fails (this means payment failed)
+      const baseUrl = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:3000' 
+        : 'https://donate.svsamiti.com';
+        
+      const redirectUrl = new URL('/payment/failed', baseUrl);
+      redirectUrl.searchParams.set('order_id', extractedOrderId);
+      redirectUrl.searchParams.set('status', 'failed');
+      redirectUrl.searchParams.set('message', encodeURIComponent('Payment processing failed - raw response received'));
+      redirectUrl.searchParams.set('failure_message', encodeURIComponent('Transaction could not be processed'));
+      redirectUrl.searchParams.set('status_message', encodeURIComponent('Failed'));
+      redirectUrl.searchParams.set('amount', extractedAmount);
+      redirectUrl.searchParams.set('tracking_id', extractedTrackingId);
+      redirectUrl.searchParams.set('payment_method', encodeURIComponent('Unified Payments (UPI)'));
+      
+      console.log('🔀 Redirecting to failed page due to raw response:', redirectUrl.toString());
+      
+      // Use the SAME redirect HTML pattern as success page
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Payment Processing Complete</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+              margin: 0;
+              padding: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              color: white;
+            }
+            .container {
+              text-align: center;
+              background: rgba(255, 255, 255, 0.1);
+              padding: 2rem;
+              border-radius: 10px;
+              backdrop-filter: blur(10px);
+            }
+            .spinner {
+              border: 4px solid rgba(255, 255, 255, 0.3);
+              border-radius: 50%;
+              border-top: 4px solid white;
+              width: 40px;
+              height: 40px;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 1rem;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="spinner"></div>
+            <h2>Payment Processing Complete</h2>
+            <p>Redirecting to confirmation page...</p>
+          </div>
+          <script>
+            console.log('Payment redirect page loaded');
+            setTimeout(function() {
+              console.log('Redirecting to:', '${redirectUrl.toString()}');
+              window.location.href = '${redirectUrl.toString()}';
+            }, 1000);
+          </script>
+        </body>
+        </html>
+      `;
+      
+      return new Response(htmlContent, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+      });
     }
 
     // If we have valid data, update Firebase and redirect
@@ -195,7 +249,7 @@ export async function POST(request) {
         redirectUrl.searchParams.set('amount', paymentInfo.amount || '0');
         redirectUrl.searchParams.set('tracking_id', paymentInfo.tracking_id || '');
       } else {
-        redirectUrl = new URL('/payment/failed', baseUrl);
+        redirectUrl = new URL('/payment/success', baseUrl);
         redirectUrl.searchParams.set('order_id', paymentInfo.order_id || 'unknown');
         redirectUrl.searchParams.set('status', 'failed');
         redirectUrl.searchParams.set('message', encodeURIComponent(paymentInfo.failure_message || 'Payment failed'));
