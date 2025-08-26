@@ -167,7 +167,7 @@ export const BookingProvider = ({ children }) => {
   };
   
   const getTotalDiscountPercent = () => {
-    return getPricingBreakdown().discounts.best.percent;
+    return getPricingBreakdown().discounts.combined.percent;
   };
   
   const getDiscountedAmount = () => {
@@ -197,24 +197,48 @@ export const BookingProvider = ({ children }) => {
   
   // Get current discount info for display
   const getCurrentDiscountInfo = () => {
-    const seatCount = selectedSeats.length;
-    const earlyBirdDiscount = getEarlyBirdDiscount();
-    const bulkDiscount = getBulkDiscount();
+    const breakdown = getPricingBreakdown();
+    const combinedDiscount = breakdown.discounts.combined;
     
-    // Determine which discount is being applied (the higher one)
-    if (earlyBirdDiscount > 0 && earlyBirdDiscount >= bulkDiscount) {
+    if (!combinedDiscount.applied || combinedDiscount.percent === 0) {
+      return null;
+    }
+
+    // If both discounts are applied
+    if (combinedDiscount.earlyBird && combinedDiscount.bulk) {
+      return {
+        type: 'combined',
+        percent: combinedDiscount.percent,
+        label: 'Early Bird + Bulk Discount',
+        earlyBird: {
+          percent: combinedDiscount.earlyBird.percent,
+          label: 'Early Bird'
+        },
+        bulk: {
+          percent: combinedDiscount.bulk.percent,
+          label: 'Bulk Discount'
+        }
+      };
+    }
+    
+    // If only early bird is applied
+    if (combinedDiscount.earlyBird) {
       return {
         type: 'earlyBird',
-        percent: earlyBirdDiscount,
+        percent: combinedDiscount.percent,
         label: 'Early Bird Discount'
       };
-    } else if (bulkDiscount > 0) {
+    }
+    
+    // If only bulk discount is applied
+    if (combinedDiscount.bulk) {
+      const seatCount = selectedSeats.length;
       const appliedDiscount = priceSettings.bulkDiscounts.find(
-        d => d.isActive && seatCount >= d.minSeats && d.discountPercent === bulkDiscount
+        d => d.isActive && seatCount >= d.minSeats && d.discountPercent === combinedDiscount.bulk.percent
       );
       return {
         type: 'bulk',
-        percent: bulkDiscount,
+        percent: combinedDiscount.percent,
         label: 'Bulk Discount',
         minSeats: appliedDiscount?.minSeats
       };
@@ -231,15 +255,21 @@ export const BookingProvider = ({ children }) => {
     return {
       ...breakdown,
       seasonalMultiplier,
-      // Enhanced discount details for display
-      discounts: {
-        ...breakdown.discounts,
-        seasonal: {
-          applied: seasonalMultiplier !== 1,
-          multiplier: seasonalMultiplier,
-          name: priceSettings.seasonalPricing.find(p => p.isActive)?.name
-        }
+    // Enhanced discount details for display
+    discounts: {
+      ...breakdown.discounts,
+      seasonal: {
+        applied: seasonalMultiplier !== 1,
+        multiplier: seasonalMultiplier,
+        name: priceSettings.seasonalPricing.find(p => p.isActive)?.name
       }
+    },
+    // Add savings information for UI
+    savings: {
+      amount: breakdown.originalAmount - breakdown.discountedAmount,
+      percentage: breakdown.discounts.combined.percent,
+      applied: breakdown.discounts.combined.applied
+    }
     };
   };
 

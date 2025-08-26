@@ -105,13 +105,15 @@ const StallBookingFlow = () => {
     <div className="min-h-screen  bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <div className="container  mx-auto px-2 py-4 md:py-8">
         <div className="max-w-7xl pb-5 md:pb-10 mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-  <div className="relative bg-gradient-to-br from-purple-200 via-white to-purple-200 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/60 overflow-hidden">
+
+
+         {/* Header - Compact Design */}
+<div className="text-center mb-6">
+  <div className="relative  bg-gradient-to-br from-purple-200 via-white to-purple-200 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/60 overflow-hidden">
     
-    {/* Stall Design Border at Top of Block */}
+    {/* Stall Design Border at Top */}
     <div 
-      className="w-full h-8 sm:h-12 bg-repeat-x bg-center"
+      className="w-full h-6 sm:h-8 bg-repeat-x bg-center"
       style={{
         backgroundImage: 'url(/stalldesign.png)',
         backgroundSize: 'auto 100%'
@@ -121,65 +123,85 @@ const StallBookingFlow = () => {
       }}
     ></div>
     
-    <div className="p-8">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-16 -translate-y-16"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-12 translate-y-12"></div>
-      
-     <div className="relative z-10 flex flex-col lg:flex-row items-center gap-2">
-  {/* Left Image - Only visible on large screens */}
-  <div className="hidden lg:block lg:flex-shrink-0">
-    <img 
-      src="/stallimg.png" 
-      alt="Stall Preview" 
-      className="w-64 h-64 object-cover"
-    />
-  </div>
-  
-  {/* Content - Keep original alignment */}
-  <div className="flex-1 text-center">
-    {/* Main Icon - Always visible */}
-    <div className="inline-flex items-center justify-center w-16 h-16">
-      <img src="/stall3.jpg" alt="Stall" className="w-12 h-12 object-contain" />
-    </div>
+    {/* Background Decoration */}
+    <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5"></div>
+    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-12 -translate-y-12"></div>
+    <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-10 translate-y-10"></div>
     
-    {/* DonateBar - Break out of padding constraint */}
-    <div className='-mx-8 mb-4'>
-      <div className='max-w-lg md:max-w-md mx-auto px-2'>
-        <DonateBar/>
+    {/* Main Content Container */}
+    <div className="px-3 md:px-4 py-8 md:py-13">
+      <div className="flex items-center justify-between gap-2 max-w-6xl mx-auto">
+        
+        {/* Left side - Stall Image */}
+        <div className="hidden lg:flex flex-shrink-0">
+          <img 
+            src="/stall4.png" 
+            alt="Stall Preview" 
+            className="w-24 h-24 lg:w-75 lg:h-75 object-contain drop-shadow-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+
+        {/* Center - Main Content */}
+        <div className="text-center flex-1 min-w-0">
+          <div className="flex justify-center items-center mb-3">
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/60 backdrop-blur-sm shadow-xl flex items-center justify-center border border-blue-300">
+              <img 
+                src="/stall3.jpg" 
+                alt="Stall" 
+                className="w-8 h-8 md:w-10 md:h-10 object-cover rounded-full"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+              <span className="text-xl md:text-2xl hidden">🏪</span>
+            </div>
+          </div>
+
+          <div className='w-full max-w-sm mx-auto mb-3'>
+            <DonateBar/>
+          </div>
+          
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 leading-tight">
+            Pick Your Stall
+          </h1>
+          
+          <p className="text-gray-700 text-sm md:text-base max-w-xl mx-auto mb-3 leading-relaxed">
+            Secure your premium business space for the 5-day grand event
+          </p>
+          
+          {/* Feature Pills - Compact */}
+          <div className="flex flex-wrap justify-center gap-2 text-xs md:text-sm">
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-3 py-1.5 rounded-full border border-green-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="font-semibold">Prime Locations</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="font-semibold">5-Day Event Pass</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-3 py-1.5 rounded-full border border-purple-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse"></div>
+              <span className="font-semibold">Premium Amenities</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Stall4 Image */}
+        <div className="hidden lg:flex flex-shrink-0">
+          <img 
+            src="/stallimg.png" 
+            alt="Stall" 
+            className="w-24 h-24 lg:w-60 lg:h-60 object-contain drop-shadow-lg"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
       </div>
-    </div>
-    
-    {/* Title */}
-    <h1 className="text-4xl md:text-5xl font-bold mb-3">
-      <span className="bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-        Pick Your Stall
-      </span>
-    </h1>
-    
-    {/* Subtitle */}
-    <p className="text-lg md:text-xl text-gray-600 font-medium mb-6 max-w-2xl mx-auto">
-      Secure your premium business space for the 5-day grand event
-    </p>
-    
-    {/* Feature Pills */}
-    <div className="flex flex-wrap justify-center gap-3 text-sm">
-      <div className="flex items-center gap-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-4 py-2 rounded-full border border-green-200/50 shadow-sm hover:shadow-md transition-shadow">
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span className="font-semibold">Prime Locations</span>
-      </div>
-      <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 px-4 py-2 rounded-full border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <span className="font-semibold">5-Day Event Pass</span>
-      </div>
-      <div className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full border border-purple-200/50 shadow-sm hover:shadow-md transition-shadow">
-        <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-        <span className="font-semibold">Premium Amenities</span>
-      </div>
-    </div>
-  </div>
-</div>
     </div>
   </div>
 </div>

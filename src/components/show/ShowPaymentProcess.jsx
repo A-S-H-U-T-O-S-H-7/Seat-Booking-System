@@ -21,6 +21,7 @@ const ShowPaymentProcess = () => {
     getBaseAmount,
     getEarlyBirdDiscount,
     getBulkDiscount,
+    getCurrentDiscountInfo,
     clearSelection,
     processBooking,
     bookingData
@@ -205,7 +206,49 @@ const ShowPaymentProcess = () => {
                 <div className="flex-1">
                   
                   <div className="space-y-2 text-sm">
-                    
+                    {/* Show base amount and discounts */}
+                    {getDiscountAmount() > 0 && (
+                      <div className="space-y-1 mb-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Base Amount:</span>
+                          <span className="text-gray-500 line-through">₹{getBaseAmount()?.toLocaleString('en-IN') || 0}</span>
+                        </div>
+                        
+                        {/* Enhanced discount display - show combined discounts */}
+                        {(() => {
+                          const currentDiscount = getCurrentDiscountInfo();
+                          if (currentDiscount) {
+                            if (currentDiscount.type === 'combined') {
+                              return (
+                                <div className="space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-green-600">Early Bird Discount ({currentDiscount.earlyBird.percent}%):</span>
+                                    <span className="text-green-600">-₹{currentDiscount.earlyBird.amount.toLocaleString('en-IN')}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-blue-600">Bulk Discount ({currentDiscount.bulk.percent}%):</span>
+                                    <span className="text-blue-600">-₹{currentDiscount.bulk.amount.toLocaleString('en-IN')}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center font-semibold">
+                                    <span className="text-purple-600">Total Savings ({currentDiscount.percent.toFixed(1)}%):</span>
+                                    <span className="text-purple-600">-₹{currentDiscount.amount.toLocaleString('en-IN')}</span>
+                                  </div>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-green-600">{currentDiscount.type === 'earlyBird' ? 'Early Bird' : 'Bulk'} Discount ({currentDiscount.percent}%):</span>
+                                  <span className="text-green-600">-₹{currentDiscount.amount.toLocaleString('en-IN')}</span>
+                                </div>
+                              );
+                            }
+                          }
+                          return null;
+                        })()
+                        }
+                      </div>
+                    )}
                     
                     <div className="flex justify-between items-center font-bold text-lg">
                       <span className="text-rose-800">Total Amount:</span>
@@ -223,9 +266,33 @@ const ShowPaymentProcess = () => {
                       ₹{getTotalAmount()?.toLocaleString('en-IN') || 0}
                     </div>
                     {getDiscountAmount() > 0 && (
-                      <p className="text-xs text-green-600 mt-1">
-                        You saved ₹{getDiscountAmount()?.toLocaleString('en-IN') || 0}!
-                      </p>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs text-gray-500 line-through">
+                          Originally ₹{getBaseAmount()?.toLocaleString('en-IN') || 0}
+                        </p>
+                        <p className="text-sm text-green-600 font-semibold">
+                          You saved ₹{getDiscountAmount()?.toLocaleString('en-IN') || 0}!
+                        </p>
+                        {/* Show combined discount badges */}
+                        {(() => {
+                          const currentDiscount = getCurrentDiscountInfo();
+                          if (currentDiscount && currentDiscount.type === 'combined') {
+                            return (
+                              <div className="flex flex-wrap justify-center gap-1 mt-2">
+                                <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                  🎉 {currentDiscount.earlyBird.percent}% Early Bird
+                                </span>
+                                <span className="text-xs text-gray-400">+</span>
+                                <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                  🎯 {currentDiscount.bulk.percent}% Bulk
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()
+                        }
+                      </div>
                     )}
                   </div>
                 </div>

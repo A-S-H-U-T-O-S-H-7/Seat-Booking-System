@@ -137,14 +137,14 @@ export default function BookingPage() {
 
                   {/* Right side - Mirror Jaga Image for better balance */}
                   <div className="hidden xl:flex flex-1 justify-center">
-                    {/* <img 
+                    <img 
                       src="/jaga1.png" 
                       alt="jaga" 
-                      className="w-32 h-32 md:w-44 md:h-62 object-contain drop-shadow-lg transform scale-x-[-1]"
+                      className="w-32 h-32 md:w-68 md:h-75  object-contain drop-shadow-lg transform scale-x-[-1]"
                       onError={(e) => {
                         e.target.style.display = 'none';
                       }}
-                    /> */}
+                    />
                   </div>
                 </div>
               </div>

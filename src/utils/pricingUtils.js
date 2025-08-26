@@ -26,7 +26,8 @@ export const calculatePriceBreakdown = ({
       discounts: {
         earlyBird: { percent: 0, applied: false, discount: null, daysUntil: 0 },
         bulk: { percent: 0, applied: false, discount: null },
-        best: { percent: 0, type: 'none', discount: null }
+        best: { percent: 0, type: 'none', discount: null },
+        combined: { percent: 0, applied: false }
       },
       discountAmount: 0,
       discountedAmount: 0,
@@ -42,11 +43,14 @@ export const calculatePriceBreakdown = ({
   // Calculate bulk discount
   const bulkDiscountResult = calculateBulkDiscount(quantity, bulkDiscounts, quantityKey);
   
-  // Determine best discount
+  // Calculate combined discounts
+  const combinedResult = calculateCombinedDiscount(earlyBirdResult, bulkDiscountResult);
+  
+  // Keep best discount for backward compatibility
   const bestDiscount = getBestDiscount(earlyBirdResult, bulkDiscountResult);
   
-  // Apply discount
-  const discountAmount = (baseAmount * bestDiscount.percent) / 100;
+  // Apply combined discount
+  const discountAmount = (baseAmount * combinedResult.percent) / 100;
   const discountedAmount = baseAmount - discountAmount;
   
   // Calculate tax
@@ -60,13 +64,15 @@ export const calculatePriceBreakdown = ({
     discounts: {
       earlyBird: earlyBirdResult,
       bulk: bulkDiscountResult,
-      best: bestDiscount
+      best: bestDiscount,
+      combined: combinedResult
     },
     discountAmount,
     discountedAmount,
     taxRate,
     taxAmount,
-    totalAmount
+    totalAmount,
+    originalAmount: baseAmount // For calculating savings (original price before discounts)
   };
 };
 
@@ -145,6 +151,54 @@ export const getBestDiscount = (earlyBirdResult, bulkDiscountResult) => {
 };
 
 /**
+ * Calculate combined discount from both early bird and bulk discounts
+ */
+export const calculateCombinedDiscount = (earlyBirdResult, bulkDiscountResult) => {
+  if (!earlyBirdResult.applied && !bulkDiscountResult.applied) {
+    return { percent: 0, applied: false };
+  }
+
+  // If both discounts are applicable, combine them
+  if (earlyBirdResult.applied && bulkDiscountResult.applied) {
+    // Simple addition of discount percentages
+    // If early bird is 10% and bulk is 2%, total discount is 12%
+    const earlyBirdPercent = earlyBirdResult.percent;
+    const bulkPercent = bulkDiscountResult.percent;
+    
+    // Calculate combined percentage using simple addition
+    const combinedPercent = earlyBirdPercent + bulkPercent;
+    
+    return {
+      percent: combinedPercent,
+      applied: true,
+      earlyBird: earlyBirdResult,
+      bulk: bulkDiscountResult
+    };
+  }
+  
+  // If only one discount is applicable, return that
+  if (earlyBirdResult.applied) {
+    return {
+      percent: earlyBirdResult.percent,
+      applied: true,
+      earlyBird: earlyBirdResult,
+      bulk: null
+    };
+  }
+  
+  if (bulkDiscountResult.applied) {
+    return {
+      percent: bulkDiscountResult.percent,
+      applied: true,
+      earlyBird: null,
+      bulk: bulkDiscountResult
+    };
+  }
+  
+  return { percent: 0, applied: false };
+};
+
+/**
  * Get next bulk milestone information
  */
 export const getNextBulkMilestone = (currentQuantity, bulkDiscounts = [], quantityKey = 'minSeats') => {
@@ -193,9 +247,31 @@ export const getDiscountDisplayInfo = (discountResult) => {
   return {
     type,
     percent,
-    title: discount?.title || `${percent}% ${type === 'earlyBird' ? 'Early Bird' : 'Bulk'} Discount`,
+    title: discount?.title || `${percent}% ${type === 'earlyBird' ? 'Early Bird' : type === 'bulk' ? 'Bulk' : 'Combined'} Discount`,
     description: discount?.description || `Save ${percent}% on your booking!`,
     savings: discount?.savings || null
+  };
+};
+
+/**
+ * Calculate savings amount based on original price and discounted price
+ */
+export const calculateSavings = (originalAmount, discountedAmount) => {
+  return originalAmount - discountedAmount;
+};
+
+/**
+ * Format savings for display
+ */
+export const formatSavings = (originalAmount, discountedAmount) => {
+  const savings = calculateSavings(originalAmount, discountedAmount);
+  if (savings <= 0) return null;
+  
+  return {
+    amount: savings,
+    formatted: formatCurrency(savings),
+    originalFormatted: formatCurrency(originalAmount),
+    percentSaved: Math.round((savings / originalAmount) * 100)
   };
 };
 
@@ -246,11 +322,13 @@ export const isBulkDiscountApplicable = (quantity, bulkDiscounts = [], quantityK
 export const getApplicableDiscounts = (quantity, selectedDate, earlyBirdDiscounts = [], bulkDiscounts = [], quantityKey = 'minSeats') => {
   const earlyBird = calculateEarlyBirdDiscount(selectedDate, earlyBirdDiscounts);
   const bulk = calculateBulkDiscount(quantity, bulkDiscounts, quantityKey);
+  const combined = calculateCombinedDiscount(earlyBird, bulk);
   
   return {
     earlyBird,
     bulk,
     hasAnyDiscount: earlyBird.applied || bulk.applied,
-    bestDiscount: getBestDiscount(earlyBird, bulk)
+    bestDiscount: getBestDiscount(earlyBird, bulk),
+    combinedDiscount: combined
   };
 };

@@ -20,6 +20,8 @@ export default function ShowAuditorium() {
     getEarlyBirdDiscount,
     getBulkDiscount,
     getNextMilestone,
+    getCurrentDiscountInfo,
+    getPricingBreakdown,
     priceSettings
   } = useShowSeatBooking();
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -683,25 +685,42 @@ export default function ShowAuditorium() {
                   <div className="text-sm text-gray-500">
                     <span className="line-through">₹{getBaseAmount().toLocaleString()}</span>
                     <span className="text-green-600 font-medium ml-2">
-                      ₹{getDiscountAmount().toLocaleString()} saved
+                      You saved ₹{getDiscountAmount().toLocaleString()}!
                     </span>
                   </div>
                 )}
               </div>
               
-              {/* Discount Badges */}
+              {/* Discount Badges - Enhanced for Combined Discounts */}
               <div className="text-right space-y-1">
-                {getEarlyBirdDiscount() > 0 && (
-                  <div className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mr-1">
-                    🎉 {getEarlyBirdDiscount()}% Early Bird!
-                  </div>
-                )}
-                
-                {getBulkDiscount() > 0 && (
-                  <div className="inline-block text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                    🎯 {getBulkDiscount()}% Bulk!
-                  </div>
-                )}
+                {(() => {
+                  const currentDiscount = getCurrentDiscountInfo();
+                  if (currentDiscount) {
+                    if (currentDiscount.type === 'combined') {
+                      return (
+                        <div className="space-y-1">
+                          
+                          <div className="text-xs text-green-700">
+                            {currentDiscount.earlyBird.percent}% Early Bird + {currentDiscount.bulk.percent}% Bulk
+                          </div>
+                        </div>
+                      );
+                    } else if (currentDiscount.type === 'earlyBird') {
+                      return (
+                        <div className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full mr-1">
+                          🎉 {currentDiscount.percent}% Early Bird!
+                        </div>
+                      );
+                    } else if (currentDiscount.type === 'bulk') {
+                      return (
+                        <div className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          🎯 {currentDiscount.percent}% Bulk!
+                        </div>
+                      );
+                    }
+                  }
+                  return null;
+                })()}
                 
                 {/* Show seat type breakdown */}
                 <div className="text-xs text-gray-600 mt-2">

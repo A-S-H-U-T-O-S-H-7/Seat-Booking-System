@@ -492,12 +492,14 @@ export const ShowSeatBookingProvider = ({ children }) => {
         discounts: {
           earlyBird: { percent: 0, applied: false },
           bulk: { percent: 0, applied: false },
-          best: { percent: 0, type: 'none' }
+          best: { percent: 0, type: 'none' },
+          combined: { percent: 0, applied: false }
         },
         discountAmount: 0,
         discountedAmount: 0,
         taxAmount: 0,
-        totalAmount: 0
+        totalAmount: 0,
+        originalAmount: 0
       };
     }
     
@@ -517,12 +519,15 @@ export const ShowSeatBookingProvider = ({ children }) => {
     
     // Override baseAmount to use actual sum instead of calculated average * quantity
     // This ensures that mixed-price seats are calculated correctly
+    // Use combined discount instead of best discount
+    const combinedDiscountPercent = breakdown.discounts.combined.percent;
     const result = {
       ...breakdown,
       baseAmount: baseAmount,
-      discountAmount: Math.round((baseAmount * breakdown.discounts.best.percent) / 100),
-      discountedAmount: baseAmount - Math.round((baseAmount * breakdown.discounts.best.percent) / 100),
-      totalAmount: baseAmount - Math.round((baseAmount * breakdown.discounts.best.percent) / 100) + breakdown.taxAmount
+      discountAmount: Math.round((baseAmount * combinedDiscountPercent) / 100),
+      discountedAmount: baseAmount - Math.round((baseAmount * combinedDiscountPercent) / 100),
+      totalAmount: baseAmount - Math.round((baseAmount * combinedDiscountPercent) / 100) + breakdown.taxAmount,
+      originalAmount: baseAmount
     };
     
     return result;
@@ -565,6 +570,58 @@ export const ShowSeatBookingProvider = ({ children }) => {
       state.priceSettings.bulkBookingDiscounts,
       'minSeats'
     );
+  };
+
+  const getTotalDiscountPercent = () => {
+    const breakdown = getPricingBreakdown();
+    return breakdown.discounts.combined.percent;
+  };
+  
+  // Get current discount info for display
+  const getCurrentDiscountInfo = () => {
+    const breakdown = getPricingBreakdown();
+    const combinedDiscount = breakdown.discounts.combined;
+    
+    if (!combinedDiscount.applied || combinedDiscount.percent === 0) {
+      return null;
+    }
+
+    // If both discounts are applied
+    if (combinedDiscount.earlyBird && combinedDiscount.bulk) {
+      return {
+        type: 'combined',
+        percent: combinedDiscount.percent,
+        label: 'Early Bird + Bulk Discount',
+        earlyBird: {
+          percent: combinedDiscount.earlyBird.percent,
+          label: 'Early Bird'
+        },
+        bulk: {
+          percent: combinedDiscount.bulk.percent,
+          label: 'Bulk Discount'
+        }
+      };
+    }
+    
+    // If only early bird is applied
+    if (combinedDiscount.earlyBird) {
+      return {
+        type: 'earlyBird',
+        percent: combinedDiscount.percent,
+        label: 'Early Bird Discount'
+      };
+    }
+    
+    // If only bulk discount is applied
+    if (combinedDiscount.bulk) {
+      return {
+        type: 'bulk',
+        percent: combinedDiscount.percent,
+        label: 'Bulk Discount'
+      };
+    }
+    
+    return null;
   };
 
   // Get seat status
@@ -724,6 +781,8 @@ export const ShowSeatBookingProvider = ({ children }) => {
     getEarlyBirdDiscount,
     getBulkDiscount,
     getNextMilestone,
+    getTotalDiscountPercent,
+    getCurrentDiscountInfo,
     // Export pricing settings for components
     priceSettings: state.priceSettings
   };

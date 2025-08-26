@@ -26,6 +26,7 @@ const PaymentProcess = ({ customerDetails }) => {
     selectedShift,
     selectedSeats,
     getTotalAmount,
+    getPricingBreakdown,
   } = useBooking();
 
   const { getShiftLabel, getShiftTime } = useShifts();
@@ -349,7 +350,23 @@ const PaymentProcess = ({ customerDetails }) => {
               <div className="flex flex-col sm:flex-row justify-between items-center text-center sm:text-left">
                 <div className="mb-2 sm:mb-0">
                   <h4 className="text-base sm:text-lg font-semibold text-amber-800">Total Amount to Pay</h4>
-                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-amber-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.”</p>
+                  {(() => {
+                    const pricingBreakdown = getPricingBreakdown();
+                    const hasDiscount = pricingBreakdown.discounts.combined.applied;
+                    
+                    if (hasDiscount) {
+                      return (
+                        <div className="mb-2">
+                          <p className="text-sm text-gray-600">
+                            <span className="line-through">₹{pricingBreakdown.originalAmount.toLocaleString('en-IN')}</span>
+                            <span className="ml-2 text-green-600 font-semibold">You saved ₹{pricingBreakdown.discountAmount.toLocaleString('en-IN')}!</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  <p className="text-xs max-w-lg mt-2 sm:text-sm text-amber-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act."</p>
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-amber-800 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl shadow-md">
                   ₹{getTotalAmount()}

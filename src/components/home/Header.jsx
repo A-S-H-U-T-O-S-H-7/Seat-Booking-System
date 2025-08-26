@@ -18,11 +18,14 @@ function Header({ user, handleLogout, onShowEventLayout }) {
       <div className="px-2 sm:px-6 lg:px-8 py-3 sm:py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center pr-2">
+              <a href="https://svsamiti.com" target="_blank" rel="noopener noreferrer">
+
             <img 
               src="/header-logo.png" 
               alt="Havan Logo" 
               
             />
+             </a>
             
           </div>
           

@@ -149,6 +149,14 @@ const PricingBreakdown = ({ compact = false }) => {
         <div className="flex justify-between items-center">
           <div>
             <h4 className="text-lg font-semibold text-amber-800">Final Total</h4>
+            {breakdown.discounts.combined.applied && (
+              <div className="text-sm text-gray-600 mt-1">
+                <span className="line-through text-gray-500">{formatCurrency(breakdown.originalAmount)}</span>
+                <span className="ml-2 text-green-600 font-semibold">
+                  You saved {formatCurrency(breakdown.discountAmount)}!
+                </span>
+              </div>
+            )}
             <p className="text-sm text-amber-600">All taxes and discounts included</p>
           </div>
           <div className="text-2xl font-bold text-amber-800">

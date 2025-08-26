@@ -127,6 +127,14 @@ const ShowBookingFlow = () => {
         className="w-20 h-32 md:w-74 md:h-79 object-contain "
       />
     </div>
+    {/* Odissi Image on Right Side */}
+    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:block z-10">
+      <img 
+        src="/odishi3.png" 
+        alt="Odissi Dance" 
+        className="w-20 h-32 md:w-74 md:h-79 object-contain "
+      />
+    </div>
     
     {/* Corner Mandala Decorations - Bigger and more visible */}
     {/* Top Left Corner */}
@@ -189,6 +197,7 @@ const ShowBookingFlow = () => {
         ✨ Reserve your place for an evening of culture and celebration 🎶🎉
       </p>                
     </div>
+    
   </div>
 </div>
           {/* Progress Steps */}

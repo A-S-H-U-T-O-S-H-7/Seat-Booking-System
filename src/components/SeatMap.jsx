@@ -23,7 +23,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
 };
   
   // Get pricing information from booking context
-  const { priceSettings, getTotalAmount, getCurrentDiscountInfo, getNextMilestone } = useBooking();
+  const { priceSettings, getTotalAmount, getCurrentDiscountInfo, getNextMilestone, getPricingBreakdown } = useBooking();
   
   // Initialize seat cleanup for expired blocked seats
   const { manualCleanup } = useSeatCleanup();
@@ -446,7 +446,19 @@ default:
               </div>
               <div className="text-blue-700 hidden sm:block text-right flex-shrink-0">
                 <p className="font-bold text-lg">₹{getTotalAmount()}</p>
-                <p className="text-xs opacity-75">₹{priceSettings.defaultSeatPrice}/seat</p>
+                {(() => {
+                  const breakdown = getPricingBreakdown();
+                  const hasDiscount = breakdown.discounts.combined.applied;
+                  
+                  if (hasDiscount) {
+                    return (
+                      <p className="text-xs text-green-600 font-semibold">
+                        You saved ₹{breakdown.discountAmount.toLocaleString('en-IN')}
+                      </p>
+                    );
+                  }
+                  return <p className="text-xs opacity-75">₹{priceSettings.defaultSeatPrice}/seat</p>;
+                })()}
               </div>
             </div>
             
@@ -456,14 +468,30 @@ default:
               {(() => {
                 const currentDiscount = getCurrentDiscountInfo();
                 if (currentDiscount) {
-                  return (
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-600 text-xs">🎉</span>
-                      <span className="text-green-800 text-xs font-medium">
-                        {currentDiscount.percent}% {currentDiscount.label} Applied!
-                      </span>
-                    </div>
-                  );
+                  if (currentDiscount.type === 'combined') {
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1">
+                          <span className="text-green-600 text-xs">🎉</span>
+                          <span className="text-green-800 text-xs font-medium">
+                            {currentDiscount.percent.toFixed(1)}% Total Savings!
+                          </span>
+                        </div>
+                        <div className="text-xs text-green-700 ml-3">
+                          {currentDiscount.earlyBird.percent}% Early Bird + {currentDiscount.bulk.percent}% Bulk
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="flex items-center gap-1">
+                        <span className="text-green-600 text-xs">🎉</span>
+                        <span className="text-green-800 text-xs font-medium">
+                          {currentDiscount.percent}% {currentDiscount.label} Applied!
+                        </span>
+                      </div>
+                    );
+                  }
                 }
                 return null;
               })()}
