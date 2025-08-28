@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import { useLocationData } from '@/hooks/useLocationData';
 
 export default function DonationForm() {
   const [donorType, setDonorType] = useState('indian');
@@ -13,7 +14,7 @@ export default function DonationForm() {
     email: '',
     mobile: '',
     address: '',
-    country: 'india',
+    country: '',
     state: '',
     city: '',
     pincode: ''
@@ -21,12 +22,22 @@ export default function DonationForm() {
 
   const router = useRouter();
   const { user } = useAuth();
+  
+  // Use location data hook similar to delegate form
+  const { countries, states, cities, loading } = useLocationData(formData);
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    let updatedData = { ...formData, [name]: value };
+    
+    // Clear dependent fields when country or state changes
+    if (name === 'country') {
+      updatedData = { ...updatedData, state: '', city: '' };
+    } else if (name === 'state') {
+      updatedData = { ...updatedData, city: '' };
+    }
+    
+    setFormData(updatedData);
   };
 
   const validateForm = () => {
@@ -52,12 +63,16 @@ export default function DonationForm() {
       errors.push('Please enter a complete address');
     }
     
+    if (!formData.country || formData.country.trim().length < 2) {
+      errors.push('Please select your country');
+    }
+    
     if (!formData.state || formData.state.trim().length < 2) {
-      errors.push('Please enter your state');
+      errors.push('Please select your state');
     }
     
     if (!formData.city || formData.city.trim().length < 2) {
-      errors.push('Please enter your city');
+      errors.push('Please select your city');
     }
     
     if (!formData.pincode || !/^[0-9]{6}$/.test(formData.pincode)) {
@@ -229,9 +244,9 @@ export default function DonationForm() {
   };
 
   return (
-    <div className="lg:col-span-3  bg-gradient-to-br from-pink-50  to-purple-100 rounded-xl shadow-lg p-4 border-2 border-purple-300 h-fit">
-      <h2 className="text-2xl py-6 font-bold text-purple-500 mb-4 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
-        Make a Difference Today
+    <div className="lg:col-span-3 bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100 rounded-xl shadow-lg p-4 border-2 border-pink-200 h-fit">
+      <h2 className="text-2xl py-6 font-bold text-pink-700 mb-4 text-center">
+        💝 Make a Difference Today
       </h2>
       
       <div className="space-y-3">
@@ -334,49 +349,54 @@ export default function DonationForm() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
-              Country
+              Country*
             </label>
             <select 
               name="country"
               value={formData.country}
               onChange={handleInputChange}
-              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 text-xs"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent text-gray-900 text-xs"
+              disabled={loading.countries}
             >
-              <option value="">Select</option>
-              <option value="india">India</option>
-              <option value="usa">USA</option>
-              <option value="uk">UK</option>
-              <option value="canada">Canada</option>
-              <option value="australia">Australia</option>
+              <option value="">Select Country</option>
+              {countries.map(country => (
+                <option key={country.iso2} value={country.name}>{country.name}</option>
+              ))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
               State*
             </label>
-            <input
-              type="text"
+            <select
               name="state"
               value={formData.state}
               onChange={handleInputChange}
-              placeholder="State"
-              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400 text-xs"
-              required
-            />
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent text-gray-900 text-xs"
+              disabled={!states.length || loading.states}
+            >
+              <option value="">Select State</option>
+              {states.map(state => (
+                <option key={state.iso2} value={state.name}>{state.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
               City*
             </label>
-            <input
-              type="text"
+            <select
               name="city"
               value={formData.city}
               onChange={handleInputChange}
-              placeholder="City"
-              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400 text-xs"
-              required
-            />
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent text-gray-900 text-xs"
+              disabled={!cities.length || loading.cities}
+            >
+              <option value="">Select City</option>
+              {cities.map(city => (
+                <option key={city.id} value={city.name}>{city.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -388,7 +408,8 @@ export default function DonationForm() {
               value={formData.pincode}
               onChange={handleInputChange}
               placeholder="PIN"
-              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400 text-xs"
+              maxLength="6"
+              className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400 text-xs"
               required
             />
           </div>

@@ -12,7 +12,8 @@ import { format, differenceInDays, parseISO } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import ShowBookingCard from '@/components/show/ShowBookingCard';
 import StallBookingCard from '@/components/stall/StallBookingCard';
-import DelegateCard from '@/components/profile/DelegateCard';
+import DelegateCard from '@/components/deligateRegistration/DelegateCard';
+import DonationCard from '@/components/profile/DonationCard';
 import ImageModal from '@/components/ImageModal';
 import { useShifts } from '@/hooks/useShifts';
 import { cancelBooking } from '@/utils/cancellationUtils';
@@ -24,6 +25,7 @@ const ProfilePage = () => {
   const [showBookings, setShowBookings] = useState([]);
   const [stallBookings, setStallBookings] = useState([]);
   const [delegateBookings, setDelegateBookings] = useState([]);
+  const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingBooking, setCancellingBooking] = useState(null);
   const [activeTab, setActiveTab] = useState('havan');
@@ -37,6 +39,7 @@ const ProfilePage = () => {
       fetchUserShowBookings();
       fetchUserStallBookings();
       fetchUserDelegateBookings();
+      fetchUserDonations();
     }
   }, [user]);
 
@@ -373,6 +376,61 @@ const ProfilePage = () => {
     }
   };
 
+  const fetchUserDonations = async () => {
+    try {
+      console.log('Fetching donations for user:', user.uid);
+      
+      // Query both guest donations (no userId) and user donations
+      const userDonationsQuery = query(
+        collection(db, 'donations'),
+        where('userId', '==', user.uid)
+      );
+      
+      const snapshot = await getDocs(userDonationsQuery);
+      console.log('Found', snapshot.size, 'donations');
+      
+      const donationsData = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        console.log('Donation data:', data);
+        
+        let createdDate;
+        if (data.createdAt) {
+          if (data.createdAt.toDate && typeof data.createdAt.toDate === 'function') {
+            createdDate = data.createdAt.toDate();
+          } else if (data.createdAt.seconds) {
+            createdDate = new Date(data.createdAt.seconds * 1000);
+          } else if (typeof data.createdAt === 'string') {
+            createdDate = parseISO(data.createdAt);
+          } else if (data.createdAt instanceof Date) {
+            createdDate = data.createdAt;
+          } else {
+            createdDate = new Date();
+          }
+        } else {
+          createdDate = new Date();
+        }
+        
+        donationsData.push({
+          id: doc.id,
+          ...data,
+          createdAt: createdDate,
+          type: 'donation' // Add type identifier
+        });
+      });
+      
+      // Sort by creation date (newest first)
+      donationsData.sort((a, b) => b.createdAt - a.createdAt);
+      
+      console.log('Processed donations:', donationsData);
+      setDonations(donationsData);
+    } catch (error) {
+      console.error('Error fetching donations:', error);
+      toast.error('Failed to load donation history');
+    }
+  };
+
 
   const canCancelBooking = (eventDate) => {
     const today = new Date();
@@ -389,6 +447,8 @@ const ProfilePage = () => {
       fetchUserStallBookings();
     } else if (activeTab === 'delegates') {
       fetchUserDelegateBookings();
+    } else if (activeTab === 'donations') {
+      fetchUserDonations();
     }
   };
 
@@ -563,6 +623,10 @@ const ProfilePage = () => {
     return <DelegateCard key={booking.id} booking={booking} />;
   };
 
+  const renderDonationCard = (donation) => {
+    return <DonationCard key={donation.id} donation={donation} />;
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -675,11 +739,21 @@ const ProfilePage = () => {
                       onClick={() => setActiveTab('delegates')}
                       className={`flex-1 px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                         activeTab === 'delegates'
-                          ? 'bg-white text-emerald-600 shadow-sm'
-                          : 'text-gray-600 hover:text-emerald-600'
+                          ? 'bg-white text-yellow-600 shadow-sm'
+                          : 'text-gray-600 hover:text-yellow-600'
                       }`}
                     >
                       Delegates ({delegateBookings.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('donations')}
+                      className={`flex-1 px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+                        activeTab === 'donations'
+                          ? 'bg-white text-pink-600 shadow-sm'
+                          : 'text-gray-600 hover:text-pink-600'
+                      }`}
+                    >
+                      Donations ({donations.length})
                     </button>
                   </div>
                 </div>
@@ -755,7 +829,7 @@ const ProfilePage = () => {
                       <p className="text-gray-400 mb-4">Register as a delegate for the event</p>
                       <Link
                         href="/booking/delegate"
-                        className="inline-block bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+                        className="inline-block bg-gradient-to-r from-yellow-500 via-white-500 to-amber-500 hover:from-yellow-600 hover:via-white-600 hover:to-amber-600 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
                       >
                         Register as Delegate
                       </Link>
@@ -763,6 +837,26 @@ const ProfilePage = () => {
                   ) : (
                     <div className="space-y-4">
                       {delegateBookings.map((booking) => renderDelegateBookingCard(booking))}
+                    </div>
+                  )
+                ) : activeTab === 'donations' ? (
+                  donations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl text-gray-400">💝</span>
+                      </div>
+                      <h4 className="text-lg font-medium text-gray-500 mb-2">No donations yet</h4>
+                      <p className="text-gray-400 mb-4">Make your first donation to support our cause</p>
+                      <Link
+                        href="/donate"
+                        className="inline-block bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white px-6 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg"
+                      >
+                        💝 Make a Donation
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {donations.map((donation) => renderDonationCard(donation))}
                     </div>
                   )
                 ) : null}
@@ -794,9 +888,15 @@ const ProfilePage = () => {
                   </Link>
                   <Link
                     href="/booking/delegate"
-                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
+                    className="w-full bg-gradient-to-r from-yellow-500 via-white-500 to-amber-500 hover:from-yellow-600 hover:via-yellow-600 hover:to-amber-600 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
                   >
                     🎓 Register as Delegate
+                  </Link>
+                  <Link
+                    href="/donate"
+                    className="w-full bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white px-4 py-3 rounded-lg font-medium transform hover:scale-105 transition-all duration-200 shadow-md hover:shadow-lg text-center block"
+                  >
+                    💝 Make a Donation
                   </Link>
                   <button
                     onClick={refreshBookings}
