@@ -24,6 +24,23 @@ export const validateForm = (formData) => {
   
   if (!formData.country) errors.country = 'Country is required';
   if (!formData.participation) errors.participation = 'Participation type is required';
+  if (!formData.registrationType) errors.registrationType = 'Registration type is required';
+  
+  // Registration type specific validations
+  if (formData.registrationType === 'Company') {
+    if (!formData.companyname || !formData.companyname.trim()) {
+      errors.companyname = 'Company name is required';
+    }
+  }
+  
+  if (formData.registrationType === 'Temple') {
+    if (!formData.templename || !formData.templename.trim()) {
+      errors.templename = 'Temple name is required';
+    }
+    if (!formData.brief || !formData.brief.trim()) {
+      errors.brief = 'Brief profile is required for temple registration';
+    }
+  }
   
   // Address and location validations
   if (!formData.address || !formData.address.trim()) {
@@ -38,20 +55,32 @@ export const validateForm = (formData) => {
     errors.pincode = 'Pincode must be exactly 6 digits';
   }
   
-  // Aadhar validation (now mandatory)
-  if (!formData.aadharno || !formData.aadharno.trim()) {
-    errors.aadharno = 'Aadhar number is required';
-  } else {
-    const cleanAadhar = formData.aadharno.replace(/\D/g, '');
-    if (cleanAadhar.length !== 12) {
-      errors.aadharno = 'Aadhar number must be exactly 12 digits';
-    }
-  }
+  // Country-based document validation
+  const isIndianResident = formData.country && formData.country.toLowerCase().includes('india');
   
-  // PAN validation (optional but must be valid if provided)
-  if (formData.pan && formData.pan.trim()) {
-    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan.trim().toUpperCase())) {
-      errors.pan = 'PAN must be in format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)';
+  if (isIndianResident) {
+    // For Indian residents: Aadhar is mandatory, PAN optional
+    if (!formData.aadharno || !formData.aadharno.trim()) {
+      errors.aadharno = 'Aadhar number is required for Indian residents';
+    } else {
+      const cleanAadhar = formData.aadharno.replace(/\D/g, '');
+      if (cleanAadhar.length !== 12) {
+        errors.aadharno = 'Aadhar number must be exactly 12 digits';
+      }
+    }
+    
+    // PAN validation (optional but must be valid if provided)
+    if (formData.pan && formData.pan.trim()) {
+      if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan.trim().toUpperCase())) {
+        errors.pan = 'PAN must be in format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)';
+      }
+    }
+  } else {
+    // For non-Indian residents: Passport is mandatory
+    if (!formData.passportno || !formData.passportno.trim()) {
+      errors.passportno = 'Passport number is required for international delegates';
+    } else if (formData.passportno.trim().length < 6) {
+      errors.passportno = 'Passport number must be at least 6 characters';
     }
   }
 

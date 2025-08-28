@@ -108,13 +108,13 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
               <input
                 type="number"
                 name="numberOfPersons"
-                value={formData.numberOfPersons}
+                value={formData.numberOfPersons || '1'}
                 onChange={handleInputChange}
                 min="1"
                 className={`w-full text-gray-800 pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all ${
                   errors.numberOfPersons ? 'border-red-500' : 'border-gray-300'
                 }`}
-                placeholder="Number of persons"
+                placeholder="1"
               />
             </div>
             {errors.numberOfPersons && <p className="text-red-500 text-xs mt-1">{errors.numberOfPersons}</p>}
@@ -122,7 +122,7 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
         </div>
       )}
 
-      {formData.delegateType && formData.numberOfPersons && (
+      {formData.delegateType && (
         <div className="bg-white p-4 rounded-lg border-2 border-emerald-300 shadow-sm">
           <div className="text-center">
             <p className="text-xl font-bold text-emerald-700 mb-1">
@@ -130,8 +130,8 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
             </p>
             <p className="text-sm text-gray-600">
               {formData.delegateType === 'withoutAssistance' 
-                ? `${formData.numberOfPersons} person(s) × 5 days × ₹${PRICING_CONFIG.withoutAssistance.pricePerPerson.toLocaleString()}`
-                : `${formData.numberOfPersons} person(s) × ${formData.days || 2} day(s) × ₹${PRICING_CONFIG.withAssistance.pricePerPersonPerDay.toLocaleString()}`
+                ? `${formData.numberOfPersons || 1} person(s) × ${PRICING_CONFIG.withoutAssistance.fixedDays} days × ₹${PRICING_CONFIG.withoutAssistance.pricePerPerson.toLocaleString()}`
+                : `${formData.numberOfPersons || 1} person(s) × ${formData.days || PRICING_CONFIG.withAssistance.minDays} day(s) × ₹${PRICING_CONFIG.withAssistance.pricePerPersonPerDay.toLocaleString()}`
               }
             </p>
           </div>

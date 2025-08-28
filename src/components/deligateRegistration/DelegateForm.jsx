@@ -27,11 +27,13 @@ const DelegateForm = () => {
     city: '',
     address: '',
     pincode: '',
-    participation: '',
-    delegateType: '',
-    days: '',
-    numberOfPersons: '',
+    participation: 'Delegate', // Default to Delegate
+    registrationType: '', // Company, Temple, Individual
+    templename: '', // For temple registration
     designation: '',
+    numberOfPersons: '1', // Default value
+    delegateType: '',
+    days: '', // Will be set when delegateType is selected
     brief: '',
     aadharno: '',
     passportno: '',
@@ -170,13 +172,29 @@ const DelegateForm = () => {
     console.log('Processing delegate booking...', bookingId);
     
     try {
+      // Prepare delegate details without the file object
+      const { selfie, ...delegateDetailsWithoutFile } = formData;
+      
+      // Add file information if file exists
+      const fileInfo = selectedFile ? {
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size,
+        fileType: selectedFile.type,
+        fileUploaded: true
+      } : {
+        fileUploaded: false
+      };
+      
       // Create delegate booking in Firebase
       const bookingRef = doc(db, 'delegateBookings', bookingId);
       await setDoc(bookingRef, {
         id: bookingId,
         bookingId: bookingId,
         userId: user?.uid || 'guest',
-        delegateDetails: formData,
+        delegateDetails: {
+          ...delegateDetailsWithoutFile,
+          fileInfo: fileInfo
+        },
         totalAmount: calculateFormAmount(),
         payment: {
           ...paymentData,
@@ -191,7 +209,12 @@ const DelegateForm = () => {
           participationType: formData.participation,
           delegateType: formData.delegateType,
           duration: formData.days,
-          numberOfPersons: formData.numberOfPersons
+          numberOfPersons: formData.numberOfPersons,
+          designation: formData.designation,
+          registrationType: formData.registrationType,
+          companyName: formData.companyname,
+          templeName: formData.templename,
+          briefProfile: formData.brief
         }
       });
       
@@ -199,7 +222,17 @@ const DelegateForm = () => {
       
     } catch (error) {
       console.error('❌ Error creating delegate booking:', error);
-      throw error;
+      
+      // More detailed error logging
+      if (error.code) {
+        console.error('Firebase Error Code:', error.code);
+      }
+      if (error.message) {
+        console.error('Firebase Error Message:', error.message);
+      }
+      
+      // Re-throw with more user-friendly message
+      throw new Error(`Failed to create booking: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -280,7 +313,17 @@ const DelegateForm = () => {
       
     } catch (error) {
       console.error('Delegate Booking/Payment failed:', error);
-      toast.error(error.message || 'Failed to initiate payment. Please try again.');
+      
+      // More specific error handling
+      if (error.message.includes('permission')) {
+        toast.error('Permission denied. Please ensure you are logged in.');
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        toast.error('Network error. Please check your internet connection.');
+      } else if (error.message.includes('validation')) {
+        toast.error('Payment validation failed. Please try again.');
+      } else {
+        toast.error(error.message || 'Failed to initiate payment. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -344,10 +387,12 @@ const DelegateForm = () => {
           city: '',
           address: '',
           pincode: '',
-          participation: '',
+          participation: 'Delegate',
+          registrationType: '',
+          templename: '',
           delegateType: '',
           days: '',
-          numberOfPersons: '',
+          numberOfPersons: '1',
           designation: '',
           brief: '',
           aadharno: '',
@@ -360,7 +405,15 @@ const DelegateForm = () => {
         
       } catch (error) {
         console.error('Free registration error:', error);
-        toast.error('Registration failed. Please try again.');
+        
+        // Show more specific error message
+        if (error.message.includes('permission')) {
+          toast.error('Permission denied. Please ensure you are logged in.');
+        } else if (error.message.includes('network')) {
+          toast.error('Network error. Please check your internet connection.');
+        } else {
+          toast.error(`Registration failed: ${error.message}`);
+        }
       } finally {
         setIsSubmitting(false);
       }
