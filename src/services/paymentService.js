@@ -80,6 +80,11 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
         await updateStallAvailabilityAfterPayment(bookingData, true);
       }
       
+      // If it's a delegate booking, no availability update needed
+      if (bookingType === 'delegate') {
+        console.log('✅ Delegate booking payment confirmed - no availability update required');
+      }
+      
       console.log('✅ Payment successful - confirming booking');
       
     } else {
@@ -100,6 +105,11 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
       // Release stalls
       if (bookingType === 'stall' && bookingData.stallIds) {
         await updateStallAvailabilityAfterPayment(bookingData, false);
+      }
+      
+      // If it's a delegate booking, no availability update needed
+      if (bookingType === 'delegate') {
+        console.log('❌ Delegate booking payment failed - no availability release required');
       }
       
       console.log('❌ Payment failed - cancelling booking');
@@ -284,6 +294,8 @@ function getCollectionName(bookingType) {
       return 'stallBookings';
     case 'donation':
       return 'donations';
+    case 'delegate':
+      return 'delegateBookings';
     default:
       return 'bookings';
   }
@@ -322,6 +334,10 @@ export async function getBookingTypeFromOrderId(orderId, purpose) {
       console.log('✅ Detected stall from purpose');
       return 'stall';
     }
+    if (purpose.includes('delegate')) {
+      console.log('✅ Detected delegate from purpose');
+      return 'delegate';
+    }
   }
   
   // Fallback to order ID pattern  
@@ -340,6 +356,10 @@ export async function getBookingTypeFromOrderId(orderId, purpose) {
   if (orderId.startsWith('STALL-') || orderId.includes('stall')) {
     console.log('✅ Detected stall from ID pattern');
     return 'stall';
+  }
+  if (orderId.startsWith('DELEGATE-') || orderId.includes('delegate')) {
+    console.log('✅ Detected delegate from ID pattern');
+    return 'delegate';
   }
   
   // For Firebase auto-generated IDs, try to check the actual collections
@@ -376,6 +396,14 @@ export async function getBookingTypeFromOrderId(orderId, purpose) {
     if (donationDoc.exists()) {
       console.log('✅ Found in donations collection');
       return 'donation';
+    }
+    
+    // Check delegate bookings
+    const delegateBookingRef = doc(db, 'delegateBookings', orderId);
+    const delegateDoc = await getDoc(delegateBookingRef);
+    if (delegateDoc.exists()) {
+      console.log('✅ Found in delegateBookings collection');
+      return 'delegate';
     }
     
   } catch (error) {

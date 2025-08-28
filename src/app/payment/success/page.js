@@ -68,9 +68,14 @@ function PaymentSuccessContent() {
             const bookingRef = doc(db, "stallBookings", orderId);
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) bookingData = bookingSnap.data();
-          } else if (orderId.startsWith("DN")) {
-            detectedType = "donation";
-            const bookingRef = doc(db, "donations", orderId);
+          } else if (orderId.startsWith('DN')) {
+            detectedType = 'donation';
+            const bookingRef = doc(db, 'donations', orderId);
+            const bookingSnap = await getDoc(bookingRef);
+            if (bookingSnap.exists()) bookingData = bookingSnap.data();
+          } else if (orderId.startsWith('DELEGATE-')) {
+            detectedType = 'delegate';
+            const bookingRef = doc(db, 'delegateBookings', orderId);
             const bookingSnap = await getDoc(bookingRef);
             if (bookingSnap.exists()) bookingData = bookingSnap.data();
           } else {
@@ -387,6 +392,93 @@ function PaymentSuccessContent() {
                           <p className="font-medium text-gray-700 mb-1">Address:</p>
                           <p className="text-gray-900 text-sm">
                             {bookingDetails?.donorDetails?.address}, {bookingDetails?.donorDetails?.city}, {bookingDetails?.donorDetails?.state} - {bookingDetails?.donorDetails?.pincode}
+                          </p>
+                        </div>
+                      </>
+                  );
+                  }
+                  
+                  // Delegate booking details
+                  if (bookingType === 'delegate') {
+                    return (
+                      <>
+                        <div className="bg-gradient-to-r from-emerald-100 to-teal-100 p-4 rounded-lg mb-4">
+                          <h4 className="font-semibold text-emerald-800 mb-2 flex items-center">
+                            🎓 Delegate Registration Details
+                          </h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Delegate Name:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.delegateDetails?.name || 'N/A'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium text-gray-700">Company:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.delegateDetails?.companyname || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Email:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.delegateDetails?.email || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Mobile:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.delegateDetails?.mobile || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Participation Type:</p>
+                            <p className="text-gray-900 capitalize font-semibold text-emerald-700">
+                              {bookingDetails?.eventDetails?.participationType || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Delegate Type:</p>
+                            <p className="text-gray-900 capitalize">
+                              {bookingDetails?.eventDetails?.delegateType?.replace('withoutAssistance', 'Without Assistance').replace('withAssistance', 'With Assistance') || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Duration:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.eventDetails?.duration || 'N/A'} days
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Number of Persons:</p>
+                            <p className="text-gray-900 font-semibold">
+                              {bookingDetails?.eventDetails?.numberOfPersons || 1}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-gray-700 mb-1">Location:</p>
+                          <p className="text-gray-900 text-sm">
+                            {bookingDetails?.delegateDetails?.city}, {bookingDetails?.delegateDetails?.state}, {bookingDetails?.delegateDetails?.country}
+                          </p>
+                        </div>
+                        
+                        <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded">
+                          <p className="text-emerald-800 text-sm font-medium">
+                            ✨ <strong>Welcome to SVS Global Summit!</strong> Your delegate registration is confirmed. Event details and access credentials will be shared via email.
                           </p>
                         </div>
                       </>

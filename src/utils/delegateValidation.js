@@ -1,0 +1,92 @@
+// Form validation utilities
+export const validateForm = (formData) => {
+  const errors = {};
+  
+  // Required field validations
+  if (!formData.name.trim()) errors.name = 'Name is required';
+  
+  if (!formData.email.trim()) {
+    errors.email = 'Email is required';
+  } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    errors.email = 'Email is invalid';
+  }
+  
+  if (!formData.mobile.trim()) {
+    errors.mobile = 'Mobile is required';
+  } else {
+    const cleanMobile = formData.mobile.replace(/\D/g, '');
+    if (cleanMobile.length !== 10) {
+      errors.mobile = 'Mobile number must be exactly 10 digits';
+    } else if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
+      errors.mobile = 'Mobile number must start with 6, 7, 8, or 9';
+    }
+  }
+  
+  if (!formData.country) errors.country = 'Country is required';
+  if (!formData.participation) errors.participation = 'Participation type is required';
+  
+  // Address and location validations
+  if (!formData.address || !formData.address.trim()) {
+    errors.address = 'Address is required';
+  } else if (formData.address.trim().length < 10) {
+    errors.address = 'Address must be at least 10 characters long';
+  }
+  
+  if (!formData.pincode || !formData.pincode.trim()) {
+    errors.pincode = 'Pincode is required';
+  } else if (!/^\d{6}$/.test(formData.pincode.trim())) {
+    errors.pincode = 'Pincode must be exactly 6 digits';
+  }
+  
+  // Aadhar validation (now mandatory)
+  if (!formData.aadharno || !formData.aadharno.trim()) {
+    errors.aadharno = 'Aadhar number is required';
+  } else {
+    const cleanAadhar = formData.aadharno.replace(/\D/g, '');
+    if (cleanAadhar.length !== 12) {
+      errors.aadharno = 'Aadhar number must be exactly 12 digits';
+    }
+  }
+  
+  // PAN validation (optional but must be valid if provided)
+  if (formData.pan && formData.pan.trim()) {
+    if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.pan.trim().toUpperCase())) {
+      errors.pan = 'PAN must be in format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)';
+    }
+  }
+
+  // Delegate specific validations
+  if (formData.participation === 'Delegate') {
+    if (!formData.delegateType) errors.delegateType = 'Delegate type is required';
+    
+    if (!formData.numberOfPersons) {
+      errors.numberOfPersons = 'Number of persons is required';
+    } else if (parseInt(formData.numberOfPersons) < 1) {
+      errors.numberOfPersons = 'Number of persons must be at least 1';
+    }
+    
+    if (formData.delegateType === 'withAssistance' && !formData.days) {
+      errors.days = 'Number of days is required';
+    }
+  }
+
+  return errors;
+};
+
+// Calculate amount utility
+export const calculateAmount = (formData, PRICING_CONFIG) => {
+  if (formData.participation !== 'Delegate' || !formData.delegateType || !formData.numberOfPersons) {
+    return 0;
+  }
+
+  const persons = parseInt(formData.numberOfPersons) || 1;
+
+  if (formData.delegateType === 'withoutAssistance') {
+    return persons * PRICING_CONFIG.withoutAssistance.pricePerPerson;
+  } else if (formData.delegateType === 'withAssistance') {
+    const days = parseInt(formData.days) || PRICING_CONFIG.withAssistance.minDays;
+    return persons * days * PRICING_CONFIG.withAssistance.pricePerPersonPerDay;
+  }
+
+  return 0;
+};

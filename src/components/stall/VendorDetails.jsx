@@ -43,6 +43,7 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
         email: details.email || user?.email || '',
         phone: details.phone || '',
         aadhar: details.aadhar || '',
+        pan: details.pan || '',
         address: details.address || ''
       };
 
@@ -57,12 +58,13 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
         if (savedProfile.email && !profile.email) profile.email = savedProfile.email;
         if (savedProfile.phone && !profile.phone) profile.phone = savedProfile.phone;
         if (savedProfile.aadhar && !profile.aadhar) profile.aadhar = savedProfile.aadhar;
+        if (savedProfile.pan && !profile.pan) profile.pan = savedProfile.pan;
         if (savedProfile.address && !profile.address) profile.address = savedProfile.address;
         if (savedProfile.businessType && !profile.businessType) profile.businessType = savedProfile.businessType;
       }
 
       // If we don't have complete data, check stallBookings collection
-      if (!profile.ownerName || !profile.phone || !profile.aadhar || !profile.address || !profile.businessType) {
+      if (!profile.ownerName || !profile.phone || !profile.aadhar || !profile.pan || !profile.address || !profile.businessType) {
         const q = query(
           collection(db, 'stallBookings'),
           where('userId', '==', user.uid)
@@ -71,7 +73,7 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
         const snapshot = await getDocs(q);
         
         snapshot.forEach((doc) => {
-          if (profile.ownerName && profile.phone && profile.aadhar && profile.address && profile.businessType) return;
+          if (profile.ownerName && profile.phone && profile.aadhar && profile.pan && profile.address && profile.businessType) return;
           
           const data = doc.data();
           const vendorDetails = data.vendorDetails || data.userDetails;
@@ -88,6 +90,9 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
             }
             if (!profile.aadhar && vendorDetails.aadhar?.trim()) {
               profile.aadhar = vendorDetails.aadhar.trim();
+            }
+            if (!profile.pan && vendorDetails.pan?.trim()) {
+              profile.pan = vendorDetails.pan.trim().toUpperCase();
             }
             if (!profile.address && vendorDetails.address?.trim()) {
               profile.address = vendorDetails.address.trim();
@@ -120,11 +125,14 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
   ];
 
   const handleInputChange = (field, value) => {
-    // Format input for phone and aadhar
+    // Format input for phone, aadhar, and pan
     if (field === 'phone') {
       value = value.replace(/\D/g, '').slice(0, 10);
     } else if (field === 'aadhar') {
       value = value.replace(/\D/g, '').slice(0, 12);
+    } else if (field === 'pan') {
+      // Format PAN: Allow only alphanumeric, convert to uppercase, max 10 chars
+      value = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10);
     }
 
     onDetailsChange(prev => ({
@@ -162,6 +170,12 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
     return aadharRegex.test(cleanAadhar);
   };
 
+  const validatePan = (pan) => {
+    // PAN format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    return panRegex.test(pan);
+  };
+
   const validateAddress = (address) => {
     return address && address.trim().length >= 5;
   };
@@ -173,6 +187,7 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
       validateEmail(details.email) &&
       validatePhone(details.phone) &&
       validateAadhar(details.aadhar) &&
+      validatePan(details.pan) &&
       validateAddress(details.address)
     );
   };
@@ -189,6 +204,8 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
         return details.phone && !validatePhone(details.phone) ? 'Please enter a valid 10-digit mobile number starting with 6-9' : '';
       case 'aadhar':
         return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number' : '';
+      case 'pan':
+        return details.pan && !validatePan(details.pan) ? 'Please enter a valid PAN number (e.g., ABCDE1234F)' : '';
       case 'address':
         return details.address && !validateAddress(details.address) ? 'Address must be at least 5 characters long' : '';
       default:
@@ -349,6 +366,32 @@ const VendorDetails = ({ details, onDetailsChange, onValidationChange }) => {
               )}
             </div>
 
+            {/* PAN Number */}
+            <div className="lg:col-span-1">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <CreditCard className="w-4 h-4 text-yellow-500" />
+                PAN Number *
+              </label>
+              <input
+                type="text"
+                value={details.pan || ''}
+                onChange={(e) => handleInputChange('pan', e.target.value)}
+                className={`w-full px-3 py-2.5 text-sm border-2 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors placeholder:text-gray-500 text-gray-700 uppercase ${
+                  getFieldError('pan') ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                placeholder="Enter PAN number (e.g., ABCDE1234F)"
+                maxLength={10}
+                style={{ textTransform: 'uppercase' }}
+                required
+              />
+              {getFieldError('pan') && (
+                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {getFieldError('pan')}
+                </p>
+              )}
+            </div>
+
             {/* Address - Full width */}
             <div className="col-span-full">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
@@ -402,6 +445,7 @@ VendorDetails.validateForm = (details) => {
     const cleanAadhar = aadhar.replace(/\s/g, '');
     return /^\d{12}$/.test(cleanAadhar);
   };
+  const validatePan = (pan) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
   const validateAddress = (address) => address && address.trim().length >= 5;
 
   return (
@@ -410,6 +454,7 @@ VendorDetails.validateForm = (details) => {
     validateEmail(details.email) &&
     validatePhone(details.phone) &&
     validateAadhar(details.aadhar) &&
+    validatePan(details.pan) &&
     validateAddress(details.address)
   );
 };

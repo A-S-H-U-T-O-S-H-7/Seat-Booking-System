@@ -42,6 +42,7 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
         email: details.email || user?.email || '',
         phone: details.phone || '',
         aadhar: details.aadhar || '',
+        pan: details.pan || '',
         address: details.address || '',
         emergencyContact: details.emergencyContact || ''
       };
@@ -56,12 +57,13 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
         if (savedProfile.email && !profile.email) profile.email = savedProfile.email;
         if (savedProfile.phone && !profile.phone) profile.phone = savedProfile.phone;
         if (savedProfile.aadhar && !profile.aadhar) profile.aadhar = savedProfile.aadhar;
+        if (savedProfile.pan && !profile.pan) profile.pan = savedProfile.pan;
         if (savedProfile.address && !profile.address) profile.address = savedProfile.address;
         if (savedProfile.emergencyContact && !profile.emergencyContact) profile.emergencyContact = savedProfile.emergencyContact;
       }
 
       // If we don't have complete data, check showBookings collection
-      if (!profile.name || !profile.phone || !profile.aadhar || !profile.address) {
+      if (!profile.name || !profile.phone || !profile.aadhar || !profile.pan || !profile.address) {
         const q = query(
           collection(db, 'showBookings'),
           where('userId', '==', user.uid)
@@ -70,7 +72,7 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
         const snapshot = await getDocs(q);
         
         snapshot.forEach((doc) => {
-          if (profile.name && profile.phone && profile.aadhar && profile.address) return;
+          if (profile.name && profile.phone && profile.aadhar && profile.pan && profile.address) return;
           
           const data = doc.data();
           const userDetails = data.userDetails || data.customerDetails;
@@ -87,6 +89,9 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
             }
             if (!profile.aadhar && userDetails.aadhar?.trim()) {
               profile.aadhar = userDetails.aadhar.trim();
+            }
+            if (!profile.pan && userDetails.pan?.trim()) {
+              profile.pan = userDetails.pan.trim().toUpperCase();
             }
             if (!profile.address && userDetails.address?.trim()) {
               profile.address = userDetails.address.trim();
@@ -112,11 +117,14 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
   };
 
   const handleChange = (field, value) => {
-    // Format input for phone and aadhar
+    // Format input for phone, aadhar, pan, and emergencyContact
     if (field === 'phone') {
       value = value.replace(/\D/g, '').slice(0, 10);
     } else if (field === 'aadhar') {
       value = value.replace(/\D/g, '').slice(0, 12);
+    } else if (field === 'pan') {
+      // Format PAN: Allow only alphanumeric, convert to uppercase, max 10 chars
+      value = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 10);
     } else if (field === 'emergencyContact') {
       value = value.replace(/\D/g, '').slice(0, 10);
     }
@@ -147,6 +155,12 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
     return aadharRegex.test(aadhar);
   };
 
+  const validatePan = (pan) => {
+    // PAN format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    return panRegex.test(pan);
+  };
+
   const validateName = (name) => {
     return name && name.trim().length >= 3;
   };
@@ -161,6 +175,7 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
       validateEmail(details.email) &&
       validatePhone(details.phone) &&
       validateAadhar(details.aadhar) &&
+      validatePan(details.pan) &&
       validateAddress(details.address)
     );
   };
@@ -175,6 +190,8 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
         return details.phone && !validatePhone(details.phone) ? 'Please enter a valid 10-digit mobile number starting with 6-9' : '';
       case 'aadhar':
         return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number' : '';
+      case 'pan':
+        return details.pan && !validatePan(details.pan) ? 'Please enter a valid PAN number (e.g., ABCDE1234F)' : '';
       case 'address':
         return details.address && !validateAddress(details.address) ? 'Address must be at least 5 characters long' : '';
       case 'emergencyContact':
@@ -311,6 +328,36 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
           )}
         </div>
 
+        {/* PAN Number */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              PAN Number *
+            </div>
+          </label>
+          <input
+            type="text"
+            value={details.pan || ''}
+            onChange={(e) => handleChange('pan', e.target.value)}
+            maxLength="10"
+            className={`w-full px-4 py-3 text-gray-900 bg-white border-2 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 placeholder:text-gray-500 uppercase ${
+              details.pan && !validatePan(details.pan)
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-gray-300 focus:ring-purple-500 focus:border-purple-500'
+            }`}
+            placeholder="Enter PAN number (e.g., ABCDE1234F)"
+            style={{ textTransform: 'uppercase' }}
+            required
+          />
+          {details.pan && !validatePan(details.pan) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
+              Please enter a valid PAN number (e.g., ABCDE1234F)
+            </p>
+          )}
+        </div>
+
         {/* Address */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -390,6 +437,12 @@ ShowUserDetails.validateForm = (details) => {
     return aadharRegex.test(aadhar);
   };
 
+  const validatePan = (pan) => {
+    // PAN format: 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    return panRegex.test(pan);
+  };
+
   const validateName = (name) => {
     return name && name.trim().length >= 3;
   };
@@ -403,6 +456,7 @@ ShowUserDetails.validateForm = (details) => {
     validateEmail(details.email) &&
     validatePhone(details.phone) &&
     validateAadhar(details.aadhar) &&
+    validatePan(details.pan) &&
     validateAddress(details.address)
   );
 };

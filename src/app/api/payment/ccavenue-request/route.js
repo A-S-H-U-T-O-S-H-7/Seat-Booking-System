@@ -57,9 +57,13 @@ export async function POST(request) {
       country: body.country || 'india',
       redirect_url: purpose === 'donation' 
         ? `https://donate.svsamiti.com/api/payment/donation-response`
+        : purpose === 'delegate_booking'
+        ? `https://donate.svsamiti.com/api/payment/ccavenue-response`
         : `https://donate.svsamiti.com/api/payment/ccavenue-response`,
       cancel_url: purpose === 'donation'
         ? `https://donate.svsamiti.com/api/payment/donation-cancel`
+        : purpose === 'delegate_booking'
+        ? `https://donate.svsamiti.com/api/payment/ccavenue-cancel`
         : `https://donate.svsamiti.com/api/payment/ccavenue-cancel`
     };
 
