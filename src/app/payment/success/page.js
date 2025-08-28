@@ -400,85 +400,133 @@ function PaymentSuccessContent() {
                   
                   // Delegate booking details
                   if (bookingType === 'delegate') {
+                    const registrationType = bookingDetails?.eventDetails?.registrationType;
+                    const delegateType = bookingDetails?.eventDetails?.delegateType;
+                    
                     return (
                       <>
-                        <div className="bg-gradient-to-r from-emerald-100 to-teal-100 p-4 rounded-lg mb-4">
-                          <h4 className="font-semibold text-emerald-800 mb-2 flex items-center">
-                            🎓 Delegate Registration Details
+                        <div className="bg-gradient-to-r from-emerald-100 via-teal-100 to-green-100 p-4 rounded-lg mb-4 border border-emerald-300">
+                          <h4 className="font-bold text-emerald-800 mb-2 flex items-center text-lg">
+                            🎓 Delegate Registration Confirmed
                           </h4>
+                          <p className="text-emerald-700 text-sm">
+                            Registration Type: <span className="font-semibold">{registrationType || 'N/A'}</span>
+                          </p>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <p className="font-medium text-gray-700">Delegate Name:</p>
+                        {/* Personal Information */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                          <div className="bg-white p-3 rounded-lg border border-emerald-200 shadow-sm">
+                            <p className="font-medium text-gray-700 text-sm mb-1">Delegate Name:</p>
                             <p className="text-gray-900 font-semibold">
                               {bookingDetails?.delegateDetails?.name || 'N/A'}
                             </p>
                           </div>
                           
-                          <div>
-                            <p className="font-medium text-gray-700">Company:</p>
+                          <div className="bg-white p-3 rounded-lg border border-emerald-200 shadow-sm">
+                            <p className="font-medium text-gray-700 text-sm mb-1">
+                              {registrationType === 'Company' ? 'Company Name:' : 
+                               registrationType === 'Temple' ? 'Temple Name:' : 'Organization:'}
+                            </p>
                             <p className="text-gray-900">
-                              {bookingDetails?.delegateDetails?.companyname || 'N/A'}
+                              {registrationType === 'Company' ? (bookingDetails?.eventDetails?.companyName || 'N/A') :
+                               registrationType === 'Temple' ? (bookingDetails?.eventDetails?.templeName || 'N/A') :
+                               (bookingDetails?.delegateDetails?.companyname || 'Individual')}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Temple Brief Profile */}
+                        {registrationType === 'Temple' && bookingDetails?.eventDetails?.briefProfile && (
+                          <div className="bg-orange-50 border border-orange-200 p-3 rounded-lg mb-4">
+                            <p className="font-medium text-orange-800 text-sm mb-1">Temple Profile:</p>
+                            <p className="text-orange-700 text-sm">
+                              {bookingDetails.eventDetails.briefProfile}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Contact Information */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                           <div>
-                            <p className="font-medium text-gray-700">Email:</p>
-                            <p className="text-gray-900">
+                            <p className="font-medium text-gray-700 text-sm">Email:</p>
+                            <p className="text-gray-900 text-sm">
                               {bookingDetails?.delegateDetails?.email || 'N/A'}
                             </p>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-700">Mobile:</p>
-                            <p className="text-gray-900">
+                            <p className="font-medium text-gray-700 text-sm">Mobile:</p>
+                            <p className="text-gray-900 text-sm">
                               {bookingDetails?.delegateDetails?.mobile || 'N/A'}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <p className="font-medium text-gray-700">Participation Type:</p>
-                            <p className="text-gray-900 capitalize font-semibold text-emerald-700">
-                              {bookingDetails?.eventDetails?.participationType || 'N/A'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">Delegate Type:</p>
-                            <p className="text-gray-900 capitalize">
-                              {bookingDetails?.eventDetails?.delegateType?.replace('withoutAssistance', 'Without Assistance').replace('withAssistance', 'With Assistance') || 'N/A'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <p className="font-medium text-gray-700">Duration:</p>
-                            <p className="text-gray-900">
-                              {bookingDetails?.eventDetails?.duration || 'N/A'} days
-                            </p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">Number of Persons:</p>
-                            <p className="text-gray-900 font-semibold">
-                              {bookingDetails?.eventDetails?.numberOfPersons || 1}
-                            </p>
+                        {/* Delegate Package Information */}
+                        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 p-4 rounded-lg border border-teal-200 mb-4">
+                          <h5 className="font-semibold text-teal-800 mb-3">Package Details</h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="text-center">
+                              <p className="text-teal-600 font-medium text-sm">Package Type</p>
+                              <p className="text-teal-800 font-bold">
+                                {delegateType?.replace('withoutAssistance', 'Without Assistance').replace('withAssistance', 'With Assistance') || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-teal-600 font-medium text-sm">Duration</p>
+                              <p className="text-teal-800 font-bold">
+                                {bookingDetails?.eventDetails?.duration || 'N/A'} days
+                              </p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-teal-600 font-medium text-sm">Persons</p>
+                              <p className="text-teal-800 font-bold">
+                                {bookingDetails?.eventDetails?.numberOfPersons || 1}
+                              </p>
+                            </div>
                           </div>
                         </div>
                         
-                        <div>
-                          <p className="font-medium text-gray-700 mb-1">Location:</p>
-                          <p className="text-gray-900 text-sm">
-                            {bookingDetails?.delegateDetails?.city}, {bookingDetails?.delegateDetails?.state}, {bookingDetails?.delegateDetails?.country}
+                        {/* Location & Additional Info */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                          <div>
+                            <p className="font-medium text-gray-700 text-sm mb-1">Location:</p>
+                            <p className="text-gray-900 text-sm">
+                              {bookingDetails?.delegateDetails?.city}, {bookingDetails?.delegateDetails?.state}, {bookingDetails?.delegateDetails?.country}
+                            </p>
+                          </div>
+                          {bookingDetails?.eventDetails?.designation && (
+                            <div>
+                              <p className="font-medium text-gray-700 text-sm mb-1">Designation:</p>
+                              <p className="text-gray-900 text-sm">
+                                {bookingDetails.eventDetails.designation}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* File Upload Status */}
+                        {bookingDetails?.delegateDetails?.fileInfo && (
+                          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg mb-4">
+                            <p className="text-blue-800 text-sm">
+                              📎 Photo {bookingDetails.delegateDetails.fileInfo.fileUploaded ? 'uploaded' : 'not uploaded'}
+                              {bookingDetails.delegateDetails.fileInfo.fileUploaded && (
+                                <span className="ml-2 text-blue-600">
+                                  ({bookingDetails.delegateDetails.fileInfo.fileName})
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Welcome Message */}
+                        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-4 rounded-lg text-white">
+                          <p className="font-bold mb-2">🎉 Welcome to SVS Global Summit!</p>
+                          <p className="text-sm opacity-90">
+                            Your {registrationType?.toLowerCase()} delegate registration is confirmed. Event details, access credentials, and further instructions will be shared via email.
                           </p>
-                        </div>
-                        
-                        <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded">
-                          <p className="text-emerald-800 text-sm font-medium">
-                            ✨ <strong>Welcome to SVS Global Summit!</strong> Your delegate registration is confirmed. Event details and access credentials will be shared via email.
+                          <p className="text-xs mt-2 opacity-80">
+                            Please check your email ({bookingDetails?.delegateDetails?.email}) for confirmation and next steps.
                           </p>
                         </div>
                       </>
