@@ -1,7 +1,7 @@
 // Configuration constants for pricing
 export const PRICING_CONFIG = {
   withoutAssistance: {
-    pricePerPerson: 5000,
+    pricePerPerson: 1,
     fixedDays: 5,
     benefits: [
       '🍴 Enjoy complimentary lunch throughout the event',
@@ -11,7 +11,7 @@ export const PRICING_CONFIG = {
     ]
   },
   withAssistance: {
-    pricePerPersonPerDay: 40000,
+    pricePerPersonPerDay: 2,
     minDays: 2,
     maxDays: 5,
     benefits: [
