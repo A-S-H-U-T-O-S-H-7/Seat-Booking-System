@@ -95,11 +95,11 @@ export default function SponsorPerformerSection() {
           <div className="mb-10">
             
             
-            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent leading-tight mb-2">
+            <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent leading-tight mb-2">
               Where Dreams Meet Opportunity
             </h1>
             
-            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-md sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Whether you wish to empower as a Sponsor or inspire as a Performer, your journey starts here.
             </p>
           </div>
@@ -112,19 +112,19 @@ export default function SponsorPerformerSection() {
               <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-4 border border-white/50 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-2">
               
               <div className='flex justify-center gap-4 '>
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center   transform group-hover:scale-110 transition-transform duration-300">
+                <div className=" w-6 h-6 md:w-8 md:h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center   transform group-hover:scale-110 transition-transform duration-300">
                   <Heart className="w-4 h-4 text-white" />
                 </div>
                 
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">Become a Sponsor</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">Become a Sponsor</h3>
                 </div>
 
-                <p className="text-gray-600 mb-8 leading-relaxed">
+                <p className="text-gray-600 mb-8 text-sm md:text-base leading-relaxed">
 Join us in shaping unforgettable moments. Your support lets dreams soar and communities flourish through artistic expression                 </p>
 
                 <button
                   onClick={() => setShowSponsorModal(true)}
-                  className="w-full cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-4 px-8 rounded-2xl hover:shadow-lg  flex items-center justify-center group-hover:shadow-purple-500/25"
+                  className="w-full cursor-pointer bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 md:py-4 px-4 md:px-8 rounded-xl md:rounded-2xl hover:shadow-lg  flex items-center justify-center group-hover:shadow-purple-500/25"
                 >
                   <Star className="w-5 h-5 mr-2" />
                   Partner With Us
@@ -138,20 +138,20 @@ Join us in shaping unforgettable moments. Your support lets dreams soar and comm
               <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl p-4 border border-white/50 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-2">
               
               <div className='flex justify-center gap-4 '>
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center ">
+                <div className="w-6 h-6 md:w-8 md:h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-2xl flex items-center justify-center ">
                   <Mic className="w-4 h-4 text-white" />
                 </div>
                 
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">Join as Performer</h3>
+                <h3 className=" text-xl md:text-2xl font-bold text-gray-800 mb-4">Join as Performer</h3>
                 </div>
 
-                <p className="text-gray-600 mb-8 leading-relaxed">
+                <p className="text-gray-600 text-sm md:text-base mb-8 leading-relaxed">
                   Showcase your talent to the world. Whether you sing, dance, or create magic, we're here to amplify your artistic voice.
                 </p>
                 
                 <button
                   onClick={() => setShowPerformerModal(true)}
-                  className="w-full cursor-pointer bg-gradient-to-r from-indigo-600 to-cyan-600 text-white font-semibold py-4 px-8 rounded-2xl hover:shadow-lg  flex items-center justify-center group-hover:shadow-indigo-500/25"
+                  className="w-full cursor-pointer bg-gradient-to-r from-indigo-600 to-cyan-600 text-white font-semibold py-3 md:py-4 px-4 md:px-8 rounded-xl md:rounded-2xl hover:shadow-lg  flex items-center justify-center group-hover:shadow-indigo-500/25"
                 >
                   <Users className="w-5 h-5 mr-2" />
                   Share Your Talent

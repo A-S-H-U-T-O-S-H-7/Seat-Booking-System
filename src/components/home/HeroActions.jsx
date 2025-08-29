@@ -2,9 +2,9 @@ import Link from "next/link";
 
 function HeroActions({ user }) {
   return (
-    <div className="flex justify-center items-center py-8 px-4">
+    <div className="flex justify-center items-center py-4 md:py-8 px-2 md:px-4">
       {user ? (
-        <div className="flex flex-row gap-8 sm:gap-10 md:gap-12 lg:gap-20 items-center justify-center w-full max-w-7xl mx-auto flex-wrap">
+        <div className="flex flex-row gap-4 md:gap-12 lg:gap-20 items-center justify-center w-full  flex-wrap">
           
           {/* Havan Booking Circle */}
           <div className="group relative flex items-center justify-center">

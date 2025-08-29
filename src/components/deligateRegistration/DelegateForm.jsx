@@ -528,9 +528,10 @@ const DelegateForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-8 px-4">
+              <DelegateBanner />
+
       <div className="max-w-6xl mx-auto ">
         
-        <DelegateBanner />
 
 
         {/* Form Container */}

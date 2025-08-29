@@ -49,7 +49,7 @@ const DonationBanner = ({ user }) => {
             Every contribution brings hope — in classrooms, homes, and communities
           </p>
           
-          <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50 space-y-3">
+          <div className="bg-white/70 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/50 space-y-3">
             <p className="text-sm leading-relaxed text-slate-600">
               Payment made for participating in <span className="font-bold text-rose-700">Havan</span>, 
               <span className="font-bold text-pink-700"> Show</span>, and 

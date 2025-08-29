@@ -3,7 +3,7 @@ import DonateBar from '../donation/DonationBar';
 
 function DelegateBanner() {
   return (
-    <div className=" rounded-lg">
+    <div className=" max-w-7xl mx-auto rounded-lg">
       <div className="text-center mb-6">
         <div className="relative bg-gradient-to-br from-yellow-100 via-amber-100 to-white
           backdrop-blur-sm rounded-2xl shadow-2xl border border-white/60 overflow-visible">
