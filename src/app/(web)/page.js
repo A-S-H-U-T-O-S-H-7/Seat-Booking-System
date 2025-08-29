@@ -26,7 +26,6 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
       <HeroSection user={user} />
-            <SponsorPerformerSection  />
 
       <DonationBanner user={user}/>
       <BookingSection user={user} />
