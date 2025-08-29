@@ -23,18 +23,18 @@ const DelegateForm = () => {
     companyname: '',
     email: '',
     mobile: '',
-    country: '',
+    country: 'india',
     state: '',
     city: '',
     address: '',
     pincode: '',
-    participation: 'Delegate', // Default to Delegate
-    registrationType: '', // Company, Temple, Individual
-    templename: '', // For temple registration
+    participation: 'Delegate', 
+    registrationType: '', 
+    templename: '',
     designation: '',
-    numberOfPersons: '1', // Default value
+    numberOfPersons: '1', 
     delegateType: '',
-    days: '', // Will be set when delegateType is selected
+    days: '', 
     brief: '',
     aadharno: '',
     passportno: '',
@@ -270,16 +270,17 @@ const DelegateForm = () => {
       // Send confirmation email for successful registrations
       if (paymentData.status === 'confirmed') {
         try {
-          const { sendBookingConfirmationEmail } = await import('@/services/emailService');
+          const { sendDelegateConfirmationEmail } = await import('@/services/emailService');
           const enrichedData = {
             ...bookingDataToSave,
             order_id: bookingId,
-            amount: calculateFormAmount()
+            amount: calculateFormAmount(),
+            payment_id: paymentData.paymentId || 'free_registration'
           };
-          const emailResult = await sendBookingConfirmationEmail(enrichedData, 'delegate');
-          console.log('📧 Delegate confirmation email sent:', emailResult);
+          const emailResult = await sendDelegateConfirmationEmail(enrichedData);
+          console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } catch (emailError) {
-          console.error('❌ Failed to send delegate confirmation email:', emailError);
+          console.error('❌ Failed to send delegate email:', emailError);
         }
       }
       

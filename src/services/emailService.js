@@ -7,6 +7,194 @@
  * @param {string} bookingType - Type of booking (havan, show, stall, delegate, donation)
  * @returns {Promise<Object>} - API response
  */
+/**
+ * Send donation confirmation email
+ * @param {Object} donationData - Donation information
+ * @returns {Promise<Object>} - API response
+ */
+export const sendDonationConfirmationEmail = async (donationData) => {
+  try {
+    console.log('📧 Sending donation confirmation email');
+    
+    const formData = new FormData();
+    formData.append('name', donationData.donorDetails?.name || donationData.name || '');
+    formData.append('email', donationData.donorDetails?.email || donationData.email || '');
+    formData.append('amount', donationData.amount?.toString() || '');
+    formData.append('payment_id', donationData.payment?.transactionId || donationData.payment_id || '');
+    formData.append('order_id', donationData.donationId || donationData.order_id || donationData.id || '');
+    formData.append('transaction_date', new Date().toISOString().split('T')[0]);
+    
+    const response = await fetch('https://svsamiti.com/havan-booking/donation-email.php', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'User-Agent': 'Havan-Booking-System/1.0'
+      }
+    });
+    
+    const responseText = await response.text();
+    console.log('📨 Donation email API response:', responseText);
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      return { success: false, error: 'Invalid response from donation email service', rawResponse: responseText };
+    }
+    
+    if (result.status) {
+      console.log('✅ Donation email sent successfully');
+      return { success: true, message: 'Donation confirmation email sent', data: result };
+    } else {
+      console.error('❌ Donation email API error:', result.errors);
+      return { success: false, error: 'Donation email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
+    }
+  } catch (error) {
+    console.error('❌ Donation email service error:', error);
+    return { success: false, error: 'Failed to send donation email: ' + error.message };
+  }
+};
+
+/**
+ * Send delegate confirmation email
+ * @param {Object} delegateData - Delegate information
+ * @returns {Promise<Object>} - API response
+ */
+export const sendDelegateConfirmationEmail = async (delegateData) => {
+  try {
+    console.log('📧 Sending delegate confirmation email');
+    
+    const formData = new FormData();
+    formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
+    formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');
+    formData.append('participation_type', delegateData.eventDetails?.participationType || delegateData.participation_type || 'Delegate');
+    formData.append('registration_type', delegateData.eventDetails?.registrationType || delegateData.registration_type || '');
+    formData.append('duration', delegateData.eventDetails?.duration || delegateData.duration || '');
+    formData.append('number_of_persons', delegateData.eventDetails?.numberOfPersons || delegateData.number_of_persons || '1');
+    formData.append('amount', delegateData.totalAmount?.toString() || delegateData.amount?.toString() || '');
+    formData.append('payment_id', delegateData.payment?.transactionId || delegateData.payment_id || '');
+    formData.append('order_id', delegateData.bookingId || delegateData.order_id || delegateData.id || '');
+    formData.append('transaction_date', new Date().toISOString().split('T')[0]);
+    
+    const response = await fetch('https://svsamiti.com/havan-booking/delegate-email.php', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'User-Agent': 'Havan-Booking-System/1.0'
+      }
+    });
+    
+    const responseText = await response.text();
+    console.log('📨 Delegate email API response:', responseText);
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      return { success: false, error: 'Invalid response from delegate email service', rawResponse: responseText };
+    }
+    
+    if (result.status) {
+      console.log('✅ Delegate email sent successfully');
+      return { success: true, message: 'Delegate confirmation email sent', data: result };
+    } else {
+      console.error('❌ Delegate email API error:', result.errors);
+      return { success: false, error: 'Delegate email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
+    }
+  } catch (error) {
+    console.error('❌ Delegate email service error:', error);
+    return { success: false, error: 'Failed to send delegate email: ' + error.message };
+  }
+};
+
+/**
+ * Send performer confirmation email
+ * @param {Object} performerData - Performer information
+ * @returns {Promise<Object>} - API response
+ */
+export const sendPerformerConfirmationEmail = async (performerData) => {
+  try {
+    console.log('📧 Sending performer confirmation email');
+    
+    const formData = new FormData();
+    formData.append('name', performerData.name || '');
+    formData.append('email', performerData.email || '');
+    
+    const response = await fetch('https://svsamiti.com/havan-booking/performer-email.php', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'User-Agent': 'Havan-Booking-System/1.0'
+      }
+    });
+    
+    const responseText = await response.text();
+    console.log('📨 Performer email API response:', responseText);
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      return { success: false, error: 'Invalid response from performer email service', rawResponse: responseText };
+    }
+    
+    if (result.status) {
+      console.log('✅ Performer email sent successfully');
+      return { success: true, message: 'Performer confirmation email sent', data: result };
+    } else {
+      console.error('❌ Performer email API error:', result.errors);
+      return { success: false, error: 'Performer email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
+    }
+  } catch (error) {
+    console.error('❌ Performer email service error:', error);
+    return { success: false, error: 'Failed to send performer email: ' + error.message };
+  }
+};
+
+/**
+ * Send sponsor confirmation email
+ * @param {Object} sponsorData - Sponsor information
+ * @returns {Promise<Object>} - API response
+ */
+export const sendSponsorConfirmationEmail = async (sponsorData) => {
+  try {
+    console.log('📧 Sending sponsor confirmation email');
+    
+    const formData = new FormData();
+    formData.append('name', sponsorData.name || '');
+    formData.append('email', sponsorData.email || '');
+    
+    const response = await fetch('https://svsamiti.com/havan-booking/sponsor-email.php', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'User-Agent': 'Havan-Booking-System/1.0'
+      }
+    });
+    
+    const responseText = await response.text();
+    console.log('📨 Sponsor email API response:', responseText);
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      return { success: false, error: 'Invalid response from sponsor email service', rawResponse: responseText };
+    }
+    
+    if (result.status) {
+      console.log('✅ Sponsor email sent successfully');
+      return { success: true, message: 'Sponsor confirmation email sent', data: result };
+    } else {
+      console.error('❌ Sponsor email API error:', result.errors);
+      return { success: false, error: 'Sponsor email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
+    }
+  } catch (error) {
+    console.error('❌ Sponsor email service error:', error);
+    return { success: false, error: 'Failed to send sponsor email: ' + error.message };
+  }
+};
+
 export const sendBookingConfirmationEmail = async (bookingData, bookingType) => {
   try {
     console.log('📧 Preparing to send confirmation email:', {

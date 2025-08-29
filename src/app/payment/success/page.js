@@ -97,51 +97,8 @@ function PaymentSuccessContent() {
         setBookingType(detectedType);
         setBookingDetails(bookingData || {});
         
-        // Send confirmation email as fallback if payment was successful
-        if (paymentInfo?.status === 'success' && bookingData && detectedType) {
-          try {
-            console.log('📧 Starting fallback email process from success page...');
-            console.log('📋 Payment info:', {
-              order_id: paymentInfo.order_id,
-              status: paymentInfo.status,
-              amount: paymentInfo.amount
-            });
-            console.log('📋 Booking data summary:', {
-              id: bookingData.id,
-              bookingId: bookingData.bookingId,
-              status: bookingData.status,
-              customerEmail: bookingData.customerDetails?.email || bookingData.userDetails?.email || 'No email found'
-            });
-            console.log('📋 Detected booking type:', detectedType);
-            
-            const { sendBookingConfirmationEmail } = await import('@/services/emailService');
-            const enrichedData = {
-              ...bookingData,
-              order_id: paymentInfo.order_id,
-              amount: paymentInfo.amount
-            };
-            
-            console.log('📧 Calling sendBookingConfirmationEmail with enriched data...');
-            const emailResult = await sendBookingConfirmationEmail(enrichedData, detectedType);
-            console.log('📧 Fallback email result from success page:', emailResult);
-            
-            if (emailResult.success) {
-              console.log('✅ Email sent successfully from success page!');
-            } else {
-              console.error('❌ Email failed from success page:', emailResult.error);
-            }
-          } catch (emailError) {
-            console.error('❌ Exception during fallback email send:', emailError);
-            console.error('❌ Error stack:', emailError.stack);
-          }
-        } else {
-          console.log('⚠️ Fallback email skipped. Conditions:', {
-            paymentStatus: paymentInfo?.status,
-            hasBookingData: !!bookingData,
-            detectedType: detectedType,
-            shouldSendEmail: paymentInfo?.status === 'success' && bookingData && detectedType
-          });
-        }
+        // Note: Email confirmation is now handled in the payment service
+        // Fallback email sending is disabled to prevent duplicates
       } catch (error) {
         console.error("Error fetching booking details:", error);
         setBookingType("havan");

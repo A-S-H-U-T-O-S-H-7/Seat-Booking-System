@@ -35,6 +35,16 @@ export default function SponsorPerformerSection() {
     if (sponsorForm.name && sponsorForm.email && sponsorForm.phone && sponsorForm.address) {
       try {
         await createSponsorApplication(sponsorForm);
+        
+        // Send confirmation email
+        try {
+          const { sendSponsorConfirmationEmail } = await import('@/services/emailService');
+          const emailResult = await sendSponsorConfirmationEmail(sponsorForm);
+          console.log('📧 Sponsor email sent:', emailResult.success ? 'Success' : emailResult.error);
+        } catch (emailError) {
+          console.error('❌ Failed to send sponsor email:', emailError);
+        }
+        
         showToastMessage("Thank you for your interest in sponsoring! Our partnership team will reach out to you within 24 hours to discuss exciting collaboration opportunities.");
         setSponsorForm({ name: '', email: '', phone: '', address: '' });
         setShowSponsorModal(false);
@@ -49,6 +59,16 @@ export default function SponsorPerformerSection() {
     if (performerForm.name && performerForm.email && performerForm.phone && performerForm.address && performerForm.performanceType) {
       try {
         await createPerformerApplication(performerForm);
+        
+        // Send confirmation email
+        try {
+          const { sendPerformerConfirmationEmail } = await import('@/services/emailService');
+          const emailResult = await sendPerformerConfirmationEmail(performerForm);
+          console.log('📧 Performer email sent:', emailResult.success ? 'Success' : emailResult.error);
+        } catch (emailError) {
+          console.error('❌ Failed to send performer email:', emailError);
+        }
+        
         showToastMessage("We're thrilled about your performance application! Our talent acquisition team will contact you soon to discuss your artistic journey with us.");
         setPerformerForm({ name: '', email: '', phone: '', address: '', performanceType: '' });
         setShowPerformerModal(false);
