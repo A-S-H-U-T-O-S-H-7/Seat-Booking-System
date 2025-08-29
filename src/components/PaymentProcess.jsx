@@ -263,7 +263,7 @@ const PaymentProcess = ({ customerDetails }) => {
 
         // Create pending booking record
         const bookingRef = doc(db, 'bookings', bookingId);
-        transaction.set(bookingRef, {
+        const bookingData = {
           id: bookingId,
           bookingId,
           userId: user.uid,
@@ -282,7 +282,9 @@ const PaymentProcess = ({ customerDetails }) => {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           expiryTime: expiryTime // Auto-expire if payment not completed
-        });
+        };
+        
+        transaction.set(bookingRef, bookingData);
       });
 
       toast.success('Booking created. Redirecting to payment...');

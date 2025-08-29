@@ -13,7 +13,7 @@ import { toast } from 'react-hot-toast';
 import ShowBookingCard from '@/components/show/ShowBookingCard';
 import StallBookingCard from '@/components/stall/StallBookingCard';
 import DelegateCard from '@/components/deligateRegistration/DelegateCard';
-import DonationCard from '@/components/profile/DonationCard';
+import DonationCard from '@/components/donation/DonationCard';
 import ImageModal from '@/components/ImageModal';
 import { useShifts } from '@/hooks/useShifts';
 import { cancelBooking } from '@/utils/cancellationUtils';
@@ -855,7 +855,7 @@ const ProfilePage = () => {
                       </Link>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="space-y-4">
                       {donations.map((donation) => renderDonationCard(donation))}
                     </div>
                   )

@@ -4,6 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import HeroSection from '@/components/home/HeroSection';
 import BookingSection from '@/components/home/BookingSection';
 import DonationBanner from '@/components/home/DonationBanner';
+import SponsorPerformerSection from '@/components/sponsor-perfomer/Sponsor-performer-section';
+
 
 function HomePage() {
   const { user,loading} = useAuth();
@@ -24,6 +26,8 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
       <HeroSection user={user} />
+            <SponsorPerformerSection  />
+
       <DonationBanner user={user}/>
       <BookingSection user={user} />
     </div>

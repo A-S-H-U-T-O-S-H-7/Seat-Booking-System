@@ -19,7 +19,8 @@ import {
   SunIcon,
   MoonIcon,
   DocumentTextIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline';
 
 // Import admin components
@@ -30,6 +31,7 @@ import StallManagement from '@/components/admin/StallManagement';
 import BookingManagement from '@/components/admin/havan-bookings/BookingManagement';
 import StallBookingManagement from '@/components/admin/stall-bookings/StallBookingManagement';
 import ShowBookingManagement from '@/components/admin/show-bookings/ShowBookingManagement';
+import DelegateManagement from '@/components/admin/delegate-bookings/DelegateManagement';
 import UserManagement from '@/components/admin/UserManagement';
 import AdminManagement from '@/components/admin/AdminManagement';
 import PriceSettings from '@/components/admin/PriceSettings';
@@ -37,6 +39,8 @@ import SystemSettings from '@/components/admin/SystemSettings';
 import OverviewStats from '@/components/admin/OverviewStats';
 import ActivityLogs from '@/components/admin/ActivityLogs';
 import CancellationRefundManagement from '@/components/admin/cancellation-refunds/CancellationRefundManagement';
+import DonationManagement from '@/components/admin/donation-management/DonationManagement';
+import SponsorPerformerManagement from '@/components/admin/SponsorPerformerManagement';
 
 export default function AdminDashboard() {
   const { adminUser, loading, logout, hasPermission } = useAdmin();
@@ -119,6 +123,24 @@ export default function AdminDashboard() {
       permission: 'view_show_bookings' // Separate permission
     },
     {
+      id: 'delegate-bookings',
+      name: 'Delegate Bookings',
+      icon: UserPlusIcon,
+      permission: 'view_delegate_bookings' // Separate permission
+    },
+    {
+      id: 'donations',
+      name: 'Donations',
+      icon: HeartIcon,
+      permission: 'view_donations'
+    },
+    {
+      id: 'sponsor-performer',
+      name: 'Sponsors & Performers',
+      icon: UserPlusIcon,
+      permission: 'view_sponsor_performer'
+    },
+    {
       id: 'cancellations',
       name: 'Cancellation & Refunds',
       icon: BanknotesIcon,
@@ -172,6 +194,12 @@ export default function AdminDashboard() {
         return <StallBookingManagement />;
       case 'show-bookings':
         return <ShowBookingManagement />;
+      case 'delegate-bookings':
+        return <DelegateManagement />;
+      case 'donations':
+        return <DonationManagement />;
+      case 'sponsor-performer':
+        return <SponsorPerformerManagement />;
       case 'cancellations':
         return <CancellationRefundManagement />;
       case 'users':

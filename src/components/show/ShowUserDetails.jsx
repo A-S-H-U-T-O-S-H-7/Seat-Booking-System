@@ -151,7 +151,8 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
   };
 
   const validateAadhar = (aadhar) => {
-    const aadharRegex = /^\d{12}$/;
+    // Check if it's 12 digits and doesn't start with 0 or 1
+    const aadharRegex = /^[2-9]\d{11}$/;
     return aadharRegex.test(aadhar);
   };
 
@@ -175,7 +176,7 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
       validateEmail(details.email) &&
       validatePhone(details.phone) &&
       validateAadhar(details.aadhar) &&
-      validatePan(details.pan) &&
+      (details.pan ? validatePan(details.pan) : true) && // PAN is optional
       validateAddress(details.address)
     );
   };
@@ -189,7 +190,7 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
       case 'phone':
         return details.phone && !validatePhone(details.phone) ? 'Please enter a valid 10-digit mobile number starting with 6-9' : '';
       case 'aadhar':
-        return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number' : '';
+        return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number (cannot start with 0 or 1)' : '';
       case 'pan':
         return details.pan && !validatePan(details.pan) ? 'Please enter a valid PAN number (e.g., ABCDE1234F)' : '';
       case 'address':
@@ -317,13 +318,13 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
                 ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                 : 'border-gray-300 focus:ring-purple-500 focus:border-purple-500'
             }`}
-            placeholder="Enter 12-digit Aadhar number"
+            placeholder="Enter 12-digit Aadhar number (cannot start with 0 or 1)"
             required
           />
           {details.aadhar && !validateAadhar(details.aadhar) && (
             <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
-              Please enter a valid 12-digit Aadhar number
+              Please enter a valid 12-digit Aadhar number (cannot start with 0 or 1)
               </p>
           )}
         </div>
@@ -333,7 +334,7 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              PAN Number *
+              PAN Number (Optional)
             </div>
           </label>
           <input
@@ -348,7 +349,6 @@ const ShowUserDetails = ({ details, onDetailsChange, onValidationChange }) => {
             }`}
             placeholder="Enter PAN number (e.g., ABCDE1234F)"
             style={{ textTransform: 'uppercase' }}
-            required
           />
           {details.pan && !validatePan(details.pan) && (
             <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -433,7 +433,8 @@ ShowUserDetails.validateForm = (details) => {
   };
 
   const validateAadhar = (aadhar) => {
-    const aadharRegex = /^\d{12}$/;
+    // Check if it's 12 digits and doesn't start with 0 or 1
+    const aadharRegex = /^[2-9]\d{11}$/;
     return aadharRegex.test(aadhar);
   };
 
@@ -456,7 +457,7 @@ ShowUserDetails.validateForm = (details) => {
     validateEmail(details.email) &&
     validatePhone(details.phone) &&
     validateAadhar(details.aadhar) &&
-    validatePan(details.pan) &&
+    (details.pan ? validatePan(details.pan) : true) && // PAN is optional
     validateAddress(details.address)
   );
 };

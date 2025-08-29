@@ -6,15 +6,9 @@ function DelegateBanner() {
     <div className=" rounded-lg">
       <div className="text-center mb-6">
         <div className="relative bg-gradient-to-br from-yellow-100 via-amber-100 to-white
-          backdrop-blur-sm rounded-2xl shadow-2xl border border-white/60 overflow-hidden">
+          backdrop-blur-sm rounded-2xl shadow-2xl border border-white/60 overflow-visible">
 
-          {/* Blue Background Image */}
-          {/* <div 
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: 'url(/lilacbg.png)'
-            }}
-          ></div> */}
+          
           
           {/* Stall Design Border at Top */}
           <div 
@@ -31,7 +25,7 @@ function DelegateBanner() {
           
           {/* Background Decoration - Updated with z-index */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-400/5 via-purple-400/10 to-pink-400/5 z-5"></div>
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-12 -translate-y-12 z-5"></div>
+          <div className="absolute top-0 right-9 md:right-0 w-24 h-24 bg-gradient-to-br from-blue-400/50 to-transparent rounded-full transform translate-x-12 -translate-y-12 z-5"></div>
           <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-purple-400/50 to-transparent rounded-full transform -translate-x-10 translate-y-10 z-5"></div>
           
           {/* Main Content Container */}
@@ -43,7 +37,7 @@ function DelegateBanner() {
                 <img 
                   src="/namaste.png" 
                   alt="Stall Preview" 
-                  className="w-24 h-24 lg:w-75 lg:h-75 object-contain drop-shadow-lg"
+                  className="w-24 h-24 lg:w-75 lg:h-75 object-contain "
                   onError={(e) => {
                     e.target.style.display = 'none';
                   }}
@@ -87,6 +81,19 @@ function DelegateBanner() {
               
             </div>
           </div>
+
+          {/* Bottom Center Flower Border */}
+          <div className="relative w-full flex justify-center  ">
+            <img 
+              src="/borderflower.png" 
+              alt="Border Flower" 
+              className="w-90 h-12 sm:w-100 sm:h-14 object-contain "
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+          
         </div>
       </div>
     </div>

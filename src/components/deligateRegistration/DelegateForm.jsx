@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { uploadDelegateImage, validateImageFile } from '@/services/delegateImageService';
 
 
 
@@ -42,6 +43,9 @@ const DelegateForm = () => {
   });
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
@@ -61,6 +65,16 @@ const DelegateForm = () => {
     // Format mobile input - only digits, max 10
     if (name === 'mobile') {
       updatedData[name] = value.replace(/\D/g, '').slice(0, 10);
+    }
+    
+    // Format Aadhar input - only digits, max 12, cannot start with 0 or 1
+    if (name === 'aadharno') {
+      const cleanValue = value.replace(/\D/g, '').slice(0, 12);
+      if (cleanValue.length > 0 && (cleanValue.startsWith('0') || cleanValue.startsWith('1'))) {
+        // Don't update if it starts with 0 or 1
+        return;
+      }
+      updatedData[name] = cleanValue;
     }
 
     // Auto-set days for without assistance
@@ -85,24 +99,33 @@ const DelegateForm = () => {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size should be less than 5MB');
-        return;
-      }
-      
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
+    
+    if (!file) {
+      setSelectedFile(null);
+      setImagePreview(null);
+      setUploadedImageUrl(null);
+      setFormData(prev => ({ ...prev, selfie: null }));
+      return;
+    }
+
+    // Validate file using the service
+    const validation = await validateImageFile(file);
+    if (!validation.isValid) {
+      toast.error(validation.error);
+      return;
     }
     
+    // Set selected file and create preview
     setSelectedFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    
     setFormData(prev => ({ ...prev, selfie: file }));
+    
+    // Show upload success message
+    toast.success('Image selected successfully!');
   };
 
   const calculateFormAmount = () => {
@@ -175,19 +198,41 @@ const DelegateForm = () => {
       // Prepare delegate details without the file object
       const { selfie, ...delegateDetailsWithoutFile } = formData;
       
-      // Add file information if file exists
-      const fileInfo = selectedFile ? {
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        fileType: selectedFile.type,
-        fileUploaded: true
+      let imageUploadResult = null;
+      
+      // Upload image to Firebase Storage if file exists
+      if (selectedFile) {
+        console.log('📸 Uploading delegate image to Firebase Storage...');
+        setImageUploading(true);
+        
+        imageUploadResult = await uploadDelegateImage(selectedFile, bookingId);
+        
+        if (!imageUploadResult.success) {
+          console.error('Image upload failed:', imageUploadResult.error);
+          toast.error('Failed to upload image: ' + imageUploadResult.error);
+          throw new Error('Image upload failed: ' + imageUploadResult.error);
+        }
+        
+        console.log('✅ Image uploaded successfully:', imageUploadResult.url);
+        setUploadedImageUrl(imageUploadResult.url);
+        setImageUploading(false);
+      }
+      
+      // Add file information 
+      const fileInfo = selectedFile && imageUploadResult ? {
+        fileName: imageUploadResult.fileName,
+        originalName: imageUploadResult.originalName,
+        fileSize: imageUploadResult.size,
+        fileType: imageUploadResult.type,
+        fileUploaded: true,
+        imageUrl: imageUploadResult.url
       } : {
         fileUploaded: false
       };
       
       // Create delegate booking in Firebase
       const bookingRef = doc(db, 'delegateBookings', bookingId);
-      await setDoc(bookingRef, {
+      const bookingDataToSave = {
         id: bookingId,
         bookingId: bookingId,
         userId: user?.uid || 'guest',
@@ -216,9 +261,27 @@ const DelegateForm = () => {
           templeName: formData.templename,
           briefProfile: formData.brief
         }
-      });
+      };
+      
+      await setDoc(bookingRef, bookingDataToSave);
       
       console.log('✅ Delegate booking created successfully:', bookingId);
+      
+      // Send confirmation email for successful registrations
+      if (paymentData.status === 'confirmed') {
+        try {
+          const { sendBookingConfirmationEmail } = await import('@/services/emailService');
+          const enrichedData = {
+            ...bookingDataToSave,
+            order_id: bookingId,
+            amount: calculateFormAmount()
+          };
+          const emailResult = await sendBookingConfirmationEmail(enrichedData, 'delegate');
+          console.log('📧 Delegate confirmation email sent:', emailResult);
+        } catch (emailError) {
+          console.error('❌ Failed to send delegate confirmation email:', emailError);
+        }
+      }
       
     } catch (error) {
       console.error('❌ Error creating delegate booking:', error);
@@ -423,6 +486,43 @@ const DelegateForm = () => {
     }
   };
 
+  // Check if form is valid for enabling submit button
+  const isFormValid = () => {
+    const requiredFields = ['name', 'email', 'mobile', 'country', 'participation', 'registrationType', 'address', 'pincode', 'delegateType'];
+    
+    // Check basic required fields
+    for (const field of requiredFields) {
+      if (!formData[field] || !formData[field].toString().trim()) {
+        return false;
+      }
+    }
+    
+    // Check registration type specific fields
+    if (formData.registrationType === 'Company' && (!formData.companyname || !formData.companyname.trim())) {
+      return false;
+    }
+    
+    if (formData.registrationType === 'Temple') {
+      if (!formData.templename || !formData.templename.trim()) return false;
+      if (!formData.brief || !formData.brief.trim()) return false;
+    }
+    
+    // Check document requirements based on country
+    const isIndianResident = formData.country && formData.country.toLowerCase().includes('india');
+    if (isIndianResident) {
+      if (!formData.aadharno || !formData.aadharno.trim()) return false;
+    } else {
+      if (!formData.passportno || !formData.passportno.trim()) return false;
+    }
+    
+    // Check delegate specific fields
+    if (formData.delegateType === 'withAssistance' && !formData.days) {
+      return false;
+    }
+    
+    return true;
+  };
+
   const totalAmount = calculateFormAmount();
 
   return (
@@ -476,6 +576,8 @@ const DelegateForm = () => {
               handleBlur={handleBlur}
               selectedFile={selectedFile}
               handleFileChange={handleFileChange}
+              imagePreview={imagePreview}
+              imageUploading={imageUploading}
             />
 
             {/* Pricing Summary */}
@@ -540,9 +642,9 @@ const DelegateForm = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isSubmitting || loading.countries}
+                disabled={isSubmitting || loading.countries || !isFormValid()}
                 className={`px-8 py-3 rounded-lg font-semibold shadow-lg transition-all duration-200 ${
-                  isSubmitting || loading.countries
+                  isSubmitting || loading.countries || !isFormValid()
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 hover:shadow-xl transform hover:scale-105'
                 } text-white`}

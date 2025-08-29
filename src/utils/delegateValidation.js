@@ -66,6 +66,8 @@ export const validateForm = (formData) => {
       const cleanAadhar = formData.aadharno.replace(/\D/g, '');
       if (cleanAadhar.length !== 12) {
         errors.aadharno = 'Aadhar number must be exactly 12 digits';
+      } else if (cleanAadhar.startsWith('0') || cleanAadhar.startsWith('1')) {
+        errors.aadharno = 'Aadhar number cannot start with 0 or 1';
       }
     }
     

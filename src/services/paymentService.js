@@ -124,6 +124,43 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
       paymentStatus: paymentData.order_status
     });
     
+    // Send confirmation email on successful payment
+    console.log('📧 Checking email trigger conditions...');
+    console.log('📋 Payment status:', paymentData.order_status);
+    console.log('📋 Order ID:', orderId);
+    console.log('📋 Booking type:', bookingType);
+    console.log('📋 Booking data summary:', {
+      id: bookingData?.id,
+      bookingId: bookingData?.bookingId,
+      status: bookingData?.status,
+      customerEmail: bookingData?.customerDetails?.email || bookingData?.userDetails?.email || 'No email found'
+    });
+    
+    if (paymentData.order_status === 'Success') {
+      try {
+        console.log('✅ Payment successful, sending confirmation email...');
+        const { sendBookingConfirmationEmail } = await import('@/services/emailService');
+        const enrichedBookingData = { ...bookingData, amount: paymentData.amount, order_id: orderId };
+        
+        console.log('📧 Calling sendBookingConfirmationEmail from payment service...');
+        console.log('📋 Enriched booking data keys:', Object.keys(enrichedBookingData));
+        
+        const emailResult = await sendBookingConfirmationEmail(enrichedBookingData, bookingType);
+        console.log('📧 Email send result from payment service:', emailResult);
+        
+        if (emailResult.success) {
+          console.log('✅ Email sent successfully from payment service!');
+        } else {
+          console.error('❌ Email failed from payment service:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('❌ Exception during email send from payment service:', emailError);
+        console.error('❌ Error stack:', emailError.stack);
+      }
+    } else {
+      console.log('⚠️ Email not sent - payment not successful. Status:', paymentData.order_status);
+    }
+    
     return true;
     
   } catch (error) {

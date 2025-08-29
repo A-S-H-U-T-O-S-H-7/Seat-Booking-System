@@ -154,7 +154,8 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
   };
 
   const validateAadhar = (aadhar) => {
-    const aadharRegex = /^\d{12}$/;
+    // Check if it's 12 digits and doesn't start with 0 or 1
+    const aadharRegex = /^[2-9]\d{11}$/;
     return aadharRegex.test(aadhar);
   };
 
@@ -174,7 +175,7 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
       validateEmail(details.email) &&
       validatePhone(details.phone) &&
       validateAadhar(details.aadhar) &&
-      validatePan(details.pan) &&
+      (details.pan ? validatePan(details.pan) : true) && // PAN is optional
       validateAddress(details.address)
     );
   };
@@ -188,7 +189,7 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
       case 'phone':
         return details.phone && !validatePhone(details.phone) ? 'Please enter a valid 10-digit mobile number' : '';
       case 'aadhar':
-        return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number' : '';
+        return details.aadhar && !validateAadhar(details.aadhar) ? 'Please enter a valid 12-digit Aadhar number (cannot start with 0 or 1)' : '';
       case 'pan':
         return details.pan && !validatePan(details.pan) ? 'Please enter a valid PAN number (e.g., ABCDE1234F)' : '';
       case 'address':
@@ -288,7 +289,7 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
     className={`w-full px-4 py-3 text-gray-900 bg-gray-50 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-500 ${
       getFieldError('aadhar') ? 'border-red-300 bg-red-50' : 'border-gray-200'
     }`}
-    placeholder="Enter 12-digit Aadhar number"
+    placeholder="Enter 12-digit Aadhar number (cannot start with 0 or 1)"
     required
   />
   {getFieldError('aadhar') && (
@@ -302,7 +303,7 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
         {/* PAN Number */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            PAN Card Number *
+            PAN Card Number (Optional)
           </label>
           <input
             type="text"
@@ -314,7 +315,6 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
             }`}
             placeholder="Enter PAN number (e.g., ABCDE1234F)"
             style={{ textTransform: 'uppercase' }}
-            required
           />
           {getFieldError('pan') && (
             <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -445,7 +445,10 @@ CustomerDetails.validateForm = (details) => {
   const validateName = (name) => name && name.trim().length >= 3;
   const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone) => /^[6-9]\d{9}$/.test(phone);
-  const validateAadhar = (aadhar) => /^\d{12}$/.test(aadhar);
+  const validateAadhar = (aadhar) => {
+    // Check if it's 12 digits and doesn't start with 0 or 1
+    return /^[2-9]\d{11}$/.test(aadhar);
+  };
   const validatePan = (pan) => /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan);
   const validateAddress = (address) => address && address.trim().length >= 5;
 
@@ -454,7 +457,7 @@ CustomerDetails.validateForm = (details) => {
     validateEmail(details.email) &&
     validatePhone(details.phone) &&
     validateAadhar(details.aadhar) &&
-    validatePan(details.pan) &&
+    (details.pan ? validatePan(details.pan) : true) && // PAN is optional
     validateAddress(details.address)
   );
 };

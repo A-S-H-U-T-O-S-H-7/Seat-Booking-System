@@ -1,7 +1,7 @@
 import React from 'react';
 import { CreditCard, Camera } from 'lucide-react';
 
-const AdditionalDetails = ({ formData, errors, handleInputChange, handleBlur, selectedFile, handleFileChange }) => {
+const AdditionalDetails = ({ formData, errors, handleInputChange, handleBlur, selectedFile, handleFileChange, imagePreview, imageUploading }) => {
   const isIndianResident = formData.country && formData.country.toLowerCase().includes('india');
   
   return (
@@ -72,26 +72,76 @@ const AdditionalDetails = ({ formData, errors, handleInputChange, handleBlur, se
 
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">Upload Photo</label>
-      <div className="relative">
-        <input
-          type="file"
-          name="selfie"
-          onChange={handleFileChange}
-          accept="image/*"
-          className="hidden"
-          id="photo-upload"
-        />
-        <label
-          htmlFor="photo-upload"
-          className="flex items-center justify-center w-full px-4 py-4 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        >
-          <div className="text-center">
-            <Camera className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-            <p className="text-sm text-gray-600">
-              {selectedFile ? selectedFile.name : 'Click to upload photo'}
-            </p>
+      <div className="space-y-3">
+        {/* Upload Area */}
+        <div className="relative">
+          <input
+            type="file"
+            name="selfie"
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+            id="photo-upload"
+          />
+          <label
+            htmlFor="photo-upload"
+            className={`flex items-center justify-center w-full px-4 py-4 border-2 border-dashed rounded-lg cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+              selectedFile 
+                ? 'border-emerald-500 bg-emerald-50' 
+                : 'border-gray-300 hover:border-emerald-500 hover:bg-emerald-50'
+            }`}
+          >
+            <div className="text-center">
+              <Camera className={`w-6 h-6 mx-auto mb-1 ${
+                selectedFile ? 'text-emerald-600' : 'text-gray-400'
+              }`} />
+              <p className={`text-sm ${
+                selectedFile ? 'text-emerald-700 font-medium' : 'text-gray-600'
+              }`}>
+                {selectedFile ? `✅ ${selectedFile.name}` : 'Click to upload photo'}
+              </p>
+              {selectedFile && (
+                <p className="text-xs text-emerald-600 mt-1">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              )}
+            </div>
+          </label>
+        </div>
+        
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mt-3">
+            <div className="relative inline-block">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="w-24 h-24 object-cover rounded-lg border-2 border-emerald-200 shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFile(null);
+                  setImagePreview(null);
+                  const input = document.getElementById('photo-upload');
+                  if (input) input.value = '';
+                }}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Image preview</p>
           </div>
-        </label>
+        )}
+        
+        {/* Upload Status */}
+        {imageUploading && (
+          <div className="flex items-center gap-2 text-sm text-emerald-600">
+            <div className="animate-spin w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full"></div>
+            <span>Uploading image...</span>
+          </div>
+        )}
       </div>
     </div>
   </div>

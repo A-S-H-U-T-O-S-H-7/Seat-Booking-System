@@ -46,7 +46,7 @@ const DonationCard = ({ donation }) => {
     : new Date(donation.createdAt);
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 via-rose-50 to-pink-100 rounded-xl shadow-sm border border-pink-100 hover:shadow-md transition-all duration-200 overflow-hidden">
+    <div className="bg-gradient-to-br w-full from-pink-50 via-rose-50 to-pink-100 rounded-xl shadow-sm border border-pink-100 hover:shadow-md transition-all duration-200 overflow-hidden">
       {/* Header with status and amount */}
       <div className="px-4 py-3 bg-gradient-to-r from-pink-100 to-rose-100 border-b border-pink-200">
         <div className="flex items-center justify-between">
@@ -81,7 +81,7 @@ const DonationCard = ({ donation }) => {
         </div>
 
         {/* Donation details */}
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Donor information */}
           <div className="bg-white/70 rounded-lg p-3 border border-pink-100">
             <div className="flex items-start gap-2">
@@ -136,14 +136,14 @@ const DonationCard = ({ donation }) => {
           </div>
         </div>
 
-        {/* Additional info for tax exemption */}
+        {/* Additional info for tax exemption
         {donation.taxExemption?.eligible && donation.status === 'confirmed' && (
           <div className="mt-3 p-2 bg-pink-50 border border-pink-200 rounded-lg">
             <p className="text-xs text-pink-700 text-center">
               🧾 Tax exemption certificate will be emailed within 7 business days
             </p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

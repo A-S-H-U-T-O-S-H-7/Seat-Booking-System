@@ -15,7 +15,7 @@ export default function ShowBookingPage() {
   // Initialize show seat cleanup service to run every 2 minutes
   useShowSeatCleanup();
   
-    const handleBack = () => {
+    const handleBack = () => { 
       router.back();
     };
   return (
