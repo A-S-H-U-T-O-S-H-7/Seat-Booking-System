@@ -129,7 +129,20 @@ const DelegateCard = ({ booking }) => {
           {/* Delegate information */}
           <div className="bg-white/70 rounded-lg p-3 border border-amber-100">
             <div className="flex items-start gap-2">
-              <User className="w-4 h-4 text-amber-600 mt-0.5" />
+              {/* Image thumbnail and view button */}
+              {delegateDetails.fileInfo.imageUrl && (
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={delegateDetails.fileInfo.imageUrl} 
+                    alt="Delegate photo"
+                    className="w-10 h-10 rounded-lg object-cover border border-amber-200"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                 
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">
                   {delegateDetails.name || 'N/A'}
@@ -137,9 +150,10 @@ const DelegateCard = ({ booking }) => {
                 <p className="text-xs text-gray-600 truncate">
                   {delegateDetails.email || ''}
                 </p>
-                <p className="text-xs text-amber-600 mt-1">
-                  {getRegistrationTypeIcon(registrationType)} {registrationType || 'Individual'}
-                </p>
+                {eventDetails.designation && (
+                  <p className="text-xs text-gray-600">{eventDetails.designation}</p>
+                )}
+                
               </div>
             </div>
           </div>
@@ -154,9 +168,10 @@ const DelegateCard = ({ booking }) => {
                    registrationType === 'Temple' ? (eventDetails.templeName || 'N/A') :
                    delegateDetails.companyname || 'Individual Registration'}
                 </p>
-                {eventDetails.designation && (
-                  <p className="text-xs text-gray-600">{eventDetails.designation}</p>
-                )}
+                <p className="text-xs text-amber-600 mt-1">
+                  {getRegistrationTypeIcon(registrationType)} {registrationType || 'Individual'}
+                </p>
+                
               </div>
             </div>
           </div>
@@ -194,46 +209,7 @@ const DelegateCard = ({ booking }) => {
           </div>
         </div>
 
-        {/* Photo Upload Status */}
-        {delegateDetails.fileInfo && (
-          <div className="bg-white/70 rounded-lg p-3 border border-amber-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-amber-600" />
-                <span className="text-sm text-gray-600">Photo:</span>
-                <span className={`text-sm font-medium ${
-                  delegateDetails.fileInfo.fileUploaded 
-                    ? 'text-green-600' 
-                    : 'text-red-600'
-                }`}>
-                  {delegateDetails.fileInfo.fileUploaded 
-                    ? '✅ Uploaded' 
-                    : '❌ Not uploaded'}
-                </span>
-              </div>
-              
-              {/* Image thumbnail and view button */}
-              {delegateDetails.fileInfo.imageUrl && (
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={delegateDetails.fileInfo.imageUrl} 
-                    alt="Delegate photo"
-                    className="w-10 h-10 rounded-lg object-cover border border-amber-200"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  <button 
-                    onClick={() => window.open(delegateDetails.fileInfo.imageUrl, '_blank')}
-                    className="text-xs bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded transition-colors"
-                  >
-                    View Full
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        
 
         {/* Expand/Collapse Button */}
         <button

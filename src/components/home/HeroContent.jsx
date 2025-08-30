@@ -7,7 +7,7 @@ const HeroContent = () => {
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mb-10">
         
         {/* Left Side - Enhanced Image Section */}
-        <div className="w-full lg:w-2/5 flex justify-center lg:justify-start">
+        <div className="w-full lg:w-2/5 flex flex-col items-center lg:items-center">
           <div className="relative group">
             {/* Main Image with Enhanced Effects */}
             <div className="relative overflow-hidden rounded-3xl shadow-2xl transform group-hover:scale-105 transition-all duration-700">
@@ -29,7 +29,16 @@ const HeroContent = () => {
             {/* Enhanced Glow Effect */}
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-orange-500/20 via-yellow-500/15 to-red-500/20 blur-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
+
+         <Link href="/pancha-ratra">
+  <div className='mt-4 px-2 py-2 rounded-md border text-orange-900 font-semibold italic border-orange-400 bg-orange-200'>
+    Know more About Pancha Ratra
+  </div>
+</Link>
+
+          
         </div>
+        
 
         {/* Right Side - Enhanced Content Section */}
         <div className="w-full lg:w-3/5 space-y-8">
