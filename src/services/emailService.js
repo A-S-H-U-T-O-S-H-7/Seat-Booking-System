@@ -335,33 +335,99 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
     email: customerDetails.email || '',
     mobile: customerDetails.phone || customerDetails.mobile || '',
     address: customerDetails.address || 'Not provided',
-    pan: customerDetails.pan || '',
+    pan: customerDetails.pan || 'Not provided',
     event_date: formatEventDate(eventDate),
     booking_type: 'Havan Seat Booking',
     details: `
-Havan Seat Booking Details:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; line-height: 1.6;">
+  <div style="background: linear-gradient(135deg, #ff9933, #ff6600); color: white; padding: 15px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h2 style="margin: 0; font-weight: 600;">🕉️ Havan Seat Booking Details</h2>
+  </div>
+  
+  <div style="background: #fff; border: 2px solid #ff9933; border-top: none; border-radius: 0 0 8px 8px; padding: 20px;">
+    
+    <div style="margin-bottom: 25px;">
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">🕉️</span>
+        <span style="font-weight: 600; color: #d2691e;">Event:</span>
+        <span style="margin-left: 8px; font-style: italic;">Sacred Havan Ceremony</span>
+      </div>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">📅</span>
+        <span style="font-weight: 600; color: #d2691e;">Date:</span>
+        <span style="margin-left: 8px;">${formatEventDate(eventDate)}</span>
+      </div>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">⏰</span>
+        <span style="font-weight: 600; color: #d2691e;">Shift:</span>
+        <span style="margin-left: 8px;">${formatShiftTime(shift)}</span>
+      </div>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">🪑</span>
+        <span style="font-weight: 600; color: #d2691e;">Selected Seats:</span>
+        <span style="margin-left: 8px; font-weight: 600; color: #ff6600;">${seats.length > 0 ? seats.join(', ') : 'Not specified'}</span>
+      </div>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">👥</span>
+        <span style="font-weight: 600; color: #d2691e;">Number of Seats:</span>
+        <span style="margin-left: 8px; font-weight: 600;">${seats.length || 1}</span>
+      </div>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 18px; margin-right: 8px;">💰</span>
+        <span style="font-weight: 600; color: #d2691e;">Total Amount:</span>
+        <span style="margin-left: 8px; font-weight: 700; font-size: 18px; color: #ff6600;">₹${baseData.amount}</span>
+      </div>
+      
+      <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <span style="font-size: 18px; margin-right: 8px;">📍</span>
+        <span style="font-weight: 600; color: #d2691e;">Venue:</span>
+        <span style="margin-left: 8px; font-style: italic;">Samudayik Vikas Samiti</span>
+      </div>
+    </div>
 
-🕉️ Event: Sacred Havan Ceremony
-📅 Date: ${formatEventDate(eventDate)}
-⏰ Shift: ${formatShiftTime(shift)}
-🪑 Selected Seats: ${seats.length > 0 ? seats.join(', ') : 'Not specified'}
-👥 Number of Seats: ${seats.length || 1}
-💰 Total Amount: ₹${baseData.amount}
+    <div style="border-top: 2px solid #f0f0f0; padding-top: 20px;">
+      <h3 style="color: #d2691e; font-weight: 600; margin-bottom: 15px; font-size: 18px;">📋 Important Information:</h3>
+      
+      <ul style="list-style: none; padding-left: 0; margin: 0;">
+        <li style="margin-bottom: 10px; padding: 8px 0; border-left: 3px solid #ff9933; padding-left: 15px;">
+          <span style="font-weight: 600;">⏰ Arrival Time:</span> Please arrive <strong style="color: #ff6600;">30 minutes before</strong> the ceremony begins
+        </li>
+        
+        <li style="margin-bottom: 10px; padding: 8px 0; border-left: 3px solid #ff9933; padding-left: 15px;">
+          <span style="font-weight: 600;">🪪 ID Verification:</span> Carry a <em>valid ID proof</em> for verification
+        </li>
+        
+        <li style="margin-bottom: 10px; padding: 8px 0; border-left: 3px solid #ff9933; padding-left: 15px;">
+          <span style="font-weight: 600;">👘 Dress Code:</span> <em>Traditional Indian attire</em> recommended
+        </li>
+        
+        <li style="margin-bottom: 10px; padding: 8px 0; border-left: 3px solid #ff9933; padding-left: 15px;">
+          <span style="font-weight: 600;">📱 Mobile Phones:</span> To be kept on <strong>silent mode</strong> during ceremony
+        </li>
+        
+        <li style="padding: 8px 0; border-left: 3px solid #ff9933; padding-left: 15px;">
+          <span style="font-weight: 600;">📸 Photography:</span> May be <em>restricted in certain areas</em>
+        </li>
+      </ul>
+    </div>
 
-📍 Venue: Samudayik Vikas Samiti
-🎯 Booking ID: ${baseData.order_id}
-
-Important Information:
-• Please arrive 30 minutes before the ceremony begins
-• Carry a valid ID proof for verification
-• Dress code: Traditional Indian attire recommended
-• Mobile phones to be kept on silent mode during ceremony
-• Photography/videography may be restricted in certain areas
-
-Your participation in this sacred ceremony will bring peace and prosperity. Thank you for your devotion and contribution to this noble cause.
-
-🙏 May this sacred ritual bring blessings to you and your family.
+    <div style="background: linear-gradient(135deg, #fffaf0, #fff8dc); border-radius: 8px; padding: 20px; margin-top: 25px; border-left: 4px solid #ff9933;">
+      <p style="margin: 0 0 10px 0; font-style: italic; color: #8B4513; line-height: 1.7;">
+        Your participation in this sacred ceremony will bring peace and prosperity. Thank you for your devotion and contribution to this noble cause.
+      </p>
+      
+      <p style="margin: 0; text-align: center; font-weight: 600; color: #d2691e; font-size: 16px;">
+        🙏 <em>May this sacred ritual bring blessings to you and your family.</em> 🙏
+      </p>
+    </div>
+    
+  </div>
+</div>
     `.trim()
   };
 };
