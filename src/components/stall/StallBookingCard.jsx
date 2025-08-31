@@ -9,18 +9,49 @@ import { getStallEventSettings, calculateEventDays } from '@/services/systemSett
 const StallBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
-  // Use event dates passed from profile page (already processed there)
-  const eventStartDate = booking.eventDetails?.startDate;
-  const eventEndDate = booking.eventDetails?.endDate;
+  const [eventStartDate, setEventStartDate] = useState(booking.eventDetails?.startDate);
+  const [eventEndDate, setEventEndDate] = useState(booking.eventDetails?.endDate);
+  const [eventDuration, setEventDuration] = useState('Loading...');
   
-  // Calculate event duration
-  const eventDuration = (() => {
-    if (eventStartDate && eventEndDate) {
-      const days = differenceInDays(eventEndDate, eventStartDate) + 1;
-      return `${days} day${days > 1 ? 's' : ''}`;
-    }
-    return '5 days'; // fallback
-  })();
+  useEffect(() => {
+    console.log('🏪 StallBookingCard - booking data:', {
+      bookingId: booking.id,
+      eventDetails: booking.eventDetails,
+      startDate: booking.eventDetails?.startDate,
+      endDate: booking.eventDetails?.endDate
+    });
+    
+    const initializeDates = async () => {
+      let startDate = booking.eventDetails?.startDate;
+      let endDate = booking.eventDetails?.endDate;
+      
+      // If dates are not in booking data, fetch from system settings
+      if (!startDate || !endDate) {
+        try {
+          const { getStallEventSettings } = await import('@/services/systemSettingsService');
+          const stallSettings = await getStallEventSettings();
+          startDate = startDate || new Date(stallSettings.startDate);
+          endDate = endDate || new Date(stallSettings.endDate);
+          
+          console.log('🏪 Fetched stall settings:', { startDate, endDate, stallSettings });
+        } catch (error) {
+          console.error('Error fetching stall settings:', error);
+        }
+      }
+      
+      if (startDate && endDate) {
+        setEventStartDate(startDate);
+        setEventEndDate(endDate);
+        
+        const days = differenceInDays(endDate, startDate) + 1;
+        setEventDuration(`${days} day${days > 1 ? 's' : ''}`);
+        
+        console.log('🏪 Set stall card dates:', { startDate, endDate, days });
+      }
+    };
+    
+    initializeDates();
+  }, [booking.eventDetails]);
   
   const canCancelBooking = (eventDate) => {
     const today = new Date();

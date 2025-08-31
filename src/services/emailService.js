@@ -330,28 +330,25 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
   const shift = bookingData.shift || 'Not specified';
   const seats = bookingData.seats || [];
   
-  // Add persistent debugging that won't disappear on page redirect
-  const debugInfo = {
-    timestamp: new Date().toISOString(),
-    eventDate,
-    bookingDataEventDate: bookingData.eventDate,
-    selectedDate: bookingData.selectedDate,
-    type: typeof eventDate,
-    constructor: eventDate?.constructor?.name,
-    orderId: baseData.order_id
-  };
+  // IMMEDIATE DEBUG - Alert box that can't be missed
+  const formattedEventDate = formatEventDate(eventDate);
+  const debugMessage = `🔍 HAVAN EMAIL DATE DEBUG:
+` +
+    `Order ID: ${baseData.order_id}\n` +
+    `Raw eventDate: ${JSON.stringify(eventDate)}\n` +
+    `Type: ${typeof eventDate}\n` +
+    `Constructor: ${eventDate?.constructor?.name}\n` +
+    `Formatted date: ${formattedEventDate}\n` +
+    `bookingData.eventDate: ${JSON.stringify(bookingData.eventDate)}\n` +
+    `bookingData.selectedDate: ${JSON.stringify(bookingData.selectedDate)}`;
   
-  console.log('🔍 prepareHavanEmailData - eventDate details:', debugInfo);
+  console.log(debugMessage);
   
-  // Store debug info in localStorage for persistence
-  try {
-    const existingDebug = JSON.parse(localStorage.getItem('havanEmailDateDebug') || '[]');
-    existingDebug.push(debugInfo);
-    // Keep only last 10 entries
-    const recentDebug = existingDebug.slice(-10);
-    localStorage.setItem('havanEmailDateDebug', JSON.stringify(recentDebug));
-  } catch (e) {
-    console.error('Failed to store debug info:', e);
+  // ALERT for impossible-to-miss debugging
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      alert(debugMessage);
+    }, 1000);
   }
 
   // Get dynamic shift information from system settings
