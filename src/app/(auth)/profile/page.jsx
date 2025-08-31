@@ -245,85 +245,96 @@ const ProfilePage = () => {
       
       const stallBookingsData = [];
       
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        console.log('Stall booking data:', data);
-        
-        // Handle different date formats for event dates
-        let startDate, endDate;
-        if (data.eventDetails?.startDate) {
-          if (data.eventDetails.startDate.toDate && typeof data.eventDetails.startDate.toDate === 'function') {
-            startDate = data.eventDetails.startDate.toDate();
-          } else if (data.eventDetails.startDate.seconds) {
-            startDate = new Date(data.eventDetails.startDate.seconds * 1000);
-          } else if (data.eventDetails.startDate instanceof Date) {
-            startDate = data.eventDetails.startDate;
+      // Load system settings once outside the loop if needed
+      let stallSettings = null;
+      
+      const processStallBookings = async () => {
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          console.log('Stall booking data:', data);
+          
+          // Handle different date formats for event dates
+          let startDate, endDate;
+          if (data.eventDetails?.startDate) {
+            if (data.eventDetails.startDate.toDate && typeof data.eventDetails.startDate.toDate === 'function') {
+              startDate = data.eventDetails.startDate.toDate();
+            } else if (data.eventDetails.startDate.seconds) {
+              startDate = new Date(data.eventDetails.startDate.seconds * 1000);
+            } else if (data.eventDetails.startDate instanceof Date) {
+              startDate = data.eventDetails.startDate;
+            } else {
+              startDate = new Date(data.eventDetails.startDate);
+            }
           } else {
-            startDate = new Date(data.eventDetails.startDate);
+            // Use dynamic dates from system settings
+            try {
+              if (!stallSettings) {
+                const { getStallEventSettings } = await import('@/services/systemSettingsService');
+                stallSettings = await getStallEventSettings();
+              }
+              startDate = new Date(stallSettings.startDate);
+            } catch (error) {
+              console.error('Error loading stall settings for profile, using fallback:', error);
+              startDate = new Date('2025-11-15');
+            }
           }
-        } else {
-          // Use dynamic dates from system settings
-          try {
-            const { getStallEventSettings } = await import('@/services/systemSettingsService');
-            const stallSettings = await getStallEventSettings();
-            startDate = new Date(stallSettings.startDate);
-          } catch (error) {
-            console.error('Error loading stall settings for profile, using fallback:', error);
-            startDate = new Date('2025-11-15');
-          }
-        }
-        
-        if (data.eventDetails?.endDate) {
-          if (data.eventDetails.endDate.toDate && typeof data.eventDetails.endDate.toDate === 'function') {
-            endDate = data.eventDetails.endDate.toDate();
-          } else if (data.eventDetails.endDate.seconds) {
-            endDate = new Date(data.eventDetails.endDate.seconds * 1000);
-          } else if (data.eventDetails.endDate instanceof Date) {
-            endDate = data.eventDetails.endDate;
+          
+          if (data.eventDetails?.endDate) {
+            if (data.eventDetails.endDate.toDate && typeof data.eventDetails.endDate.toDate === 'function') {
+              endDate = data.eventDetails.endDate.toDate();
+            } else if (data.eventDetails.endDate.seconds) {
+              endDate = new Date(data.eventDetails.endDate.seconds * 1000);
+            } else if (data.eventDetails.endDate instanceof Date) {
+              endDate = data.eventDetails.endDate;
+            } else {
+              endDate = new Date(data.eventDetails.endDate);
+            }
           } else {
-            endDate = new Date(data.eventDetails.endDate);
+            // Use dynamic dates from system settings
+            try {
+              if (!stallSettings) {
+                const { getStallEventSettings } = await import('@/services/systemSettingsService');
+                stallSettings = await getStallEventSettings();
+              }
+              endDate = new Date(stallSettings.endDate);
+            } catch (error) {
+              console.error('Error loading stall settings for profile, using fallback:', error);
+              endDate = new Date('2025-11-20');
+            }
           }
-        } else {
-          // Use dynamic dates from system settings
-          try {
-            const { getStallEventSettings } = await import('@/services/systemSettingsService');
-            const stallSettings = await getStallEventSettings();
-            endDate = new Date(stallSettings.endDate);
-          } catch (error) {
-            console.error('Error loading stall settings for profile, using fallback:', error);
-            endDate = new Date('2025-11-20');
-          }
-        }
-        
-        let createdDate;
-        if (data.createdAt) {
-          if (data.createdAt.toDate && typeof data.createdAt.toDate === 'function') {
-            createdDate = data.createdAt.toDate();
-          } else if (data.createdAt.seconds) {
-            createdDate = new Date(data.createdAt.seconds * 1000);
-          } else if (typeof data.createdAt === 'string') {
-            createdDate = parseISO(data.createdAt);
-          } else if (data.createdAt instanceof Date) {
-            createdDate = data.createdAt;
+          
+          let createdDate;
+          if (data.createdAt) {
+            if (data.createdAt.toDate && typeof data.createdAt.toDate === 'function') {
+              createdDate = data.createdAt.toDate();
+            } else if (data.createdAt.seconds) {
+              createdDate = new Date(data.createdAt.seconds * 1000);
+            } else if (typeof data.createdAt === 'string') {
+              createdDate = parseISO(data.createdAt);
+            } else if (data.createdAt instanceof Date) {
+              createdDate = data.createdAt;
+            } else {
+              createdDate = new Date();
+            }
           } else {
             createdDate = new Date();
           }
-        } else {
-          createdDate = new Date();
+          
+          stallBookingsData.push({
+            id: doc.id,
+            ...data,
+            createdAt: createdDate,
+            eventDetails: {
+              ...data.eventDetails,
+              startDate,
+              endDate
+            },
+            type: 'stall' // Add type identifier
+          });
         }
-        
-        stallBookingsData.push({
-          id: doc.id,
-          ...data,
-          createdAt: createdDate,
-          eventDetails: {
-            ...data.eventDetails,
-            startDate,
-            endDate
-          },
-          type: 'stall' // Add type identifier
-        });
-      });
+      };
+      
+      await processStallBookings();
       
       // Sort by creation date (newest first)
       stallBookingsData.sort((a, b) => b.createdAt - a.createdAt);
