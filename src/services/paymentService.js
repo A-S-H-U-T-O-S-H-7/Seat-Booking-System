@@ -1,6 +1,7 @@
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
+import { formatDateKey } from '@/utils/dateUtils';
 
 /**
  * Update booking status after successful payment
@@ -324,15 +325,6 @@ function getCollectionName(bookingType) {
   }
 }
 
-/**
- * Format date for Firebase document keys
- */
-function formatDateKey(date) {
-  if (!date) return '';
-  
-  const dateObj = date instanceof Date ? date : new Date(date);
-  return dateObj.toISOString().split('T')[0];
-}
 
 /**
  * Get booking type from order ID or purpose
