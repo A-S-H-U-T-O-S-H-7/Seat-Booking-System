@@ -63,7 +63,52 @@ export const sendDonationConfirmationEmail = async (donationData) => {
 export const sendDelegateConfirmationEmail = async (delegateData) => {
   try {
     console.log('📧 Sending delegate confirmation email');
+    console.log('🔄 Attempting primary delegate-specific API first...');
     
+    // First, try the dedicated delegate email API
+    const primaryResult = await tryDelegateSpecificAPI(delegateData);
+    
+    if (primaryResult.success) {
+      console.log('✅ Primary delegate email API succeeded');
+      return primaryResult;
+    }
+    
+    console.log('⚠️ Primary API failed, falling back to general email API...');
+    console.log('Primary API error:', primaryResult.error);
+    
+    // Fallback to general email API with proper delegate formatting
+    const fallbackResult = await sendDelegateViaGeneralAPI(delegateData);
+    
+    if (fallbackResult.success) {
+      console.log('✅ Delegate email sent successfully via fallback general API');
+      return { 
+        success: true, 
+        message: 'Delegate confirmation email sent via fallback system', 
+        data: fallbackResult.data,
+        method: 'fallback'
+      };
+    } else {
+      console.error('❌ Both delegate email methods failed');
+      return { 
+        success: false, 
+        error: `Both email methods failed. Primary: ${primaryResult.error}. Fallback: ${fallbackResult.error}`,
+        primaryError: primaryResult.error,
+        fallbackError: fallbackResult.error
+      };
+    }
+  } catch (error) {
+    console.error('❌ Delegate email service error:', error);
+    return { success: false, error: 'Failed to send delegate email: ' + error.message };
+  }
+};
+
+/**
+ * Try the dedicated delegate email API first
+ * @param {Object} delegateData - Delegate information
+ * @returns {Promise<Object>} - API response
+ */
+const tryDelegateSpecificAPI = async (delegateData) => {
+  try {
     const formData = new FormData();
     formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
     formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');
@@ -85,25 +130,46 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
     });
     
     const responseText = await response.text();
-    console.log('📨 Delegate email API response:', responseText);
+    console.log('📨 Primary delegate API response:', responseText);
     
     let result;
     try {
       result = JSON.parse(responseText);
     } catch (parseError) {
-      return { success: false, error: 'Invalid response from delegate email service', rawResponse: responseText };
+      return { success: false, error: 'Invalid response from primary delegate email service', rawResponse: responseText };
     }
     
     if (result.status) {
-      console.log('✅ Delegate email sent successfully');
       return { success: true, message: 'Delegate confirmation email sent', data: result };
     } else {
-      console.error('❌ Delegate email API error:', result.errors);
-      return { success: false, error: 'Delegate email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
+      return { success: false, error: 'Primary delegate API error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
     }
   } catch (error) {
-    console.error('❌ Delegate email service error:', error);
-    return { success: false, error: 'Failed to send delegate email: ' + error.message };
+    return { success: false, error: 'Primary delegate API network error: ' + error.message };
+  }
+};
+
+/**
+ * Send delegate email via general booking email API as fallback
+ * @param {Object} delegateData - Delegate information
+ * @returns {Promise<Object>} - API response
+ */
+const sendDelegateViaGeneralAPI = async (delegateData) => {
+  try {
+    console.log('📧 Using general email API for delegate confirmation...');
+    
+    // Use the existing sendBookingConfirmationEmail function which works with general API
+    const result = await sendBookingConfirmationEmail(delegateData, 'delegate');
+    
+    if (result.success) {
+      console.log('✅ Delegate email sent via general API');
+      return { success: true, message: 'Delegate email sent via general API', data: result.data };
+    } else {
+      console.log('❌ General API also failed:', result.error);
+      return { success: false, error: 'General API error: ' + result.error };
+    }
+  } catch (error) {
+    return { success: false, error: 'General API network error: ' + error.message };
   }
 };
 

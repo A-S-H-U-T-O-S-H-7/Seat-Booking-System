@@ -590,15 +590,62 @@ function PaymentSuccessContent() {
                             {(() => {
                               try {
                                 if (bookingDetails?.eventDate) {
-                                  const date = bookingDetails.eventDate.seconds ? 
-                                    new Date(bookingDetails.eventDate.seconds * 1000) : 
-                                    new Date(bookingDetails.eventDate);
-                                  return date.toLocaleDateString('en-IN', {
+                                  // DEBUG: Detailed logging for date handling
+                                  console.log('🔍 SUCCESS PAGE - Event Date Debug:', {
+                                    rawEventDate: bookingDetails.eventDate,
+                                    type: typeof bookingDetails.eventDate,
+                                    constructor: bookingDetails.eventDate?.constructor?.name,
+                                    hasSeconds: bookingDetails.eventDate?.seconds ? true : false,
+                                    seconds: bookingDetails.eventDate?.seconds,
+                                    hasToDate: typeof bookingDetails.eventDate?.toDate === 'function',
+                                    isString: typeof bookingDetails.eventDate === 'string',
+                                    isTimestamp: typeof bookingDetails.eventDate === 'number'
+                                  });
+                                  
+                                  let date;
+                                  if (bookingDetails.eventDate.seconds) {
+                                    date = new Date(bookingDetails.eventDate.seconds * 1000);
+                                    console.log('🔍 Created date from seconds:', date, 'ISO:', date.toISOString());
+                                  } else if (bookingDetails.eventDate.toDate) {
+                                    date = bookingDetails.eventDate.toDate();
+                                    console.log('🔍 Created date from toDate():', date, 'ISO:', date.toISOString());
+                                  } else if (typeof bookingDetails.eventDate === 'string') {
+                                    date = new Date(bookingDetails.eventDate);
+                                    console.log('🔍 Created date from string:', date, 'ISO:', date.toISOString());
+                                  } else {
+                                    date = new Date(bookingDetails.eventDate);
+                                    console.log('🔍 Created date from raw value:', date, 'ISO:', date.toISOString());
+                                  }
+                                  
+                                  const formattedDate = date.toLocaleDateString('en-IN', {
                                     weekday: 'long',
                                     year: 'numeric',
                                     month: 'long',
                                     day: 'numeric'
                                   });
+                                  
+                                  console.log('🔍 Final formatted date:', formattedDate);
+                                  
+                                  // Alert for debugging
+                                  if (typeof window !== 'undefined') {
+                                    setTimeout(() => {
+                                      alert(`🔍 SUCCESS PAGE DATE DEBUG:
+` +
+                                        `Raw eventDate: ${JSON.stringify(bookingDetails.eventDate)}
+` +
+                                        `Type: ${typeof bookingDetails.eventDate}
+` +
+                                        `Has seconds: ${bookingDetails.eventDate?.seconds ? 'Yes - ' + bookingDetails.eventDate.seconds : 'No'}
+` +
+                                        `Parsed Date: ${date}
+` +
+                                        `Date ISO: ${date.toISOString()}
+` +
+                                        `Formatted: ${formattedDate}`);
+                                    }, 1000);
+                                  }
+                                  
+                                  return formattedDate;
                                 }
                                 return 'Date not available';
                               } catch (e) {

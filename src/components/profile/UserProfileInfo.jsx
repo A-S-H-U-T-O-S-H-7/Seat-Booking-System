@@ -25,7 +25,7 @@ import {
 } from '@/utils/userProfileService';
 import ProfileEditModal from './ProfileEditModal';
 
-const UserProfileInfo = ({ user, onEdit }) => {
+const UserProfileInfo = ({ user, onEdit, onShowEventLayout }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [profileCompletion, setProfileCompletion] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -263,6 +263,36 @@ const PaymentProcess = ({ customerDetails }) => {
 
         // Create pending booking record
         const bookingRef = doc(db, 'bookings', bookingId);
+        
+        // DEBUG: Check what selectedDate is being saved
+        console.log('🔍 PaymentProcess - selectedDate details:', {
+          selectedDate,
+          type: typeof selectedDate,
+          constructor: selectedDate?.constructor?.name,
+          timestamp: selectedDate?.getTime?.(),
+          toISOString: selectedDate?.toISOString?.(),
+          dateKey
+        });
+        
+        // ALERT for debugging
+        if (typeof window !== 'undefined') {
+          setTimeout(() => {
+            alert(`🔍 BOOKING CREATION DEBUG:
+` +
+              `Selected Date: ${selectedDate}
+` +
+              `Type: ${typeof selectedDate}
+` +
+              `Constructor: ${selectedDate?.constructor?.name}
+` +
+              `Timestamp: ${selectedDate?.getTime?.()}
+` +
+              `ISO String: ${selectedDate?.toISOString?.()}
+` +
+              `Date Key: ${dateKey}`);
+          }, 500);
+        }
+        
         const bookingData = {
           id: bookingId,
           bookingId,
