@@ -10,8 +10,8 @@ const StallBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
   const [eventDuration, setEventDuration] = useState('5 days');
-  const [eventStartDate, setEventStartDate] = useState(booking.eventDetails?.startDate || new Date('2025-11-15'));
-  const [eventEndDate, setEventEndDate] = useState(booking.eventDetails?.endDate || new Date('2025-11-20'));
+  const [eventStartDate, setEventStartDate] = useState(null);
+  const [eventEndDate, setEventEndDate] = useState(null);
   
   const canCancelBooking = (eventDate) => {
     const today = new Date();
@@ -119,7 +119,10 @@ const StallBookingCard = ({ booking, onCancel }) => {
           <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
             <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">EVENT PERIOD</p>
             <p className="text-sm font-bold text-gray-900 leading-tight">
-              {format(eventStartDate, 'MMM dd')} - {format(eventEndDate, 'MMM dd, yyyy')}
+              {eventStartDate && eventEndDate 
+                ? `${format(eventStartDate, 'MMM dd')} - ${format(eventEndDate, 'MMM dd, yyyy')}`
+                : 'Loading...'
+              }
             </p>
             <p className="text-xs text-gray-600">
               {eventDuration}

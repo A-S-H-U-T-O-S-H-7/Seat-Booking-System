@@ -330,13 +330,29 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
   const shift = bookingData.shift || 'Not specified';
   const seats = bookingData.seats || [];
   
-  console.log('🔍 prepareHavanEmailData - eventDate details:', {
+  // Add persistent debugging that won't disappear on page redirect
+  const debugInfo = {
+    timestamp: new Date().toISOString(),
     eventDate,
     bookingDataEventDate: bookingData.eventDate,
     selectedDate: bookingData.selectedDate,
     type: typeof eventDate,
-    constructor: eventDate?.constructor?.name
-  });
+    constructor: eventDate?.constructor?.name,
+    orderId: baseData.order_id
+  };
+  
+  console.log('🔍 prepareHavanEmailData - eventDate details:', debugInfo);
+  
+  // Store debug info in localStorage for persistence
+  try {
+    const existingDebug = JSON.parse(localStorage.getItem('havanEmailDateDebug') || '[]');
+    existingDebug.push(debugInfo);
+    // Keep only last 10 entries
+    const recentDebug = existingDebug.slice(-10);
+    localStorage.setItem('havanEmailDateDebug', JSON.stringify(recentDebug));
+  } catch (e) {
+    console.error('Failed to store debug info:', e);
+  }
 
   // Get dynamic shift information from system settings
   let shiftTimeDisplay = formatShiftTime(shift);
@@ -409,13 +425,35 @@ const prepareStallEmailData = async (bookingData, baseData) => {
 
   // Get dynamic event duration from system settings
   let eventDuration = 'Event duration not available';
+  let stallSettings = null;
   try {
     const { getStallEventSettings, formatEventDuration } = await import('@/services/systemSettingsService');
-    const stallSettings = await getStallEventSettings();
+    stallSettings = await getStallEventSettings();
     eventDuration = formatEventDuration(stallSettings.startDate, stallSettings.endDate);
   } catch (error) {
     console.error('Error fetching stall event duration for email:', error);
     eventDuration = 'November 15-20, 2025 (5 Days)'; // Fallback
+  }
+
+  // Get the actual start date from booking data or system settings
+  let startDate = eventDetails.startDate;
+  if (!startDate && stallSettings) {
+    startDate = stallSettings.startDate;
+  }
+  if (!startDate) {
+    startDate = '2025-11-15'; // Final fallback
+  }
+
+  // Format the event date to show full range (Start - End Date)
+  let eventDateDisplay = formatEventDate(startDate);
+  try {
+    if (stallSettings && stallSettings.startDate && stallSettings.endDate) {
+      const startFormatted = formatEventDate(stallSettings.startDate);
+      const endFormatted = formatEventDate(stallSettings.endDate);
+      eventDateDisplay = `${startFormatted} - ${endFormatted}`;
+    }
+  } catch (error) {
+    console.error('Error formatting stall date range for email:', error);
   }
 
   return {
@@ -425,7 +463,7 @@ const prepareStallEmailData = async (bookingData, baseData) => {
     mobile: vendorDetails.phone || vendorDetails.mobile || '',
     address: vendorDetails.address || 'Not provided',
     pan: vendorDetails.pan || '',
-    event_date: formatEventDate(eventDetails.startDate || '2025-11-15'),
+    event_date: eventDateDisplay,
     booking_type: 'Vendor Stall Booking',
     details: `
 
