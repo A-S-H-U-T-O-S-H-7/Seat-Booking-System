@@ -400,8 +400,6 @@ const prepareShowEmailData = async (bookingData, baseData) => {
     event_date: formatEventDate(showDate),
     booking_type: 'Cultural Show Reservation',
     details: `
-Cultural Show Reservation Details:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🎭 Event: Cultural Show & Performance
 ⏰ Time: 5:00 PM - 10:00 PM

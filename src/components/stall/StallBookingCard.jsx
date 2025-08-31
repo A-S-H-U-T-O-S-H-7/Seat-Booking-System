@@ -164,7 +164,7 @@ const StallBookingCard = ({ booking, onCancel }) => {
                 : booking.stallDetails?.size || 'Standard size'
               }
             </p>
-          </div>
+          </div> 
           
           <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
             <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">BUSINESS TYPE</p>

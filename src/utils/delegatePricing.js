@@ -11,7 +11,7 @@ export const PRICING_CONFIG = {
     ]
   },
   withAssistance: {
-    pricePerPersonPerDay: 2,
+    pricePerPersonPerDay: 20,
     minDays: 2,
     maxDays: 5,
     benefits: [
