@@ -10,6 +10,12 @@ import { ShoppingBag, CreditCard, CheckCircle, Shield, Building, User, Phone, Ma
 
 const StallPaymentProcess = ({ vendorDetails }) => {
   const [processing, setProcessing] = useState(false);
+  const [eventDetails, setEventDetails] = useState({
+    startDate: null,
+    endDate: null,
+    duration: 'Loading...',
+    formattedDuration: 'Loading...'
+  });
   const router = useRouter();
   const { user } = useAuth();
   const { 
@@ -21,6 +27,40 @@ const StallPaymentProcess = ({ vendorDetails }) => {
     priceSettings,
     clearSelection 
   } = useStallBooking();
+  
+  // Fetch event dates from system settings
+  useEffect(() => {
+    const fetchEventDates = async () => {
+      try {
+        const { getStallEventSettings, formatEventDuration, calculateEventDays } = await import('@/services/systemSettingsService');
+        const stallSettings = await getStallEventSettings();
+        
+        const startDate = new Date(stallSettings.startDate);
+        const endDate = new Date(stallSettings.endDate);
+        const days = calculateEventDays(stallSettings.startDate, stallSettings.endDate);
+        const formattedDuration = formatEventDuration(stallSettings.startDate, stallSettings.endDate);
+        
+        setEventDetails({
+          startDate,
+          endDate,
+          duration: `${days} day${days > 1 ? 's' : ''}`,
+          formattedDuration
+        });
+      } catch (error) {
+        // Use fallback values if fetch fails
+        const startDate = new Date('2025-11-15');
+        const endDate = new Date('2025-11-20');
+        setEventDetails({
+          startDate,
+          endDate,
+          duration: '5 days',
+          formattedDuration: 'Nov 15 - Nov 20, 2025 (5 Days)'
+        });
+      }
+    };
+    
+    fetchEventDates();
+  }, []);
 
   const generateBookingId = () => {
     const timestamp = Date.now();
@@ -44,8 +84,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
     setProcessing(true);
     
     try {
-      console.log('Creating pending stall booking...');
-      
       // Create pending booking first
       const generatedBookingId = generateBookingId();
       
@@ -57,8 +95,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
         status: 'pending_payment'
       }, generatedBookingId);
       
-      console.log('✅ Stall booking created with ID:', generatedBookingId);
-      
       // Prepare payment data for CCAvenue
       const paymentData = {
         order_id: generatedBookingId,
@@ -69,8 +105,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
         phone: vendorDetails.phone,
         address: vendorDetails.address || 'Delhi, India'
       };
-      
-      console.log('💳 Sending request to CCAvenue API...', paymentData);
       
       // Send request to CCAvenue API
       const response = await fetch('/api/payment/ccavenue-request', {
@@ -86,7 +120,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
       }
       
       const data = await response.json();
-      console.log('CCAvenue API Response:', data);
       
       if (!data.status) {
         const errorMessage = data.errors ? data.errors.join(', ') : 'Payment request failed';
@@ -97,13 +130,10 @@ const StallPaymentProcess = ({ vendorDetails }) => {
         throw new Error('Invalid response from payment API');
       }
       
-      console.log('✅ CCAvenue request prepared successfully');
-      
       // Redirect to CCAvenue
       submitToCCAvenue(data.encRequest, data.access_code, generatedBookingId);
       
     } catch (error) {
-      console.error('Booking/Payment failed:', error);
       toast.error(error.message || 'Failed to initiate payment. Please try again.');
     } finally {
       setProcessing(false);
@@ -112,8 +142,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
   
   // Submit form to CCAvenue payment gateway
   const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
-    console.log('🌐 Creating CCAvenue payment form...');
-    
     try {
       // Create form dynamically
       const form = document.createElement('form');
@@ -139,11 +167,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
       // Append form to body and submit
       document.body.appendChild(form);
       
-      console.log('🚀 Submitting to CCAvenue...', {
-        action: form.action,
-        bookingId: bookingId
-      });
-      
       // Submit form
       form.submit();
       
@@ -155,7 +178,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
       }, 1000);
       
     } catch (error) {
-      console.error('Form submission error:', error);
       toast.error('Failed to redirect to payment gateway');
       setProcessing(false);
     }
@@ -163,10 +185,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
 
   const processStallBooking = async (paymentData, bookingId) => {
     const generatedBookingId = bookingId || generateBookingId();
-    
-    console.log('Processing stall booking for stalls:', selectedStalls);
-    console.log('Total amount:', getTotalAmount());
-    console.log('Number of stalls:', selectedStalls.length);
     
     try {
       await runTransaction(db, async (transaction) => {
@@ -208,7 +226,6 @@ const StallPaymentProcess = ({ vendorDetails }) => {
         }, { merge: true });
 
         // Create a single booking record for all stalls
-        console.log('Creating single booking record for stalls:', selectedStalls);
         const bookingRef = doc(db, 'stallBookings', generatedBookingId);
         transaction.set(bookingRef, {
           id: generatedBookingId,
@@ -217,7 +234,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
           vendorDetails,
           stallIds: selectedStalls, // Array of all selected stall IDs
           numberOfStalls: selectedStalls.length,
-          duration: '5 days',
+          duration: eventDetails.duration || '5 days',
           totalAmount: getTotalAmount(), // Total amount for all stalls
           payment: {
             ...paymentData,
@@ -229,17 +246,15 @@ const StallPaymentProcess = ({ vendorDetails }) => {
           updatedAt: serverTimestamp(),
           expiryTime: expiryTime, // Auto-expire if payment not completed
           eventDetails: {
-            startDate: new Date('2025-11-15'),
-            endDate: new Date('2025-11-20'),
+            startDate: eventDetails.startDate || new Date('2025-11-15'),
+            endDate: eventDetails.endDate || new Date('2025-11-20'),
+            duration: eventDetails.duration || '5 days',
             type: 'vendor_stall'
           }
         });
       });
-
-      console.log('Transaction completed successfully for booking ID:', generatedBookingId);
       
     } catch (error) {
-      console.error('Booking failed:', error);
       throw error;
     }
   };
@@ -287,8 +302,8 @@ const StallPaymentProcess = ({ vendorDetails }) => {
                 </h4>
                 <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700">
                   <p><span className="font-medium text-gray-900">Stall IDs:</span> {selectedStalls && selectedStalls.length > 0 ? selectedStalls.join(', ') : 'N/A'}</p>
-                  <p><span className="font-medium text-gray-900">Event Duration:</span> 5 Days (Nov 15-20, 2025)</p>
-                  <p><span className="font-medium text-gray-900">Location:</span> Main Exhibition Area</p>
+                  <p><span className="font-medium text-gray-900">Event Duration:</span> {eventDetails.formattedDuration}</p>
+                  <p><span className="font-medium text-gray-900">Location:</span> Delhi NCR Noida Stadium</p>
                   <p><span className="font-medium text-gray-900">Facilities:</span> Electricity, Water, Loading Access</p>
                 </div>
               </div>

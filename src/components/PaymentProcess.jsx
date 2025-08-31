@@ -13,11 +13,6 @@ import { CheckCircle } from 'lucide-react';
 
 const PaymentProcess = ({ customerDetails }) => {
   const [processing, setProcessing] = useState(false);
-  const [debugInfo, setDebugInfo] = useState(null);
-  const [showDebugOverlay, setShowDebugOverlay] = useState(false);
-  const [countdown, setCountdown] = useState(60); 
-  const [debugMode, setDebugMode] = useState(false);
-  const [logs, setLogs] = useState([]);
   const router = useRouter();
 
   const { user } = useAuth();
@@ -31,31 +26,15 @@ const PaymentProcess = ({ customerDetails }) => {
 
   const { getShiftLabel, getShiftTime } = useShifts();
 
-  // DEBUG: Add log capturing function
-  const addLog = (message, type = 'info') => {
-    const timestamp = new Date().toLocaleTimeString();
-    const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
-    setLogs(prev => [...prev, logEntry]);
-    console.log(logEntry);
-  };
 
   // CCAvenue Payment Integration
   const handlePayment = async () => {
     setProcessing(true);
-    setLogs([]);
-    
-    addLog('🚀 CCAvenue payment initiation started');
-    addLog(`Customer: ${customerDetails.name}`);
-    addLog(`Amount: ₹${getTotalAmount()}`);
-    addLog(`Seats: ${selectedSeats.join(', ')}`);
-
     try {
-      // Step 1: Create booking with 'pending' status
-      addLog('📝 Creating pending booking...');
+      // Create booking with 'pending' status
       const bookingId = await createPendingBooking();
-      addLog(`✅ Booking created: ${bookingId}`);
 
-      // Step 2: Prepare payment data for CCAvenue
+      // Prepare payment data for CCAvenue
       const paymentData = {
         order_id: bookingId,
         purpose: 'havan', // Required to identify payment type
@@ -65,11 +44,6 @@ const PaymentProcess = ({ customerDetails }) => {
         phone: customerDetails.phone,
         address: customerDetails.address || 'Delhi, India'
       };
-      
-      addLog('💳 Sending request to CCAvenue API...');
-      addLog(`Payment data: ${JSON.stringify(paymentData)}`);
-      addLog(`Customer details: ${JSON.stringify(customerDetails)}`);
-      addLog(`Total amount: ${getTotalAmount()}`);
       
       // Validate data before sending
       if (!customerDetails.name || customerDetails.name.trim().length < 2) {
@@ -85,7 +59,7 @@ const PaymentProcess = ({ customerDetails }) => {
         throw new Error('Valid amount is required');
       }
       
-      // Step 3: Send request to our Next.js API route (which proxies to CCAvenue)
+      // Send request to our Next.js API route (which proxies to CCAvenue)
       const response = await fetch('/api/payment/ccavenue-request', {
         method: 'POST',
         headers: {
@@ -94,38 +68,27 @@ const PaymentProcess = ({ customerDetails }) => {
         body: JSON.stringify(paymentData)
       });
       
-      addLog(`API Response Status: ${response.status}`);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      addLog(`API Response: ${JSON.stringify(data)}`);
       
-      // Step 4: Check API response
+      // Check API response
       if (!data.status) {
         const errorMessage = data.errors ? data.errors.join(', ') : 'Payment request failed';
-        addLog(`❌ API Error: ${errorMessage}`, 'error');
         throw new Error(errorMessage);
       }
       
-      // Step 5: Validate response data
+      // Validate response data
       if (!data.encRequest || !data.access_code) {
-        addLog('❌ Missing required payment parameters from API', 'error');
         throw new Error('Invalid response from payment API');
       }
       
-      addLog(`✅ CCAvenue request prepared successfully`);
-      addLog(`Encrypted request length: ${data.encRequest.length}`);
-      addLog(`Access code: ${data.access_code}`);
-      
-      // Step 6: Redirect to CCAvenue
-      addLog('🚀 Redirecting to CCAvenue payment gateway...');
+      // Redirect to CCAvenue
       submitToCCAvenue(data.encRequest, data.access_code, bookingId);
       
     } catch (error) {
-      addLog(`❌ Payment initiation failed: ${error.message}`, 'error');
       toast.error(error.message || "Failed to initiate payment. Please try again.");
       setProcessing(false);
     }
@@ -133,8 +96,6 @@ const PaymentProcess = ({ customerDetails }) => {
   
   // Submit form to CCAvenue payment gateway
   const submitToCCAvenue = (encRequest, accessCode, bookingId) => {
-    addLog('🌐 Creating CCAvenue payment form...');
-    
     try {
       // Create form dynamically
       const form = document.createElement('form');
@@ -160,11 +121,6 @@ const PaymentProcess = ({ customerDetails }) => {
       // Append form to body and submit
       document.body.appendChild(form);
       
-      addLog('✅ Form created and ready for submission');
-      addLog(`Form action: ${form.action}`);
-      addLog(`Booking ID: ${bookingId}`);
-      addLog('🚀 Submitting to CCAvenue...');
-      
       // Submit form
       form.submit();
       
@@ -176,7 +132,6 @@ const PaymentProcess = ({ customerDetails }) => {
       }, 1000);
       
     } catch (error) {
-      addLog(`❌ Form submission error: ${error.message}`, 'error');
       toast.error('Failed to redirect to payment gateway');
       setProcessing(false);
     }
@@ -184,8 +139,6 @@ const PaymentProcess = ({ customerDetails }) => {
   
   // Handle payment response (to be called from payment status page)
   const handlePaymentResponse = async (encResp) => {
-    addLog('📥 Processing payment response...');
-    
     try {
       // Send encrypted response to our API route (which proxies to CCAvenue)
       const response = await fetch('/api/payment/ccavenue-response', {
@@ -199,18 +152,14 @@ const PaymentProcess = ({ customerDetails }) => {
       });
       
       const data = await response.json();
-      addLog(`Response handler result: ${JSON.stringify(data)}`);
       
       if (data.status && data.data) {
-        addLog('✅ Payment processed successfully');
         return data.data;
       } else {
-        addLog('❌ Payment processing failed', 'error');
         return null;
       }
       
     } catch (error) {
-      addLog(`❌ Payment response handling failed: ${error.message}`, 'error');
       return null;
     }
   };
@@ -263,35 +212,6 @@ const PaymentProcess = ({ customerDetails }) => {
 
         // Create pending booking record
         const bookingRef = doc(db, 'bookings', bookingId);
-        
-        // DEBUG: Check what selectedDate is being saved
-        console.log('🔍 PaymentProcess - selectedDate details:', {
-          selectedDate,
-          type: typeof selectedDate,
-          constructor: selectedDate?.constructor?.name,
-          timestamp: selectedDate?.getTime?.(),
-          toISOString: selectedDate?.toISOString?.(),
-          dateKey
-        });
-        
-        // ALERT for debugging
-        if (typeof window !== 'undefined') {
-          setTimeout(() => {
-            alert(`🔍 BOOKING CREATION DEBUG:
-` +
-              `Selected Date: ${selectedDate}
-` +
-              `Type: ${typeof selectedDate}
-` +
-              `Constructor: ${selectedDate?.constructor?.name}
-` +
-              `Timestamp: ${selectedDate?.getTime?.()}
-` +
-              `ISO String: ${selectedDate?.toISOString?.()}
-` +
-              `Date Key: ${dateKey}`);
-          }, 500);
-        }
         
         const bookingData = {
           id: bookingId,

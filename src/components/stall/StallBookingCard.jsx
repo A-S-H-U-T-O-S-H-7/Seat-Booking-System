@@ -14,13 +14,6 @@ const StallBookingCard = ({ booking, onCancel }) => {
   const [eventDuration, setEventDuration] = useState('Loading...');
   
   useEffect(() => {
-    console.log('🏪 StallBookingCard - booking data:', {
-      bookingId: booking.id,
-      eventDetails: booking.eventDetails,
-      startDate: booking.eventDetails?.startDate,
-      endDate: booking.eventDetails?.endDate
-    });
-    
     const initializeDates = async () => {
       let startDate = booking.eventDetails?.startDate;
       let endDate = booking.eventDetails?.endDate;
@@ -32,10 +25,8 @@ const StallBookingCard = ({ booking, onCancel }) => {
           const stallSettings = await getStallEventSettings();
           startDate = startDate || new Date(stallSettings.startDate);
           endDate = endDate || new Date(stallSettings.endDate);
-          
-          console.log('🏪 Fetched stall settings:', { startDate, endDate, stallSettings });
         } catch (error) {
-          console.error('Error fetching stall settings:', error);
+          // Silently handle error - fallback values will be used
         }
       }
       
@@ -45,8 +36,6 @@ const StallBookingCard = ({ booking, onCancel }) => {
         
         const days = differenceInDays(endDate, startDate) + 1;
         setEventDuration(`${days} day${days > 1 ? 's' : ''}`);
-        
-        console.log('🏪 Set stall card dates:', { startDate, endDate, days });
       }
     };
     
@@ -93,7 +82,6 @@ const StallBookingCard = ({ booking, onCancel }) => {
       }
     } catch (error) {
       toast.error('Error cancelling stall booking. Please contact support.');
-      console.error('Stall cancellation error:', error);
     } finally {
       setIsCancelling(false);
     }

@@ -361,7 +361,7 @@ const CustomerDetails = ({ details, onDetailsChange, onValidationChange }) => {
         <div className="grid gap-2">
           <div className="flex items-center gap-2 p-2 bg-white bg-opacity-60 rounded border border-amber-200">
             <Clock className="w-3 h-3 text-amber-600 flex-shrink-0" />
-            <span className="text-xs text-gray-700">Arrive 15 minutes before event starts</span>
+            <span className="text-xs text-gray-700">Arrive 45 minutes before event starts</span>
           </div>
           
           <div className="flex items-center gap-2 p-2 bg-white bg-opacity-60 rounded border border-amber-200">

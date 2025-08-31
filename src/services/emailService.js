@@ -14,8 +14,6 @@
  */
 export const sendDonationConfirmationEmail = async (donationData) => {
   try {
-    console.log('📧 Sending donation confirmation email');
-    
     const formData = new FormData();
     formData.append('name', donationData.donorDetails?.name || donationData.name || '');
     formData.append('email', donationData.donorDetails?.email || donationData.email || '');
@@ -33,7 +31,6 @@ export const sendDonationConfirmationEmail = async (donationData) => {
     });
     
     const responseText = await response.text();
-    console.log('📨 Donation email API response:', responseText);
     
     let result;
     try {
@@ -43,14 +40,11 @@ export const sendDonationConfirmationEmail = async (donationData) => {
     }
     
     if (result.status) {
-      console.log('✅ Donation email sent successfully');
       return { success: true, message: 'Donation confirmation email sent', data: result };
     } else {
-      console.error('❌ Donation email API error:', result.errors);
       return { success: false, error: 'Donation email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
     }
   } catch (error) {
-    console.error('❌ Donation email service error:', error);
     return { success: false, error: 'Failed to send donation email: ' + error.message };
   }
 };
@@ -62,25 +56,17 @@ export const sendDonationConfirmationEmail = async (donationData) => {
  */
 export const sendDelegateConfirmationEmail = async (delegateData) => {
   try {
-    console.log('📧 Sending delegate confirmation email');
-    console.log('🔄 Attempting primary delegate-specific API first...');
-    
     // First, try the dedicated delegate email API
     const primaryResult = await tryDelegateSpecificAPI(delegateData);
     
     if (primaryResult.success) {
-      console.log('✅ Primary delegate email API succeeded');
       return primaryResult;
     }
-    
-    console.log('⚠️ Primary API failed, falling back to general email API...');
-    console.log('Primary API error:', primaryResult.error);
     
     // Fallback to general email API with proper delegate formatting
     const fallbackResult = await sendDelegateViaGeneralAPI(delegateData);
     
     if (fallbackResult.success) {
-      console.log('✅ Delegate email sent successfully via fallback general API');
       return { 
         success: true, 
         message: 'Delegate confirmation email sent via fallback system', 
@@ -88,7 +74,6 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
         method: 'fallback'
       };
     } else {
-      console.error('❌ Both delegate email methods failed');
       return { 
         success: false, 
         error: `Both email methods failed. Primary: ${primaryResult.error}. Fallback: ${fallbackResult.error}`,
@@ -97,7 +82,6 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
       };
     }
   } catch (error) {
-    console.error('❌ Delegate email service error:', error);
     return { success: false, error: 'Failed to send delegate email: ' + error.message };
   }
 };
@@ -130,7 +114,6 @@ const tryDelegateSpecificAPI = async (delegateData) => {
     });
     
     const responseText = await response.text();
-    console.log('📨 Primary delegate API response:', responseText);
     
     let result;
     try {
@@ -156,16 +139,12 @@ const tryDelegateSpecificAPI = async (delegateData) => {
  */
 const sendDelegateViaGeneralAPI = async (delegateData) => {
   try {
-    console.log('📧 Using general email API for delegate confirmation...');
-    
     // Use the existing sendBookingConfirmationEmail function which works with general API
     const result = await sendBookingConfirmationEmail(delegateData, 'delegate');
     
     if (result.success) {
-      console.log('✅ Delegate email sent via general API');
       return { success: true, message: 'Delegate email sent via general API', data: result.data };
     } else {
-      console.log('❌ General API also failed:', result.error);
       return { success: false, error: 'General API error: ' + result.error };
     }
   } catch (error) {
@@ -180,8 +159,6 @@ const sendDelegateViaGeneralAPI = async (delegateData) => {
  */
 export const sendPerformerConfirmationEmail = async (performerData) => {
   try {
-    console.log('📧 Sending performer confirmation email');
-    
     const formData = new FormData();
     formData.append('name', performerData.name || '');
     formData.append('email', performerData.email || '');
@@ -195,7 +172,6 @@ export const sendPerformerConfirmationEmail = async (performerData) => {
     });
     
     const responseText = await response.text();
-    console.log('📨 Performer email API response:', responseText);
     
     let result;
     try {
@@ -205,14 +181,11 @@ export const sendPerformerConfirmationEmail = async (performerData) => {
     }
     
     if (result.status) {
-      console.log('✅ Performer email sent successfully');
       return { success: true, message: 'Performer confirmation email sent', data: result };
     } else {
-      console.error('❌ Performer email API error:', result.errors);
       return { success: false, error: 'Performer email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
     }
   } catch (error) {
-    console.error('❌ Performer email service error:', error);
     return { success: false, error: 'Failed to send performer email: ' + error.message };
   }
 };
@@ -224,8 +197,6 @@ export const sendPerformerConfirmationEmail = async (performerData) => {
  */
 export const sendSponsorConfirmationEmail = async (sponsorData) => {
   try {
-    console.log('📧 Sending sponsor confirmation email');
-    
     const formData = new FormData();
     formData.append('name', sponsorData.name || '');
     formData.append('email', sponsorData.email || '');
@@ -239,7 +210,6 @@ export const sendSponsorConfirmationEmail = async (sponsorData) => {
     });
     
     const responseText = await response.text();
-    console.log('📨 Sponsor email API response:', responseText);
     
     let result;
     try {
@@ -249,33 +219,23 @@ export const sendSponsorConfirmationEmail = async (sponsorData) => {
     }
     
     if (result.status) {
-      console.log('✅ Sponsor email sent successfully');
       return { success: true, message: 'Sponsor confirmation email sent', data: result };
     } else {
-      console.error('❌ Sponsor email API error:', result.errors);
       return { success: false, error: 'Sponsor email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
     }
   } catch (error) {
-    console.error('❌ Sponsor email service error:', error);
     return { success: false, error: 'Failed to send sponsor email: ' + error.message };
   }
 };
 
 export const sendBookingConfirmationEmail = async (bookingData, bookingType) => {
   try {
-    console.log('📧 Preparing to send confirmation email:', {
-      bookingType,
-      orderId: bookingData.order_id || bookingData.bookingId,
-      customerEmail: getCustomerEmail(bookingData, bookingType)
-    });
-
     // Prepare email data based on booking type
     const emailData = await prepareEmailData(bookingData, bookingType);
     
     // Validate required fields
     const validation = validateEmailData(emailData);
     if (!validation.isValid) {
-      console.error('❌ Email data validation failed:', validation.errors);
       return {
         success: false,
         error: 'Email data validation failed: ' + validation.errors.join(', ')
@@ -290,16 +250,6 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       }
     });
 
-    console.log('📤 Sending email API request to:', 'https://svsamiti.com/havan-booking/email.php');
-    console.log('📋 Email data summary:', {
-      name: emailData.name,
-      email: emailData.email,
-      order_id: emailData.order_id,
-      booking_type: emailData.booking_type,
-      amount: emailData.amount,
-      event_date: emailData.event_date // Added to debug date issue
-    });
-
     // Send request to the email API
     const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
       method: 'POST',
@@ -310,14 +260,11 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
     });
 
     const responseText = await response.text();
-    console.log('📨 Email API response status:', response.status);
-    console.log('📨 Email API raw response:', responseText);
 
     let result;
     try {
       result = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('❌ Failed to parse email API response:', parseError);
       return {
         success: false,
         error: 'Invalid response from email service',
@@ -326,14 +273,12 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
     }
 
     if (result.status) {
-      console.log('✅ Email sent successfully');
       return {
         success: true,
         message: 'Confirmation email sent successfully',
         data: result
       };
     } else {
-      console.error('❌ Email API returned error:', result.errors);
       return {
         success: false,
         error: 'Email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'),
@@ -342,7 +287,6 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
     }
 
   } catch (error) {
-    console.error('❌ Email service error:', error);
     return {
       success: false,
       error: 'Failed to send email: ' + error.message
@@ -382,7 +326,6 @@ const prepareEmailData = async (bookingData, bookingType) => {
     case 'donation':
       return await prepareDonationEmailData(bookingData, baseData);
     default:
-      console.warn('⚠️ Unknown booking type:', bookingType);
       return baseData;
   }
 };
@@ -396,17 +339,8 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
   const shift = bookingData.shift || 'Not specified';
   const seats = bookingData.seats || [];
   
-  // Debug logging for date formatting (console only)
+  // Format the event date for email
   const formattedEventDate = formatEventDate(eventDate);
-  console.log('🔍 HAVAN EMAIL DATE DEBUG:', {
-    orderId: baseData.order_id,
-    rawEventDate: eventDate,
-    type: typeof eventDate,
-    constructor: eventDate?.constructor?.name,
-    formattedDate: formattedEventDate,
-    bookingDataEventDate: bookingData.eventDate,
-    bookingDataSelectedDate: bookingData.selectedDate
-  });
 
   // Get dynamic shift information from system settings
   let shiftTimeDisplay = formatShiftTime(shift);
@@ -416,7 +350,6 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
     const shiftInfo = getShiftDisplayInfo(shift, shiftSettings.shifts);
     shiftTimeDisplay = `${shiftInfo.label} (${shiftInfo.time})`;
   } catch (error) {
-    console.error('Error fetching shift information for email:', error);
     shiftTimeDisplay = formatShiftTime(shift); // Fallback
   }
 
@@ -479,7 +412,6 @@ const prepareStallEmailData = async (bookingData, baseData) => {
     stallSettings = await getStallEventSettings();
     eventDuration = formatEventDuration(stallSettings.startDate, stallSettings.endDate);
   } catch (error) {
-    console.error('Error fetching stall event duration for email:', error);
     eventDuration = 'November 15-20, 2025 (5 Days)'; // Fallback
   }
 
@@ -501,7 +433,7 @@ const prepareStallEmailData = async (bookingData, baseData) => {
       eventDateDisplay = `${startFormatted} - ${endFormatted}`;
     }
   } catch (error) {
-    console.error('Error formatting stall date range for email:', error);
+    // Use single date fallback if date range formatting fails
   }
 
   return {
@@ -772,7 +704,6 @@ const formatEventDate = (dateValue) => {
     
     return cleanDate.toLocaleDateString('en-IN', options);
   } catch (error) {
-    console.error('Date formatting error:', error, 'Input:', dateValue);
     return 'Date not available';
   }
 };
