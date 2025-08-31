@@ -419,7 +419,7 @@ export default function DelegateDetailsModal({
                   <div className="flex justify-between items-center">
                     <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wide`}>Payment Method</span>
                     <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {payment.method || 'N/A'}
+                      {payment.method || payment.gateway || booking.payment?.gateway || 'CCAvenue'}
                     </span>
                   </div>
                   {payment.paymentId && payment.paymentId !== 'pending_' + Date.now() && (

@@ -146,25 +146,11 @@ export default function DelegateManagement() {
         console.log('Raw delegate booking data:', doc.id, doc.data());
         try {
           const data = doc.data();
-          // Normalize delegate booking data
+          // Don't normalize - use the data structure as is, like DelegateCard does
           const normalizedBooking = {
             id: doc.id,
             ...data,
-            delegateDetails: {
-              name: data.delegateDetails?.name || data.personalInfo?.name || 'N/A',
-              email: data.delegateDetails?.email || data.personalInfo?.email || 'N/A',
-              phone: data.delegateDetails?.phone || data.personalInfo?.phone || 'N/A',
-              organization: data.delegateDetails?.organization || data.professionalInfo?.organization || 'N/A',
-              designation: data.delegateDetails?.designation || data.professionalInfo?.designation || 'N/A',
-              experience: data.delegateDetails?.experience || data.professionalInfo?.experience || 'N/A',
-              city: data.delegateDetails?.city || data.personalInfo?.city || 'N/A',
-              state: data.delegateDetails?.state || data.personalInfo?.state || 'N/A',
-              country: data.delegateDetails?.country || data.personalInfo?.country || 'N/A',
-              aadhar: data.delegateDetails?.aadhar || data.personalInfo?.aadhar,
-              address: data.delegateDetails?.address || data.personalInfo?.address,
-              isVegetarian: data.delegateDetails?.isVegetarian || data.preferences?.isVegetarian || false,
-              specialRequirements: data.delegateDetails?.specialRequirements || data.preferences?.specialRequirements
-            },
+            // Keep original delegateDetails and eventDetails structure intact
             totalAmount: data.payment?.amount || data.totalAmount || data.amount || 0,
           };
           console.log('Normalized delegate booking data:', normalizedBooking);
@@ -332,14 +318,22 @@ export default function DelegateManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Simple Header */}
+      {/* Main Header */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl border shadow-sm overflow-hidden`}>
-        <div className="px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            🎓 Delegate Management
-            <span className="text-sm font-normal text-gray-600">({stats.total} total registrations)</span>
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">Manage delegate registrations</p>
+        <div className="px-6 py-6">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${isDarkMode ? 'bg-yellow-900/30' : 'bg-yellow-100'}`}>
+              <span className="text-2xl">🎓</span>
+            </div>
+            <div>
+              <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Delegate Management
+              </h1>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                Manage delegate registrations and applications
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
