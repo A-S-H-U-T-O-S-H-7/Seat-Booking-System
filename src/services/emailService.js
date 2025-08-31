@@ -230,7 +230,8 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       email: emailData.email,
       order_id: emailData.order_id,
       booking_type: emailData.booking_type,
-      amount: emailData.amount
+      amount: emailData.amount,
+      event_date: emailData.event_date // Added to debug date issue
     });
 
     // Send request to the email API
@@ -328,6 +329,14 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
   const eventDate = bookingData.eventDate || bookingData.selectedDate;
   const shift = bookingData.shift || 'Not specified';
   const seats = bookingData.seats || [];
+  
+  console.log('🔍 prepareHavanEmailData - eventDate details:', {
+    eventDate,
+    bookingDataEventDate: bookingData.eventDate,
+    selectedDate: bookingData.selectedDate,
+    type: typeof eventDate,
+    constructor: eventDate?.constructor?.name
+  });
 
   // Get dynamic shift information from system settings
   let shiftTimeDisplay = formatShiftTime(shift);
@@ -623,6 +632,13 @@ const getCustomerEmail = (bookingData, bookingType) => {
  * Helper function to format event dates
  */
 const formatEventDate = (dateValue) => {
+  console.log('🔍 formatEventDate called with:', {
+    value: dateValue,
+    type: typeof dateValue,
+    constructor: dateValue?.constructor?.name,
+    isFirestoreTimestamp: dateValue && typeof dateValue === 'object' && dateValue.seconds !== undefined
+  });
+  
   if (!dateValue) return 'To be announced';
   
   try {
