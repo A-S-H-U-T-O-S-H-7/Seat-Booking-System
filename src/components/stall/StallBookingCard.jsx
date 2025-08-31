@@ -9,9 +9,18 @@ import { getStallEventSettings, calculateEventDays } from '@/services/systemSett
 const StallBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
-  const [eventDuration, setEventDuration] = useState('5 days');
-  const [eventStartDate, setEventStartDate] = useState(null);
-  const [eventEndDate, setEventEndDate] = useState(null);
+  // Use event dates passed from profile page (already processed there)
+  const eventStartDate = booking.eventDetails?.startDate;
+  const eventEndDate = booking.eventDetails?.endDate;
+  
+  // Calculate event duration
+  const eventDuration = (() => {
+    if (eventStartDate && eventEndDate) {
+      const days = differenceInDays(eventEndDate, eventStartDate) + 1;
+      return `${days} day${days > 1 ? 's' : ''}`;
+    }
+    return '5 days'; // fallback
+  })();
   
   const canCancelBooking = (eventDate) => {
     const today = new Date();
@@ -33,27 +42,6 @@ const StallBookingCard = ({ booking, onCancel }) => {
     };
     return businessTypes[businessType] || businessType || 'General';
   };
-
-  // Fetch dynamic event settings
-  useEffect(() => {
-    const fetchEventSettings = async () => {
-      try {
-        const stallSettings = await getStallEventSettings();
-        const startDate = booking.eventDetails?.startDate || new Date(stallSettings.startDate);
-        const endDate = booking.eventDetails?.endDate || new Date(stallSettings.endDate);
-        const days = calculateEventDays(stallSettings.startDate, stallSettings.endDate);
-        
-        setEventStartDate(startDate);
-        setEventEndDate(endDate);
-        setEventDuration(`${days} day${days > 1 ? 's' : ''}`);
-      } catch (error) {
-        console.error('Error fetching stall event settings:', error);
-        // Keep defaults as fallback
-      }
-    };
-    
-    fetchEventSettings();
-  }, [booking.eventDetails]);
 
 
   const handleCancelBooking = async () => {

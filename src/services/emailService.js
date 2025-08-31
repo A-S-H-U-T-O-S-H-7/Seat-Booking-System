@@ -670,56 +670,55 @@ const getCustomerEmail = (bookingData, bookingType) => {
  * Helper function to format event dates
  */
 const formatEventDate = (dateValue) => {
-  console.log('🔍 formatEventDate called with:', {
-    value: dateValue,
-    type: typeof dateValue,
-    constructor: dateValue?.constructor?.name,
-    isFirestoreTimestamp: dateValue && typeof dateValue === 'object' && dateValue.seconds !== undefined
-  });
-  
   if (!dateValue) return 'To be announced';
   
   try {
     let date;
+    
+    // Handle different date input types
     if (typeof dateValue === 'object' && dateValue.seconds) {
-      // Firestore timestamp - create date in local timezone
+      // Firestore timestamp with seconds property
       date = new Date(dateValue.seconds * 1000);
     } else if (typeof dateValue === 'object' && dateValue.toDate) {
       // Firestore timestamp with toDate method
       date = dateValue.toDate();
     } else if (typeof dateValue === 'string') {
-      // String date - parse carefully to avoid timezone issues
+      // String date - handle carefully to avoid timezone issues
       if (dateValue.includes('T') || dateValue.includes('Z')) {
-        // ISO format - convert to local date to prevent timezone shift
-        const isoDate = new Date(dateValue);
-        date = new Date(isoDate.getFullYear(), isoDate.getMonth(), isoDate.getDate());
-      } else {
-        // Date-only string (YYYY-MM-DD) - create in local timezone
+        // ISO format string - parse and reconstruct to avoid timezone shift
+        const tempDate = new Date(dateValue);
+        date = new Date(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate());
+      } else if (dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // YYYY-MM-DD format - parse manually to avoid timezone issues
         const [year, month, day] = dateValue.split('-').map(Number);
         date = new Date(year, month - 1, day); // month is 0-indexed
+      } else {
+        // Other string formats
+        const tempDate = new Date(dateValue);
+        date = new Date(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate());
       }
+    } else if (dateValue instanceof Date) {
+      // Already a Date object - reconstruct to avoid timezone issues
+      date = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
     } else {
-      // Handle Date object or timestamp
-      date = new Date(dateValue);
-      // If the date seems to have timezone issues, extract date components to prevent shifts
-      if (date.getTime() !== dateValue.getTime && typeof dateValue.getTime === 'function') {
-        date = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
-      }
+      // Fallback for other types (timestamp numbers, etc.)
+      const tempDate = new Date(dateValue);
+      date = new Date(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate());
     }
     
-    // Ensure we're working with the exact date without timezone conversion
-    // Use UTC methods or construct a fresh date to prevent timezone shifts
-    const safeDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    // Format the date using Indian locale and timezone
+    // Create a clean date at midnight local time to avoid any timezone shifts
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0); // noon to be safe
     
     const options = {
       weekday: 'long',
-      year: 'numeric',
+      year: 'numeric', 
       month: 'long',
       day: 'numeric',
-      timeZone: 'Asia/Kolkata' // Ensure Indian timezone
+      timeZone: 'Asia/Kolkata'
     };
     
-    return safeDate.toLocaleDateString('en-IN', options);
+    return localDate.toLocaleDateString('en-IN', options);
   } catch (error) {
     console.error('Date formatting error:', error, 'Input:', dateValue);
     return 'Date not available';
