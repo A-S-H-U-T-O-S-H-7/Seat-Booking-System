@@ -32,6 +32,16 @@ export default function SelectShift({ selectedDate, selectedShift, onShiftSelect
             isActive: true
           },
           { 
+            id: "afternoon", 
+            label: "Afternoon Session", 
+            time: "2:00 PM - 5:00 PM",
+            timeFrom: "14:00",
+            timeTo: "17:00",
+            description: "Peaceful afternoon spiritual session",
+            icon: "☀️",
+            isActive: true
+          },
+          { 
             id: "evening", 
             label: "Evening Session", 
             time: "4:00 PM - 10:00 PM",
@@ -57,6 +67,16 @@ export default function SelectShift({ selectedDate, selectedShift, onShiftSelect
           timeTo: "12:00",
           description: "Start your day with divine blessings",
           icon: "🌅",
+          isActive: true
+        },
+        { 
+          id: "afternoon", 
+          label: "Afternoon Session", 
+          time: "2:00 PM - 5:00 PM",
+          timeFrom: "14:00",
+          timeTo: "17:00",
+          description: "Peaceful afternoon spiritual session",
+          icon: "☀️",
           isActive: true
         },
         { 

@@ -628,21 +628,46 @@ const formatEventDate = (dateValue) => {
   try {
     let date;
     if (typeof dateValue === 'object' && dateValue.seconds) {
+      // Firestore timestamp - create date in local timezone
       date = new Date(dateValue.seconds * 1000);
     } else if (typeof dateValue === 'object' && dateValue.toDate) {
+      // Firestore timestamp with toDate method
       date = dateValue.toDate();
+    } else if (typeof dateValue === 'string') {
+      // String date - parse carefully to avoid timezone issues
+      if (dateValue.includes('T') || dateValue.includes('Z')) {
+        // ISO format - convert to local date to prevent timezone shift
+        const isoDate = new Date(dateValue);
+        date = new Date(isoDate.getFullYear(), isoDate.getMonth(), isoDate.getDate());
+      } else {
+        // Date-only string (YYYY-MM-DD) - create in local timezone
+        const [year, month, day] = dateValue.split('-').map(Number);
+        date = new Date(year, month - 1, day); // month is 0-indexed
+      }
     } else {
+      // Handle Date object or timestamp
       date = new Date(dateValue);
+      // If the date seems to have timezone issues, extract date components to prevent shifts
+      if (date.getTime() !== dateValue.getTime && typeof dateValue.getTime === 'function') {
+        date = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+      }
     }
     
-    return date.toLocaleDateString('en-IN', {
+    // Ensure we're working with the exact date without timezone conversion
+    // Use UTC methods or construct a fresh date to prevent timezone shifts
+    const safeDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    const options = {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
-    });
+      day: 'numeric',
+      timeZone: 'Asia/Kolkata' // Ensure Indian timezone
+    };
+    
+    return safeDate.toLocaleDateString('en-IN', options);
   } catch (error) {
-    console.error('Date formatting error:', error);
+    console.error('Date formatting error:', error, 'Input:', dateValue);
     return 'Date not available';
   }
 };
@@ -652,11 +677,12 @@ const formatEventDate = (dateValue) => {
  */
 const formatShiftTime = (shift) => {
   const shifts = {
-    'morning': 'Morning Shift (6:00 AM - 12:00 PM)',
-    'evening': 'Evening Shift (6:00 PM - 12:00 AM)',
-    'full_day': 'Full Day (6:00 AM - 12:00 AM)'
+    'morning': 'Morning Shift (9:00 AM - 12:00 PM)',
+    'evening': 'Evening Shift (4:00 PM - 10:00 PM)',
+    'afternoon': 'Afternoon Shift (2:00 PM - 5:00 PM)',
+    'full_day': 'Full Day (9:00 AM - 10:00 PM)'
   };
-  return shifts[shift] || `${shift} Shift`;
+  return shifts[shift] || `${shift.charAt(0).toUpperCase() + shift.slice(1)} Shift`;
 };
 
 /**

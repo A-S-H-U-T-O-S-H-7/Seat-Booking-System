@@ -611,17 +611,50 @@ function PaymentSuccessContent() {
                         
                         <div>
                           <p className="font-medium text-gray-700">Shift:</p>
-                          <p className="text-gray-900 capitalize">
+                          <p className="text-gray-900">
                             {(() => {
-                              if (!bookingDetails?.shift) return 'Shift not available';
+                              // Check for shift in eventDetails first, then fallback to root level
+                              const shift = bookingDetails?.eventDetails?.shift || bookingDetails?.shift;
                               
-                              const shiftInfo = getShiftDisplayInfo(
-                                bookingDetails.shift,
-                                eventSettings.shiftSettings
-                              );
+                              if (!shift) return 'Shift not available';
                               
-                              return shiftInfo.displayText;
-                            })()}
+                              try {
+                                const shiftInfo = getShiftDisplayInfo(
+                                  shift,
+                                  eventSettings.shiftSettings
+                                );
+                                
+                                return `${shiftInfo?.label || shift.charAt(0).toUpperCase() + shift.slice(1) + ' Session'}`;
+                              } catch (error) {
+                                console.error('Error getting shift display info:', error);
+                                // Fallback to basic formatting
+                                return shift.charAt(0).toUpperCase() + shift.slice(1) + ' Session';
+                              }
+                            })()} 
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {(() => {
+                              // Show shift time
+                              const shift = bookingDetails?.eventDetails?.shift || bookingDetails?.shift;
+                              
+                              if (!shift) return 'Time not available';
+                              
+                              try {
+                                const shiftInfo = getShiftDisplayInfo(
+                                  shift,
+                                  eventSettings.shiftSettings
+                                );
+                                
+                                return shiftInfo?.time || 'Time not available';
+                              } catch (error) {
+                                console.error('Error getting shift time info:', error);
+                                // Fallback times based on shift ID
+                                if (shift === 'morning') return '9:00 AM - 12:00 PM';
+                                if (shift === 'evening') return '4:00 PM - 10:00 PM';
+                                if (shift === 'afternoon') return '2:00 PM - 5:00 PM';
+                                return 'Time not available';
+                              }
+                            })()} 
                           </p>
                         </div>
                       </div>

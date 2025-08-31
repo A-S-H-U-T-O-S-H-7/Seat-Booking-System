@@ -73,6 +73,15 @@ export const getShiftSettings = async () => {
             isActive: true
           },
           {
+            id: "afternoon",
+            label: "Afternoon Session",
+            timeFrom: "14:00",
+            timeTo: "17:00",
+            description: "Peaceful afternoon spiritual session",
+            icon: "☀️",
+            isActive: true
+          },
+          {
             id: "evening",
             label: "Evening Session", 
             timeFrom: "16:00",
@@ -96,6 +105,15 @@ export const getShiftSettings = async () => {
           timeTo: "12:00",
           description: "Start your day with divine blessings",
           icon: "🌅",
+          isActive: true
+        },
+        {
+          id: "afternoon",
+          label: "Afternoon Session",
+          timeFrom: "14:00",
+          timeTo: "17:00",
+          description: "Peaceful afternoon spiritual session",
+          icon: "☀️",
           isActive: true
         },
         {
