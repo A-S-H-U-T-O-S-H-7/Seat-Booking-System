@@ -1,0 +1,217 @@
+import React from 'react';
+
+const EventPass = () => {
+  return (
+    <div className="min-h-screen bg-gray-100 p-2 sm:p-4 flex items-center justify-center">
+      <div className="w-full max-w-5xl h-auto sm:h-80 bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-row border-2 border-orange-200">
+        
+        {/* Left Section */}
+        <div className="flex-1 relative p-2   bg-gradient-to-br from-orange-50 to-yellow-50 overflow-hidden">
+          
+          {/* Decorative Flowers - Top Left */}
+          <div className="absolute top-0 left-0 w-8 sm:w-12 md:w-16 lg:w-24 h-8 sm:h-12 md:h-16 lg:h-24">
+            <img 
+              src="/cornerflower.png" 
+              alt="Flower" 
+              className="w-full h-full object-contain rotate-90"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                document.getElementById('top-left-flower-fallback').style.display = 'block';
+              }}
+            />
+            <div id="top-left-flower-fallback" className="w-full h-full hidden">
+              <div className="w-8 h-8 bg-orange-400 rounded-full"></div>
+              <div className="w-6 h-6 bg-yellow-400 rounded-full -mt-2 ml-2"></div>
+            </div>
+          </div>
+
+          {/* Decorative Flowers - Top Right */}
+          <div className="absolute top-0 right-0 w-8 sm:w-12 md:w-16 lg:w-24 h-8 sm:h-12 md:h-16 lg:h-24">
+            <img 
+              src="/cornerflower.png" 
+              alt="Flower" 
+              className="w-full h-full object-contain rotate-180"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                document.getElementById('top-right-flower-fallback').style.display = 'block';
+              }}
+            />
+            <div id="top-right-flower-fallback" className="w-full h-full hidden">
+              <div className="w-8 h-8 bg-orange-400 rounded-full ml-auto"></div>
+              <div className="w-6 h-6 bg-yellow-400 rounded-full -mt-2 mr-2"></div>
+            </div>
+          </div>
+
+          {/* Decorative Flowers - Bottom Left */}
+          <div className="absolute bottom-0 left-0 w-8 sm:w-12 md:w-16 lg:w-24 h-8 sm:h-12 md:h-16 lg:h-24">
+            <img 
+              src="/cornerflower.png" 
+              alt="Flower" 
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                document.getElementById('bottom-left-flower-fallback').style.display = 'block';
+              }}
+            />
+            <div id="bottom-left-flower-fallback" className="w-full h-full hidden">
+              <div className="w-8 h-8 bg-orange-400 rounded-full"></div>
+              <div className="w-6 h-6 bg-yellow-400 rounded-full mt-2 ml-2"></div>
+            </div>
+          </div>
+
+          {/* Decorative Flowers - Bottom Right */}
+          <div className="absolute bottom-0 right-0 w-8 sm:w-12 md:w-16 lg:w-24 h-8 sm:h-12 md:h-16 lg:h-24">
+            <img 
+              src="/cornerflower.png" 
+              alt="Flower" 
+              className="w-full h-full object-contain -rotate-90"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                document.getElementById('bottom-right-flower-fallback').style.display = 'block';
+              }}
+            />
+            <div id="bottom-right-flower-fallback" className="w-full h-full hidden">
+              <div className="w-8 h-8 bg-orange-400 rounded-full ml-auto"></div>
+              <div className="w-6 h-6 bg-yellow-400 rounded-full mt-2 mr-2"></div>
+            </div>
+          </div>
+
+          {/* Header with Logo - Centered */}
+          <div className="flex items-center justify-center mb-2  ">
+            <div className="flex items-center space-x-1 sm:space-x-2 ">
+              {/* Logo Circle */}
+              <div className="w-6 sm:w-8 md:w-10 lg:w-14 h-6 sm:h-8 md:h-10 lg:h-14 bg-white rounded-full flex items-center justify-center shadow-lg border-2 border-orange-300">
+                <img 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  className="w-4 sm:w-6 md:w-8 lg:w-10 h-4 sm:h-6 md:h-8 lg:h-10 object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-4 sm:w-6 md:w-8 lg:w-10 h-4 sm:h-6 md:h-8 lg:h-10 bg-orange-500 rounded-full hidden items-center justify-center text-white font-bold text-xs md:text-sm">
+                  SVS
+                </div>
+              </div>
+              
+              <div>
+                <h1 className="text-xs sm:text-sm md:text-xl font-bold text-slate-700 tracking-wide">SAMUDAYIK VIKAS SAMITI</h1>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-row items-center h-full">
+            {/* Temple Image */}
+            <div className="w-20 sm:w-20 md:w-28 lg:w-60 h-30 -mt-16 -ml-2 sm:h-20 md:h-28 lg:h-60 flex-shrink-0 mr-2 sm:mr-3 md:mr-1 lg:-ml-6 lg:-mt-30">
+              <img 
+                src="/jaga1.png" 
+                alt="Sri Mandir" 
+                className="w-full h-full object-contain drop-shadow-xl"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="w-full h-full bg-gradient-to-t from-orange-300 to-yellow-300 rounded-lg hidden items-center justify-center text-orange-800 font-semibold text-xs sm:text-sm md:text-lg">
+                Sri Mandir
+              </div>
+            </div>
+
+            {/* Event Title and Participant Info */}
+            <div className='flex flex-col items-center justify-center text-center -mt-10 md:-mt-18 md:-ml-38 -ml-0 flex-1'>
+              <div className="mb-3 sm:mb-3 md:mb-6 ">
+                <h2 className="text-xs sm:text-sm md:text-lg lg:text-3xl font-bold text-emerald-600 mb-0.5 md:mb-1 lg:mb-2">International</h2>
+                <h3 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold text-orange-700 mb-0.5 md:mb-1">Śrī Jagannātha Pāñcharātra</h3>
+                <h3 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold text-red-700">Havan Ceremony</h3>
+              </div>
+
+              {/* Participant Info */}
+              <div>
+                <h4 className="text-sm sm:text-base md:text-lg  lg:text-2xl font-bold text-gray-900">Rahul Sharma</h4>
+                <p className="text-xs sm:text-sm md:text-base mb-2 lg:text-lg text-gray-700 font-medium">Purpose: Cultural Event</p>
+                <p className="text-xs md:text-sm font-semibold text-gray-700">Valid From: Sept 15, 2025 - Sept 17, 2025</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dashed Divider Line */}
+        <div className="w-px h-full relative bg-transparent">
+          <div className="absolute inset-0 flex flex-col justify-center items-center space-y-1">
+            {Array.from({length: 30}).map((_, i) => (
+              <div key={i} className="w-0.5 h-2 bg-orange-600 rounded-full opacity-100"></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Section - Member Pass */}
+        <div className="w-20 sm:w-24 md:w-32 lg:w-80 bg-gradient-to-br from-red-600 to-orange-600 flex flex-col items-center justify-center text-white relative overflow-hidden py-2 sm:py-4 lg:py-0">
+          
+          {/* Background Decorative Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="w-full h-full" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/svg%3E")`,
+            }}></div>
+          </div>
+
+          {/* Jagannath Image */}
+          <div className="mb-1 sm:mb-2 md:mb-2 lg:mt-8">
+            <div className="w-6 sm:w-8 md:w-10 lg:w-16 h-6 sm:h-8 md:h-10 lg:h-16 bg-white rounded-full shadow-lg">
+              <img 
+                src="/srimandir.png" 
+                alt="Lord Jagannath" 
+                className="w-full h-full object-contain rounded-full"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="w-full h-full bg-orange-200 rounded-full hidden items-center justify-center text-orange-800 font-bold text-base md:text-lg">
+                ॐ
+              </div>
+            </div>
+          </div>
+
+          {/* Member Pass Text */}
+          <div className="text-center mb-1 sm:mb-2 md:mb-3 lg:mb-4">
+            <h5 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold tracking-widest">MEMBER PASS</h5>
+          </div>
+
+          {/* QR Code */}
+          <div className="bg-white p-1 sm:p-1 md:p-2 lg:p-3 rounded-lg lg:rounded-xl shadow-lg mb-1 sm:mb-2 md:mb-3 lg:mb-4">
+            <div className="w-10 sm:w-12 md:w-16 lg:w-24 h-10 sm:h-12 md:h-16 lg:h-24 bg-black rounded-sm lg:rounded-lg relative overflow-hidden">
+              {/* QR Pattern */}
+              <div className="grid grid-cols-12 gap-px w-full h-full p-0.5 lg:p-1">
+                {Array.from({length: 144}).map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`${Math.random() > 0.5 ? 'bg-black' : 'bg-white'} ${i % 13 === 0 || i % 13 === 12 || Math.floor(i/12) === 0 || Math.floor(i/12) === 11 ? 'bg-black' : ''}`}
+                  ></div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sanskrit Text */}
+          <div className="text-center px-1 sm:px-2 lg:px-4 mb-1 sm:mb-2 md:mb-3 lg:mb-4">
+            <p className="text-xs md:text-sm font-medium italic leading-tight">
+              सर्वे भवन्तु सुखिनः<br />
+              सर्वे सन्तु निरामयाः
+            </p>
+            <p className="text-xs mt-1 opacity-80 hidden md:block lg:block">May all be happy, may all be free from illness</p>
+          </div>
+
+          {/* Decorative Lines */}
+          <div className="space-y-0.5 sm:space-y-1">
+            <div className="w-6 sm:w-8 md:w-12 lg:w-16 h-0.5 bg-white opacity-60"></div>
+            <div className="w-4 sm:w-6 md:w-8 lg:w-12 h-0.5 bg-white opacity-40 mx-auto"></div>
+            <div className="w-8 sm:w-10 md:w-16 lg:w-20 h-0.5 bg-white opacity-60"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default EventPass;

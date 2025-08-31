@@ -438,12 +438,8 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
     pan: customerDetails.pan || 'Not provided',
     event_date: formatEventDate(eventDate),
     booking_type: 'Havan Seat Booking',
-    details: `🕉️  **Event:** *Sacred Havan Ceremony*
-⏰  **Shift:** ${shiftTimeDisplay}
-🪑  **Selected Seats:** **${seats.length > 0 ? seats.join(', ') : 'Not specified'}**,
-👥  **Number of Seats:** **${seats.length || 1}**
-
-    `.trim()
+    details: `🕉️ Event: Sacred Havan Ceremony\r\n⏰ Shift: ${shiftTimeDisplay}\r\n🪑 Selected Seats: ${seats.length > 0 ? seats.join(', ') : 'Not specified'}\r\n👥 Number of Seats: ${seats.length || 1}`
+.trim()
   };
 };
 
