@@ -329,6 +329,18 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
   const shift = bookingData.shift || 'Not specified';
   const seats = bookingData.seats || [];
 
+  // Get dynamic shift information from system settings
+  let shiftTimeDisplay = formatShiftTime(shift);
+  try {
+    const { getShiftSettings, getShiftDisplayInfo } = await import('@/services/systemSettingsService');
+    const shiftSettings = await getShiftSettings();
+    const shiftInfo = getShiftDisplayInfo(shift, shiftSettings.shifts);
+    shiftTimeDisplay = `${shiftInfo.label} (${shiftInfo.time})`;
+  } catch (error) {
+    console.error('Error fetching shift information for email:', error);
+    shiftTimeDisplay = formatShiftTime(shift); // Fallback
+  }
+
   return {
     ...baseData,
     name: customerDetails.name || 'Valued Customer',
@@ -338,40 +350,11 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
     pan: customerDetails.pan || 'Not provided',
     event_date: formatEventDate(eventDate),
     booking_type: 'Havan Seat Booking',
-    details: `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🕉️  HAVAN SEAT BOOKING DETAILS  🕉️
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🕉️  **Event:** *Sacred Havan Ceremony*
-📅  **Date:** ${formatEventDate(eventDate)}
-⏰  **Shift:** ${formatShiftTime(shift)}
-🪑  **Selected Seats:** **${seats.length > 0 ? seats.join(', ') : 'Not specified'}**
+    details: `🕉️  **Event:** *Sacred Havan Ceremony*
+⏰  **Shift:** ${shiftTimeDisplay}
+🪑  **Selected Seats:** **${seats.length > 0 ? seats.join(', ') : 'Not specified'}**,
 👥  **Number of Seats:** **${seats.length || 1}**
-💰  **Total Amount:** **₹${baseData.amount}**
-📍  **Venue:** *Samudayik Vikas Samiti*
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋  **IMPORTANT INFORMATION**
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⏰  **Arrival Time:** Please arrive **30 minutes before** the ceremony begins
-
-🪪  **ID Verification:** Carry a *valid ID proof* for verification  
-
-👘  **Dress Code:** *Traditional Indian attire* recommended
-
-📱  **Mobile Phones:** To be kept on **silent mode** during ceremony
-
-📸  **Photography:** May be *restricted in certain areas*
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-*Your participation in this sacred ceremony will bring peace and prosperity. Thank you for your devotion and contribution to this noble cause.*
-
-🙏  **May this sacred ritual bring blessings to you and your family.**  🙏
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     `.trim()
   };
 };
@@ -393,36 +376,16 @@ const prepareShowEmailData = async (bookingData, baseData) => {
     address: userDetails.address || 'Not provided',
     pan: userDetails.pan || '',
     event_date: formatEventDate(showDate),
-    booking_type: 'Cultural Show Booking',
+    booking_type: 'Cultural Show Reservation',
     details: `
-Cultural Show Booking Details:
+Cultural Show Reservation Details:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🎭 Event: Cultural Show & Performance
-📅 Date: ${formatEventDate(showDate)}
 ⏰ Time: 5:00 PM - 10:00 PM
 🎫 Selected Seats: ${selectedSeats.length > 0 ? selectedSeats.slice(0, 10).join(', ') : 'Not specified'}${selectedSeats.length > 10 ? ` +${selectedSeats.length - 10} more` : ''}
 👥 Number of Seats: ${selectedSeats.length || 1}
-💰 Total Amount: ₹${baseData.amount}
 
-📍 Venue: Samudayik Vikas Samiti Cultural Centre
-🎯 Booking ID: ${baseData.order_id}
-
-Show Highlights:
-• Traditional Indian classical music performances
-• Cultural dance presentations
-• Community talent showcase
-• Inspirational speeches and presentations
-• Light refreshments will be served
-
-Entry Guidelines:
-• Gates open at 4:30 PM
-• Please arrive at least 15 minutes before start time
-• Carry this booking confirmation and a valid ID
-• Children under 5 can enter free (no separate seat)
-• Outside food and beverages not allowed
-
-🎊 Get ready for an evening filled with culture, community, and celebration!
     `.trim()
   };
 };
@@ -435,6 +398,17 @@ const prepareStallEmailData = async (bookingData, baseData) => {
   const stallIds = bookingData.stallIds || [];
   const eventDetails = bookingData.eventDetails || {};
 
+  // Get dynamic event duration from system settings
+  let eventDuration = 'Event duration not available';
+  try {
+    const { getStallEventSettings, formatEventDuration } = await import('@/services/systemSettingsService');
+    const stallSettings = await getStallEventSettings();
+    eventDuration = formatEventDuration(stallSettings.startDate, stallSettings.endDate);
+  } catch (error) {
+    console.error('Error fetching stall event duration for email:', error);
+    eventDuration = 'November 15-20, 2025 (5 Days)'; // Fallback
+  }
+
   return {
     ...baseData,
     name: vendorDetails.ownerName || 'Valued Vendor',
@@ -445,48 +419,12 @@ const prepareStallEmailData = async (bookingData, baseData) => {
     event_date: formatEventDate(eventDetails.startDate || '2025-11-15'),
     booking_type: 'Vendor Stall Booking',
     details: `
-Vendor Stall Booking Details:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🏪 Stall Booking Confirmation
-📅 Event Duration: November 15-20, 2025 (5 Days)
+📅 Event Duration: ${eventDuration}
 🏷️ Stall Numbers: ${stallIds.length > 0 ? stallIds.join(', ') : 'To be assigned'}
 🏢 Business Type: ${vendorDetails.businessType || 'Not specified'}
 👤 Contact Person: ${vendorDetails.ownerName || 'Not specified'}
 📱 Business Contact: ${vendorDetails.phone || 'Not provided'}
-💰 Total Amount: ₹${baseData.amount}
-
-📍 Location: Main Exhibition Area, SVS Premises
-🎯 Booking ID: ${baseData.order_id}
-📄 Aadhar: ${vendorDetails.aadhar || 'Not provided'}
-
-Stall Facilities Included:
-• Electricity connection (1 power point)
-• Water supply access
-• Loading/unloading assistance
-• Basic security arrangements
-• Waste management support
-• Customer parking facility
-
-Important Instructions:
-• Setup time: November 14, 2025 (6:00 PM onwards)
-• Operating hours: 9:00 AM - 9:00 PM daily
-• Mandatory insurance coverage required
-• GST registration certificate needed (if applicable)
-• Fire safety compliance mandatory
-• All local permits and licenses must be valid
-
-Setup Guidelines:
-• Stall setup must be completed by November 15, 8:00 AM
-• Display boards and decorations subject to approval
-• Only approved products/services can be sold
-• Maintain cleanliness and hygiene standards
-• Follow event guidelines and safety protocols
-
-📞 For setup queries, contact: setup@svsamiti.com
-💼 For business queries, contact: vendors@svsamiti.com
-
-Thank you for partnering with us for this community event!
     `.trim()
   };
 };

@@ -15,7 +15,7 @@ import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/fires
 import { toast } from 'react-hot-toast';
 import { uploadDelegateImage, validateImageFile } from '@/services/delegateImageService';
 
-
+ 
 
 const DelegateForm = () => {
   const [formData, setFormData] = useState({
@@ -411,6 +411,11 @@ const DelegateForm = () => {
     e.preventDefault();
     
     const validationErrors = validateForm(formData);
+
+    // Add photo validation
+if (!selectedFile) {
+  validationErrors.selfie = 'Photo upload is mandatory';
+}
     
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -520,6 +525,10 @@ const DelegateForm = () => {
     if (formData.delegateType === 'withAssistance' && !formData.days) {
       return false;
     }
+    // Check if photo is uploaded
+if (!selectedFile) {
+  return false;
+}
     
     return true;
   };

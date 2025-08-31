@@ -1,13 +1,18 @@
 "use client";
 import { format, differenceInDays } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cancelBooking } from '@/utils/cancellationUtils';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import { getStallEventSettings, calculateEventDays } from '@/services/systemSettingsService';
 
 const StallBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [eventDuration, setEventDuration] = useState('5 days');
+  const [eventStartDate, setEventStartDate] = useState(booking.eventDetails?.startDate || new Date('2025-11-15'));
+  const [eventEndDate, setEventEndDate] = useState(booking.eventDetails?.endDate || new Date('2025-11-20'));
+  
   const canCancelBooking = (eventDate) => {
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
@@ -29,8 +34,26 @@ const StallBookingCard = ({ booking, onCancel }) => {
     return businessTypes[businessType] || businessType || 'General';
   };
 
-  const eventStartDate = booking.eventDetails?.startDate || new Date('2025-11-15');
-  const eventEndDate = booking.eventDetails?.endDate || new Date('2025-11-20');
+  // Fetch dynamic event settings
+  useEffect(() => {
+    const fetchEventSettings = async () => {
+      try {
+        const stallSettings = await getStallEventSettings();
+        const startDate = booking.eventDetails?.startDate || new Date(stallSettings.startDate);
+        const endDate = booking.eventDetails?.endDate || new Date(stallSettings.endDate);
+        const days = calculateEventDays(stallSettings.startDate, stallSettings.endDate);
+        
+        setEventStartDate(startDate);
+        setEventEndDate(endDate);
+        setEventDuration(`${days} day${days > 1 ? 's' : ''}`);
+      } catch (error) {
+        console.error('Error fetching stall event settings:', error);
+        // Keep defaults as fallback
+      }
+    };
+    
+    fetchEventSettings();
+  }, [booking.eventDetails]);
 
 
   const handleCancelBooking = async () => {
@@ -99,7 +122,7 @@ const StallBookingCard = ({ booking, onCancel }) => {
               {format(eventStartDate, 'MMM dd')} - {format(eventEndDate, 'MMM dd, yyyy')}
             </p>
             <p className="text-xs text-gray-600">
-              5 days
+              {eventDuration}
             </p>
           </div>
           

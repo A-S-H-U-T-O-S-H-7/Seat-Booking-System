@@ -262,7 +262,15 @@ const ProfilePage = () => {
             startDate = new Date(data.eventDetails.startDate);
           }
         } else {
-          startDate = new Date('2025-11-15');
+          // Use dynamic dates from system settings
+          try {
+            const { getStallEventSettings } = await import('@/services/systemSettingsService');
+            const stallSettings = await getStallEventSettings();
+            startDate = new Date(stallSettings.startDate);
+          } catch (error) {
+            console.error('Error loading stall settings for profile, using fallback:', error);
+            startDate = new Date('2025-11-15');
+          }
         }
         
         if (data.eventDetails?.endDate) {
@@ -276,7 +284,15 @@ const ProfilePage = () => {
             endDate = new Date(data.eventDetails.endDate);
           }
         } else {
-          endDate = new Date('2025-11-20');
+          // Use dynamic dates from system settings
+          try {
+            const { getStallEventSettings } = await import('@/services/systemSettingsService');
+            const stallSettings = await getStallEventSettings();
+            endDate = new Date(stallSettings.endDate);
+          } catch (error) {
+            console.error('Error loading stall settings for profile, using fallback:', error);
+            endDate = new Date('2025-11-20');
+          }
         }
         
         let createdDate;

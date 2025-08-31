@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, Camera } from 'lucide-react';
+import { CreditCard, Camera, Info } from 'lucide-react';
 
 const AdditionalDetails = ({ formData, errors, handleInputChange, handleBlur, selectedFile, handleFileChange, imagePreview, imageUploading }) => {
   const isIndianResident = formData.country && formData.country.toLowerCase().includes('india');
@@ -71,7 +71,10 @@ const AdditionalDetails = ({ formData, errors, handleInputChange, handleBlur, se
     )}
 
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Upload Photo</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Upload Photo *</label>
+      {errors.selfie && <p className="text-red-500 text-xs mt-1">{errors.selfie}</p>}
+
+
       <div className="space-y-3">
         {/* Upload Area */}
         <div className="relative">
@@ -143,6 +146,22 @@ const AdditionalDetails = ({ formData, errors, handleInputChange, handleBlur, se
           </div>
         )}
       </div>
+
+      <div className="mt-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+  <div className="flex items-start gap-2 text-sm text-orange-800">
+    <Info className="w-4 h-4 text-orange-600 mt-1" />
+    <div className="space-y-1">
+      <p className="font-medium text-sm">
+        1. Photographic identification required for VIP movement coordination
+      </p>
+      <p className="font-medium text-sm">
+        2. Carrying of weapons of any kind is strictly prohibited
+      </p>
+    </div>
+  </div>
+</div>
+
+
     </div>
   </div>
   );

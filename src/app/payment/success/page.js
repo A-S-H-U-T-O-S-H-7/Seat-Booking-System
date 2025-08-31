@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { getStallEventSettings, getShiftSettings, formatEventDuration, getShiftDisplayInfo } from "@/services/systemSettingsService";
 
 // Loading component for suspense fallback
 function LoadingPaymentResult() {
@@ -22,6 +23,10 @@ function PaymentSuccessContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [bookingDetails, setBookingDetails] = useState(null);
   const [bookingType, setBookingType] = useState(null);
+  const [eventSettings, setEventSettings] = useState({
+    stallEventDuration: '5 Days (Nov 15-20, 2025)',
+    shiftSettings: []
+  });
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -46,6 +51,30 @@ function PaymentSuccessContent() {
       setIsLoading(false);
     }
   }, [searchParams]);
+
+  // Fetch dynamic event settings
+  useEffect(() => {
+    const fetchEventSettings = async () => {
+      try {
+        const [stallSettings, shiftSettings] = await Promise.all([
+          getStallEventSettings(),
+          getShiftSettings()
+        ]);
+        
+        const stallEventDuration = formatEventDuration(stallSettings.startDate, stallSettings.endDate);
+        
+        setEventSettings({
+          stallEventDuration,
+          shiftSettings: shiftSettings.shifts
+        });
+      } catch (error) {
+        console.error('Error fetching event settings for payment success page:', error);
+        // Keep default values on error
+      }
+    };
+    
+    fetchEventSettings();
+  }, []);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -318,7 +347,7 @@ function PaymentSuccessContent() {
                           
                           <div>
                             <p className="font-medium text-gray-700">Event Duration:</p>
-                            <p className="text-gray-900">5 Days (Nov 15-20, 2025)</p>
+                            <p className="text-gray-900">{eventSettings.stallEventDuration}</p>
                           </div>
                           
                           <div>
@@ -583,11 +612,16 @@ function PaymentSuccessContent() {
                         <div>
                           <p className="font-medium text-gray-700">Shift:</p>
                           <p className="text-gray-900 capitalize">
-                            {bookingDetails?.shift ? (
-                              bookingDetails.shift === 'morning' ? 'Morning (6:00 AM - 12:00 PM)' :
-                              bookingDetails.shift === 'evening' ? 'Evening (6:00 PM - 12:00 AM)' :
-                              bookingDetails.shift
-                            ) : 'Shift not available'}
+                            {(() => {
+                              if (!bookingDetails?.shift) return 'Shift not available';
+                              
+                              const shiftInfo = getShiftDisplayInfo(
+                                bookingDetails.shift,
+                                eventSettings.shiftSettings
+                              );
+                              
+                              return shiftInfo.displayText;
+                            })()}
                           </p>
                         </div>
                       </div>
