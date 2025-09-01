@@ -1,12 +1,12 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building } from 'lucide-react';
 import PersonalInfo from './PersonalInfo';
 import LocationInfo from './LocationInfo';
 import ParticipationInfo from './ParticipationInfo';
 import AdditionalDetails from './AdditionalDetails';
 import { validateForm, calculateAmount } from '@/utils/delegateValidation';
-import { PRICING_CONFIG } from '@/utils/delegatePricing';
+import { PRICING_CONFIG, fetchDelegatePricing, DEFAULT_PRICING_CONFIG } from '@/utils/delegatePricing';
 import { useLocationData } from '@/hooks/useLocationData';
 import DelegateBanner from './DelegateBanner';
 import { useAuth } from '@/context/AuthContext';
@@ -48,10 +48,33 @@ const DelegateForm = () => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dynamicPricing, setDynamicPricing] = useState(DEFAULT_PRICING_CONFIG);
+  const [pricingLoading, setPricingLoading] = useState(true);
   const { user } = useAuth();
 
   // Use custom hook for location data
   const { countries, states, cities, loading } = useLocationData(formData);
+
+  // Fetch dynamic pricing on component mount
+  useEffect(() => {
+    const loadDynamicPricing = async () => {
+      try {
+        console.log('🔄 Loading dynamic delegate pricing...');
+        setPricingLoading(true);
+        const pricing = await fetchDelegatePricing();
+        setDynamicPricing(pricing);
+        console.log('✅ Dynamic pricing loaded:', pricing);
+      } catch (error) {
+        console.error('❌ Failed to load dynamic pricing:', error);
+        setDynamicPricing(DEFAULT_PRICING_CONFIG);
+        toast.error('Using default pricing due to loading error');
+      } finally {
+        setPricingLoading(false);
+      }
+    };
+
+    loadDynamicPricing();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -79,9 +102,9 @@ const DelegateForm = () => {
 
     // Auto-set days for without assistance
     if (name === 'delegateType' && value === 'withoutAssistance') {
-      updatedData.days = PRICING_CONFIG.withoutAssistance.fixedDays;
+      updatedData.days = dynamicPricing.withoutAssistance.fixedDays;
     } else if (name === 'delegateType' && value === 'withAssistance') {
-      updatedData.days = PRICING_CONFIG.withAssistance.minDays;
+      updatedData.days = dynamicPricing.withAssistance.minDays;
     }
 
     // Clear dependent fields when country or state changes
@@ -129,7 +152,7 @@ const DelegateForm = () => {
   };
 
   const calculateFormAmount = () => {
-    return calculateAmount(formData, PRICING_CONFIG);
+    return calculateAmount(formData, dynamicPricing);
   };
 
   // Generate booking ID for delegate registration
@@ -576,7 +599,7 @@ if (!selectedFile) {
               handleInputChange={handleInputChange}
               handleBlur={handleBlur}
               calculateAmount={calculateFormAmount}
-              pricingConfig={PRICING_CONFIG}
+              pricingConfig={dynamicPricing}
             />
 
             {/* Additional Details */}
@@ -601,8 +624,8 @@ if (!selectedFile) {
                     <div className="bg-white p-4 rounded-lg shadow-sm">
                       <h4 className="font-medium text-gray-900 mb-2">Without Assistance Package</h4>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <p>• Price per person: ₹{PRICING_CONFIG.withoutAssistance.pricePerPerson.toLocaleString()}</p>
-                        <p>• Fixed duration: {PRICING_CONFIG.withoutAssistance.fixedDays} days</p>
+                        <p>• Price per person: ₹{dynamicPricing.withoutAssistance.pricePerPerson.toLocaleString()}</p>
+                        <p>• Fixed duration: {dynamicPricing.withoutAssistance.fixedDays} days</p>
                         <p>• Number of persons: {formData.numberOfPersons || 1}</p>
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-200">
@@ -613,7 +636,7 @@ if (!selectedFile) {
                       <div className="mt-3">
                         <h5 className="font-medium text-gray-800 mb-2">Benefits included:</h5>
                         <ul className="text-sm text-gray-600 space-y-1">
-                          {PRICING_CONFIG.withoutAssistance.benefits.map((benefit, index) => (
+                          {dynamicPricing.withoutAssistance.benefits.map((benefit, index) => (
                             <li key={index}>• {benefit}</li>
                           ))}
                         </ul>
@@ -625,8 +648,8 @@ if (!selectedFile) {
                     <div className="bg-white p-4 rounded-lg shadow-sm">
                       <h4 className="font-medium text-gray-900 mb-2">With Assistance Package</h4>
                       <div className="text-sm text-gray-600 space-y-1">
-                        <p>• Price per person per day: ₹{PRICING_CONFIG.withAssistance.pricePerPersonPerDay.toLocaleString()}</p>
-                        <p>• Duration: {formData.days || PRICING_CONFIG.withAssistance.minDays} days</p>
+                        <p>• Price per person per day: ₹{dynamicPricing.withAssistance.pricePerPersonPerDay.toLocaleString()}</p>
+                        <p>• Duration: {formData.days || dynamicPricing.withAssistance.minDays} days</p>
                         <p>• Number of persons: {formData.numberOfPersons || 1}</p>
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-200">
@@ -637,7 +660,7 @@ if (!selectedFile) {
                       <div className="mt-3">
                         <h5 className="font-medium text-gray-800 mb-2">Benefits included:</h5>
                         <ul className="text-sm text-gray-600 space-y-1">
-                          {PRICING_CONFIG.withAssistance.benefits.map((benefit, index) => (
+                          {dynamicPricing.withAssistance.benefits.map((benefit, index) => (
                             <li key={index}>• {benefit}</li>
                           ))}
                         </ul>

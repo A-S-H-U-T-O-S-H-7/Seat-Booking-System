@@ -2,7 +2,7 @@ import React from 'react';
 import { Calendar, Users } from 'lucide-react';
 import { PRICING_CONFIG } from '@/utils/delegatePricing';
 
-const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount }) => (
+const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount, pricingConfig = PRICING_CONFIG }) => (
   <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-2 md:p-4 rounded-lg border border-emerald-200">
     <h4 className="font-medium text-gray-800 mb-4">Delegate Options</h4>
     
@@ -28,10 +28,10 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
               <div className="flex-1">
                 <h5 className="font-bold text-gray-800 text-base mb-2">Without Assistance</h5>
                 <p className="text-sm font-medium text-emerald-600 mb-2">
-                  ₹{PRICING_CONFIG.withoutAssistance.pricePerPerson.toLocaleString()}/person for 5 days
+                  ₹{pricingConfig.withoutAssistance.pricePerPerson.toLocaleString()}/person for 5 days
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  {PRICING_CONFIG.withoutAssistance.benefits.map((benefit, index) => (
+                  {pricingConfig.withoutAssistance.benefits.map((benefit, index) => (
                     <li key={index} className="flex items-start">
                       <span className="text-emerald-500 mr-2">•</span>
                       {benefit}
@@ -60,10 +60,10 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
               <div className="flex-1">
                 <h5 className="font-bold text-gray-800 text-base mb-2">With Assistance</h5>
                 <p className="text-sm font-medium text-emerald-600 mb-2">
-                  ₹{PRICING_CONFIG.withAssistance.pricePerPersonPerDay.toLocaleString()}/person/day
+                  ₹{pricingConfig.withAssistance.pricePerPersonPerDay.toLocaleString()}/person/day
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  {PRICING_CONFIG.withAssistance.benefits.map((benefit, index) => (
+                  {pricingConfig.withAssistance.benefits.map((benefit, index) => (
                     <li key={index} className="flex items-start">
                       <span className="text-emerald-500 mr-2">•</span>
                       {benefit}
@@ -89,8 +89,8 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
                   name="days"
                   value={formData.days}
                   onChange={handleInputChange}
-                  min={PRICING_CONFIG.withAssistance.minDays}
-                  max={PRICING_CONFIG.withAssistance.maxDays}
+                  min={pricingConfig.withAssistance.minDays}
+                  max={pricingConfig.withAssistance.maxDays}
                   className={`w-full text-gray-800 pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all ${
                     errors.days ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -130,8 +130,8 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount 
             </p>
             <p className="text-sm text-gray-600">
               {formData.delegateType === 'withoutAssistance' 
-                ? `${formData.numberOfPersons || 1} person(s) × ${PRICING_CONFIG.withoutAssistance.fixedDays} days × ₹${PRICING_CONFIG.withoutAssistance.pricePerPerson.toLocaleString()}`
-                : `${formData.numberOfPersons || 1} person(s) × ${formData.days || PRICING_CONFIG.withAssistance.minDays} day(s) × ₹${PRICING_CONFIG.withAssistance.pricePerPersonPerDay.toLocaleString()}`
+                ? `${formData.numberOfPersons || 1} person(s) × ${pricingConfig.withoutAssistance.fixedDays} days × ₹${pricingConfig.withoutAssistance.pricePerPerson.toLocaleString()}`
+                : `${formData.numberOfPersons || 1} person(s) × ${formData.days || pricingConfig.withAssistance.minDays} day(s) × ₹${pricingConfig.withAssistance.pricePerPersonPerDay.toLocaleString()}`
               }
             </p>
           </div>

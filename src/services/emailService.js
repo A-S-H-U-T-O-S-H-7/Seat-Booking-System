@@ -99,7 +99,7 @@ const tryDelegateSpecificAPI = async (delegateData) => {
     formData.append('participation_type', delegateData.eventDetails?.participationType || delegateData.participation_type || 'Delegate');
     formData.append('registration_type', delegateData.eventDetails?.registrationType || delegateData.registration_type || '');
     formData.append('duration', delegateData.eventDetails?.duration || delegateData.duration || '');
-    formData.append('number_of_persons', delegateData.eventDetails?.numberOfPersons || delegateData.number_of_persons || '1');
+    formData.append('number_of_person', delegateData.eventDetails?.numberOfPersons || delegateData.number_of_persons || '1');
     formData.append('amount', delegateData.totalAmount?.toString() || delegateData.amount?.toString() || '');
     formData.append('payment_id', delegateData.payment?.transactionId || delegateData.payment_id || '');
     formData.append('order_id', delegateData.bookingId || delegateData.order_id || delegateData.id || '');

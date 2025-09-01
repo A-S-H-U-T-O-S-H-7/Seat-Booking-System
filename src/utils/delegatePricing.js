@@ -1,7 +1,10 @@
-// Configuration constants for pricing
-export const PRICING_CONFIG = {
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+// Default fallback configuration constants for pricing
+export const DEFAULT_PRICING_CONFIG = {
   withoutAssistance: {
-    pricePerPerson: 1,
+    pricePerPerson: 5000,
     fixedDays: 5,
     benefits: [
       '🍴 Enjoy complimentary lunch throughout the event',
@@ -11,17 +14,51 @@ export const PRICING_CONFIG = {
     ]
   },
   withAssistance: {
-    pricePerPersonPerDay: 20,
+    pricePerPersonPerDay: 1000,
     minDays: 2,
     maxDays: 5,
     benefits: [
-      '✈️ Facility of pick-up & drop from airport/station ',
-      '🏨 Comfortable stay in well-appointed hotel ',
+      '✈️ Facility of pick-up & drop from airport/station',
+      '🏨 Comfortable stay in well-appointed hotel',
       '🚐 Daily transportation between hotel & venue provided',
       '🍽️ Lunch and dinner served throughout your stay',
       '🛎️ Provided all essential amenities for Havan and Shows',
       '🤝 Personalized care and dedicated assistance'
     ]
+  }
+};
+
+// Legacy export for backward compatibility
+export const PRICING_CONFIG = DEFAULT_PRICING_CONFIG;
+
+// Function to fetch dynamic pricing from Firebase
+export const fetchDelegatePricing = async () => {
+  try {
+    const pricingRef = doc(db, 'settings', 'delegatePricing');
+    const pricingSnap = await getDoc(pricingRef);
+    
+    if (pricingSnap.exists()) {
+      const firebaseData = pricingSnap.data();
+      console.log('📊 Fetched delegate pricing from Firebase:', firebaseData);
+      
+      // Merge with defaults to ensure all fields exist
+      return {
+        withoutAssistance: {
+          ...DEFAULT_PRICING_CONFIG.withoutAssistance,
+          ...firebaseData.withoutAssistance
+        },
+        withAssistance: {
+          ...DEFAULT_PRICING_CONFIG.withAssistance,
+          ...firebaseData.withAssistance
+        }
+      };
+    } else {
+      console.log('⚠️ No delegate pricing found in Firebase, using defaults');
+      return DEFAULT_PRICING_CONFIG;
+    }
+  } catch (error) {
+    console.error('❌ Error fetching delegate pricing:', error);
+    return DEFAULT_PRICING_CONFIG;
   }
 };
 

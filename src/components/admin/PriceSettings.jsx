@@ -10,12 +10,14 @@ import {
   CheckCircleIcon,
   HomeIcon,
   BuildingStorefrontIcon,
-  TicketIcon
+  TicketIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 import RealTimeSyncStatus from './RealTimeSyncStatus';
 import HavanPriceSection from './price-components/HavanPriceSection';
 import StallPriceSection from './price-components/StallPriceSection';
 import ShowPriceSection from './price-components/ShowPriceSection';
+import DelegatePriceSection from './price-components/DelegatePriceSection';
 
 export default function PriceSettings() {
   const { isDarkMode } = useTheme();
@@ -66,6 +68,33 @@ export default function PriceSettings() {
     ]
   });
 
+  // Delegate Price Management
+  const [delegateSettings, setDelegateSettings] = useState({
+    withoutAssistance: {
+      pricePerPerson: 5000,
+      fixedDays: 5,
+      benefits: [
+        '🍴 Enjoy complimentary lunch throughout the event',
+        '🎟️ Receive a free entry pass valid for 5 days',
+        '🤝 Get assistance with basic needs during event',
+        '🎫 Avail a complimentary pass to exclusive shows'
+      ]
+    },
+    withAssistance: {
+      pricePerPersonPerDay: 1000,
+      minDays: 2,
+      maxDays: 5,
+      benefits: [
+        '✈️ Facility of pick-up & drop from airport/station',
+        '🏨 Comfortable stay in well-appointed hotel',
+        '🚐 Daily transportation between hotel & venue provided',
+        '🍽️ Lunch and dinner served throughout your stay',
+        '🛎️ Provided all essential amenities for Havan and Shows',
+        '🤝 Personalized care and dedicated assistance'
+      ]
+    }
+  });
+
   useEffect(() => {
     fetchPriceSettings();
   }, []);
@@ -92,6 +121,13 @@ export default function PriceSettings() {
       const showSnap = await getDoc(showRef);
       if (showSnap.exists()) {
         setShowSettings(prev => ({ ...prev, ...showSnap.data() }));
+      }
+
+      // Fetch Delegate pricing
+      const delegateRef = doc(db, 'settings', 'delegatePricing');
+      const delegateSnap = await getDoc(delegateRef);
+      if (delegateSnap.exists()) {
+        setDelegateSettings(prev => ({ ...prev, ...delegateSnap.data() }));
       }
     } catch (error) {
       console.error('Error fetching price settings:', error);
@@ -125,6 +161,13 @@ export default function PriceSettings() {
         updatedAt: new Date()
       });
 
+      // Save Delegate settings
+      const delegateRef = doc(db, 'settings', 'delegatePricing');
+      await setDoc(delegateRef, {
+        ...delegateSettings,
+        updatedAt: new Date()
+      });
+
       // Also update legacy general settings for backward compatibility
       const generalRef = doc(db, 'settings', 'general');
       await setDoc(generalRef, {
@@ -139,7 +182,7 @@ export default function PriceSettings() {
             adminUser,
             'update',
             'pricing',
-            'Updated comprehensive price settings for Havan, Stall, and Show management'
+            'Updated comprehensive price settings for Havan, Stall, Show, and Delegate management'
           );
         } catch (logError) {
           console.error('Error logging price settings update:', logError);
@@ -201,7 +244,7 @@ export default function PriceSettings() {
           <p className={`mt-2 text-sm ${
             isDarkMode ? 'text-gray-400' : 'text-gray-600'
           }`}>
-            Comprehensive pricing control for Havan, Stall, and Show bookings with advanced discount management
+            Comprehensive pricing control for Havan, Stall, Show, and Delegate bookings with advanced discount management
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -246,6 +289,13 @@ export default function PriceSettings() {
           isActive={activeTab === 'show'}
           onClick={setActiveTab}
         />
+        <TabButton
+          id="delegate"
+          label="Delegate Price Management"
+          icon={<UserGroupIcon className="w-5 h-5" />}
+          isActive={activeTab === 'delegate'}
+          onClick={setActiveTab}
+        />
       </div>
 
       {/* Tab Content */}
@@ -281,6 +331,17 @@ export default function PriceSettings() {
             <ShowPriceSection
               settings={showSettings}
               onUpdate={setShowSettings}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+        )}
+
+        {/* Delegate Price Management */}
+        {activeTab === 'delegate' && (
+          <div className="p-6">
+            <DelegatePriceSection
+              settings={delegateSettings}
+              onUpdate={setDelegateSettings}
               isDarkMode={isDarkMode}
             />
           </div>
