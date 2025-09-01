@@ -133,7 +133,7 @@ const tryDelegateSpecificAPI = async (delegateData) => {
 };
 
 /**
- * Send delegate email via general booking email API as fallback
+ * Send delegate email via general booking email API as fal lback
  * @param {Object} delegateData - Delegate information
  * @returns {Promise<Object>} - API response
  */
@@ -483,10 +483,7 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
     event_date: '2025-11-15', // Delegate event start date
     booking_type: 'Delegate Registration',
     details: `
-Delegate Registration Confirmation:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎓 Welcome to SVS Delegate Program!
 👤 Delegate Name: ${delegateDetails.name || 'Not specified'}
 🏢 Registration Type: ${registrationType}
 🏛️ Organization: ${organizationName}
@@ -513,39 +510,8 @@ ${delegateDetails.pan ? `• PAN: ${delegateDetails.pan}` : ''}
 ${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : ''}
 
 📋 Registration ID: ${baseData.order_id}
-📎 Photo Upload: ${delegateDetails.fileInfo?.fileUploaded ? 'Completed ✅' : 'Pending ❌'}
 
-${registrationType === 'Temple' && eventDetails.briefProfile ? `
-🛕 Temple Profile:
-${eventDetails.briefProfile}
-` : ''}
 
-What's Next:
-━━━━━━━━━━━━━
-1. You will receive detailed event schedule via email
-2. Access credentials will be shared 48 hours before event
-3. Accommodation details (if applicable) will be communicated separately
-4. Please ensure all documents are readily available
-5. Report to registration desk on arrival
-
-Event Benefits:
-• Networking opportunities with like-minded individuals
-• Access to exclusive sessions and workshops  
-• Complimentary meals and refreshments
-• Event kit with resources and materials
-• Certificate of participation
-• Community membership benefits
-
-Important Notes:
-• Please carry valid photo ID proof
-• Dress code: Formal/Traditional attire
-• Mobile devices to be kept on silent during sessions
-• Photography permitted in designated areas only
-
-📞 For queries: delegates@svsamiti.com
-🌐 Event updates: www.svsamiti.com
-
-🙏 Thank you for joining our mission of community development and spiritual growth!
     `.trim()
   };
 };
