@@ -242,50 +242,74 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       };
     }
 
-    // Create FormData for the API request
-    const formData = new FormData();
-    Object.keys(emailData).forEach(key => {
-      if (emailData[key] !== null && emailData[key] !== undefined) {
-        formData.append(key, emailData[key]);
-      }
+    // Create Headers object as shown by senior
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    
+    // Prepare the request body using JSON.stringify with all required fields
+    const raw = JSON.stringify({
+      "name": emailData.name,
+      "email": emailData.email,
+      "order_id": emailData.order_id,
+      "details": emailData.details,
+      "event_date": emailData.event_date,
+      "booking_type": emailData.booking_type,
+      "amount": emailData.amount,
+      "mobile": emailData.mobile,
+      "address": emailData.address,
+      "pan": emailData.pan,
+      "valid_from": emailData.valid_from,
+      "valid_to": emailData.valid_to
     });
-
+    
+    // Define requestOptions with method, headers, body, and redirect
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
+    
     // Send request to the local Next.js email API
     const baseUrl = process.env.NODE_ENV === 'development' 
       ? 'http://localhost:3000' 
       : (process.env.NEXT_PUBLIC_BASE_URL || 'https://donate.svsamiti.com');
     
-    const response = await fetch(`${baseUrl}/api/emails/booking`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(emailData)
-    });
+    console.log('📧 Sending email request to:', `${baseUrl}/api/emails/booking`);
+    console.log('📦 Request payload:', raw);
+    
+    const response = await fetch(`${baseUrl}/api/emails/booking`, requestOptions);
+    console.log('📡 Response status:', response.status, response.statusText);
 
     const responseText = await response.text();
+    console.log('📥 Raw response:', responseText);
 
     let result;
     try {
       result = JSON.parse(responseText);
+      console.log('✅ Parsed response:', result);
     } catch (parseError) {
+      console.error('❌ Failed to parse response:', parseError.message);
+      console.error('📄 Raw response was:', responseText);
       return {
         success: false,
-        error: 'Invalid response from email service',
+        error: 'Invalid response from email service: ' + parseError.message,
         rawResponse: responseText
       };
     }
 
     if (result.status) {
+      console.log('🎉 Email sent successfully!');
       return {
         success: true,
         message: 'Confirmation email sent successfully',
         data: result
       };
     } else {
+      console.error('❌ Email service returned error:', result);
       return {
         success: false,
-        error: 'Email service error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'),
+        error: 'Email service error: ' + (result.errors ? result.errors.join(', ') : result.message || 'Unknown error'),
         data: result
       };
     }

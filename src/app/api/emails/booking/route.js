@@ -309,12 +309,24 @@ export async function POST(req) {
         const result = await resp.json();
 
         if (result.status === true) {
-            return NextResponse.json({ success: true, message: result.message });
+            return NextResponse.json({ 
+                status: true, 
+                message: result.message || 'Email sent successfully!' 
+            });
         } else {
-            return NextResponse.json({ success: false, message: result.message });
+            return NextResponse.json({ 
+                status: false, 
+                message: result.message || 'Failed to send email',
+                errors: result.errors || [result.message || 'Email service error']
+            });
         }
 
     } catch (err) {
-        return NextResponse.json({ success: false, message: err.message });
+        console.error('Email API error:', err);
+        return NextResponse.json({ 
+            status: false, 
+            message: err.message || 'Unknown error occurred',
+            errors: [err.message || 'Unknown error occurred'] 
+        });
     }
 }
