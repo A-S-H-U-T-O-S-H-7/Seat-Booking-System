@@ -1,20 +1,19 @@
 "use client"
-import JagannathPancharatra from '@/components/pancha-ratra/PanchaRatra'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation';
 import React from 'react'
-import Link from 'next/link';
 
-
-function page() {
-  const router = useRouter();
-
-  const handleBack = () => {
-    router.back();
-  };
+function layout({children}) {
+        const router = useRouter();
+        const handleBack = () => { 
+          router.back();
+        };
+  
+    
   return (
     <div>
-      {/* Header */}
-          <header className="bg-white/95  backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-rose-200">
+        {/* Header */}
+          <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50 border-b border-rose-200">
           
           <div className="px-2 sm:px-6 py-3 sm:py-4">
             <div className="flex justify-between items-center">
@@ -47,9 +46,9 @@ function page() {
             </div>
           </div>
         </header>
-      <JagannathPancharatra />
+      {children}
     </div>
   )
 }
 
-export default page
+export default layout

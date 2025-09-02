@@ -30,11 +30,25 @@ const HeroContent = () => {
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-orange-500/20 via-yellow-500/15 to-red-500/20 blur-2xl opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
 
-         <Link href="/pancha-ratra">
-  <div className='mt-4 px-2 py-2 rounded-md border text-orange-900 font-semibold italic border-orange-400 bg-orange-200'>
+<div className='flex gap-2 md:gap-4 flex-wrap justify-center'>
+         <Link href="/daily-events">
+  <div className='mt-4 px-2 py-2 rounded-md drop-shadow-md border text-cyan-900 font-semibold italic border-indigo-400 bg-cyan-200'>
+    Daily Events
+  </div>
+</Link>
+<Link href="/distinguished-guests">
+  <div className='mt-4 px-2 py-2 shadow-2xl drop-shadow-md  rounded-md border text-teal-900 font-semibold italic border-emerald-400 bg-teal-200'>
+    Distinguised Guests
+  </div>
+</Link>
+<Link href="/pancha-ratra">
+  <div className='mt-4 px-2 py-2 rounded-md drop-shadow-md border text-orange-900 font-semibold italic border-orange-400 bg-orange-200'>
     Know more About Pancha Ratra
   </div>
 </Link>
+
+
+</div>
 
           
         </div>

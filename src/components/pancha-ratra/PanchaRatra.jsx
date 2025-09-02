@@ -166,9 +166,9 @@ When these five sacred streams flow together with unwavering faith, disciplined 
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br  from-orange-50 via-yellow-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br  pt-5 from-orange-50 via-yellow-50 to-red-50">
         
-      <div className="bg-gradient-to-r mx-2 md:mx-10 rounded-xl mb-5 from-orange-600 via-red-500 to-pink-600 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r mx-2 md:mx-10 rounded-xl mb-5  from-orange-600 via-red-500 to-pink-600 text-white relative overflow-hidden">
       {/* Flower Design Border at Top of Block */}
       <div 
         className="w-full h-8 sm:h-12 bg-repeat-x bg-center"
@@ -225,7 +225,7 @@ When these five sacred streams flow together with unwavering faith, disciplined 
     </div>
 
       {/* Banner */}
-      <div className="bg-gradient-to-r from-yellow-100 via-orange-100 to-red-100 py-8 px-6 border-b-4 border-gradient-to-r border-from-orange-300 border-to-red-300">
+      <div className="bg-gradient-to-r from-yellow-100 via-orange-100 to-red-100 py-2 md:py-8 px-2 md:px-6 border-b-4 rounded-md mx-2 md:mx-10 border-gradient-to-r border-from-orange-300 border-to-red-300">
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-flex items-center space-x-3 bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg">
             <span className="text-orange-600 text-2xl">🙏</span>
@@ -238,7 +238,7 @@ When these five sacred streams flow together with unwavering faith, disciplined 
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-6xl mx-auto px-2 md:px-6 py-4 md:py-8">
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-orange-200">
@@ -262,7 +262,7 @@ When these five sacred streams flow together with unwavering faith, disciplined 
 
         {/* Content Area */}
         <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl border border-orange-200 overflow-hidden">
-          <div className="p-8 md:p-12">
+          <div className="p-4 md:p-12">
             {/* Sacred Knowledge Section */}
             <div className="mb-10">
               <div className="flex items-center justify-center mb-6">
