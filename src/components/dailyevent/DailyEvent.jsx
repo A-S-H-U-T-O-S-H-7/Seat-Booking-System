@@ -34,18 +34,7 @@ export default function JagannathSchedule() {
     <div className="min-h-screen bg-gradient-to-br pt-4 from-orange-50 via-yellow-50 to-red-50">
       <EventBanner />
 
-      {/* Sacred Notice Banner */}
-      <div className="bg-gradient-to-r from-yellow-100 via-orange-100 to-red-100 mx-2 md:mx-10 rounded-xl py-4 md:py-8 px-2 md:px-6 border-b-4 border-orange-300">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="inline-flex items-center space-x-3 bg-white/80 backdrop-blur-sm rounded-lg px-6 py-3 shadow-lg">
-            <span className="text-orange-600 text-2xl">🕉️</span>
-            <span className="text-gray-800 text-base md:text-2xl font-semibold drop-shadow-xl">
-              Sacred Daily Activities & Spiritual Schedule
-            </span>
-            <span className="text-orange-600 text-2xl">🕉️</span>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 md:px-6 py-6 md:py-12">

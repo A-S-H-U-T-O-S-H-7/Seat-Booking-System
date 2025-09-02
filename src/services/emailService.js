@@ -242,21 +242,13 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       };
     }
 
-    // Create FormData for the API request
-    const formData = new FormData();
-    Object.keys(emailData).forEach(key => {
-      if (emailData[key] !== null && emailData[key] !== undefined) {
-        formData.append(key, emailData[key]);
-      }
-    });
-
-    // Send request to the email API
-    const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
+    // Send JSON request to local Next.js API instead of external PHP
+    const response = await fetch('/api/emails/booking', {
       method: 'POST',
-      body: formData,
       headers: {
-        'User-Agent': 'Havan-Booking-System/1.0'
-      }
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailData)
     });
 
     const responseText = await response.text();
@@ -313,7 +305,7 @@ const prepareEmailData = async (bookingData, bookingType) => {
     details: ''
   };
 
-  // Fill data based on booking type
+  // Fill data based on booking type (only for havan, show, stall - delegates and donations use separate APIs)
   switch (bookingType) {
     case 'havan':
       return await prepareHavanEmailData(bookingData, baseData);
@@ -321,10 +313,6 @@ const prepareEmailData = async (bookingData, bookingType) => {
       return await prepareShowEmailData(bookingData, baseData);
     case 'stall':
       return await prepareStallEmailData(bookingData, baseData);
-    case 'delegate':
-      return await prepareDelegateEmailData(bookingData, baseData);
-    case 'donation':
-      return await prepareDonationEmailData(bookingData, baseData);
     default:
       return baseData;
   }
@@ -456,161 +444,10 @@ const prepareStallEmailData = async (bookingData, baseData) => {
   };
 };
 
-/**
- * Prepare email data for Delegate bookings
- */
-const prepareDelegateEmailData = async (bookingData, baseData) => {
-  const delegateDetails = bookingData.delegateDetails || {};
-  const eventDetails = bookingData.eventDetails || {};
-  const registrationType = eventDetails.registrationType || 'Individual';
-  const delegateType = eventDetails.delegateType || 'Standard';
+// Note: Delegate and donation email data preparation functions removed
+// since they use dedicated external APIs and don't go through general booking confirmation
 
-  // Determine organization name based on registration type
-  let organizationName = 'Individual Registration';
-  if (registrationType === 'Company') {
-    organizationName = eventDetails.companyName || 'Company Registration';
-  } else if (registrationType === 'Temple') {
-    organizationName = eventDetails.templeName || 'Temple Registration';
-  }
-
-  return {
-    ...baseData,
-    name: delegateDetails.name || 'Valued Delegate',
-    email: delegateDetails.email || '',
-    mobile: delegateDetails.mobile || '',
-    address: `${delegateDetails.address || ''}, ${delegateDetails.city || ''}, ${delegateDetails.state || ''}, ${delegateDetails.country || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
-    pan: delegateDetails.pan || '',
-    event_date: '2025-11-15', // Delegate event start date
-    booking_type: 'Delegate Registration',
-    details: `
-
-👤 Delegate Name: ${delegateDetails.name || 'Not specified'}
-🏢 Registration Type: ${registrationType}
-🏛️ Organization: ${organizationName}
-📧 Email: ${delegateDetails.email || 'Not provided'}
-📱 Mobile: ${delegateDetails.mobile || 'Not provided'}
-💰 Registration Fee: ₹${baseData.amount}
-
-📦 Package Details:
-• Package Type: ${getDelegateTypeDisplay(delegateType)}
-• Duration: ${eventDetails.duration || 'TBD'} days
-• Number of Persons: ${eventDetails.numberOfPersons || 1}
-${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
-
-📍 Location Details:
-• Address: ${delegateDetails.address || 'Not provided'}
-• City: ${delegateDetails.city || 'Not provided'}
-• State: ${delegateDetails.state || 'Not provided'}
-• Country: ${delegateDetails.country || 'Not provided'}
-• PIN Code: ${delegateDetails.pincode || 'Not provided'}
-
-🆔 Identity Documents:
-${delegateDetails.aadharno ? `• Aadhar: ${maskAadhar(delegateDetails.aadharno)}` : ''}
-${delegateDetails.pan ? `• PAN: ${delegateDetails.pan}` : ''}
-${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : ''}
-
-📋 Registration ID: ${baseData.order_id}
-
-
-    `.trim()
-  };
-};
-
-/**
- * Prepare email data for Donation bookings
- */
-const prepareDonationEmailData = async (bookingData, baseData) => {
-  const donorDetails = bookingData.donorDetails || {};
-  const donationType = donorDetails.donorType || 'general';
-
-  return {
-    ...baseData,
-    name: donorDetails.name || 'Valued Donor',
-    email: donorDetails.email || '',
-    mobile: donorDetails.mobile || '',
-    address: `${donorDetails.address || ''}, ${donorDetails.city || ''}, ${donorDetails.state || ''} - ${donorDetails.pincode || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
-    pan: donorDetails.pan || '',
-    event_date: new Date().toISOString().split('T')[0],
-    booking_type: 'Donation',
-    details: `
-Donation Receipt & Acknowledgment:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🙏 Thank You for Your Generous Contribution!
-
-👤 Donor Name: ${donorDetails.name || 'Anonymous Donor'}
-🌍 Donor Type: ${donationType === 'indian' ? 'Indian Resident' : 'NRI/Foreign National'}
-📧 Email: ${donorDetails.email || 'Not provided'}
-📱 Mobile: ${donorDetails.mobile || 'Not provided'}
-💰 Donation Amount: ₹${baseData.amount}
-
-📍 Address:
-${donorDetails.address || 'Not provided'}
-${donorDetails.city || ''}, ${donorDetails.state || ''} - ${donorDetails.pincode || ''}
-
-🧾 Receipt Details:
-• Receipt Number: ${baseData.order_id}
-• Date of Donation: ${new Date().toLocaleDateString('en-IN')}
-• Payment Method: Online Transfer
-• Transaction Status: Completed ✅
-
-📜 Tax Benefits:
-• This donation is eligible for tax exemption under Section 80G
-• Tax exemption certificate will be issued within 15 working days
-• Please retain this receipt for your tax filing records
-• 50% of donation amount is eligible for tax deduction
-
-How Your Donation Helps:
-━━━━━━━━━━━━━━━━━━━━━━
-✨ Community Development Programs
-✨ Educational Initiatives & Scholarships
-✨ Healthcare Support for Underprivileged
-✨ Spiritual & Cultural Event Organization
-✨ Infrastructure Development Projects
-✨ Emergency Relief & Support Programs
-
-Organization Details:
-━━━━━━━━━━━━━━━━━━━━
-🏛️ Samudayik Vikas Samiti (SVS)
-📍 Registered Office: [Address]
-📞 Contact: +91-XXXXXXXXXX
-📧 Email: donations@svsamiti.com
-🌐 Website: www.svsamiti.com
-🆔 Registration Number: [Reg. No.]
-📜 80G Certificate Number: [80G No.]
-
-📞 For donation queries: accounts@svsamiti.com
-📄 For 80G certificate: tax@svsamiti.com
-
-Your generosity makes a real difference in countless lives. Thank you for being a part of our mission to create positive change in society.
-
-May your kindness be blessed manifold! 🙏✨
-
-With heartfelt gratitude,
-Team Samudayik Vikas Samiti
-    `.trim()
-  };
-};
-
-/**
- * Helper function to get customer email based on booking type
- */
-const getCustomerEmail = (bookingData, bookingType) => {
-  switch (bookingType) {
-    case 'havan':
-      return bookingData.customerDetails?.email;
-    case 'show':
-      return bookingData.userDetails?.email;
-    case 'stall':
-      return bookingData.vendorDetails?.email;
-    case 'delegate':
-      return bookingData.delegateDetails?.email;
-    case 'donation':
-      return bookingData.donorDetails?.email;
-    default:
-      return null;
-  }
-};
+// Note: getCustomerEmail helper function removed as it's unused in the current implementation
 
 /**
  * Helper function to format event dates
@@ -687,24 +524,7 @@ const formatShiftTime = (shift) => {
   return shifts[shift] || `${shift.charAt(0).toUpperCase() + shift.slice(1)} Shift`;
 };
 
-/**
- * Helper function to get delegate type display
- */
-const getDelegateTypeDisplay = (type) => {
-  const types = {
-    'withoutAssistance': 'Without Assistance Package',
-    'withAssistance': 'With Assistance Package'
-  };
-  return types[type] || type || 'Standard Package';
-};
-
-/**
- * Helper function to mask Aadhar number for security
- */
-const maskAadhar = (aadhar) => {
-  if (!aadhar || aadhar.length < 8) return aadhar;
-  return aadhar.substring(0, 4) + '****' + aadhar.substring(8);
-};
+// Note: getDelegateTypeDisplay and maskAadhar functions removed as they're only used by delegate-specific APIs
 
 /**
  * Helper function to calculate validity end date based on booking type

@@ -75,8 +75,12 @@ export default function EventBanner() {
             Śrī Jagannātha Pāñcharātra
           </h1>
           
-          <p className="text-base text-gray-800 md:text-lg lg:text-xl opacity-90 max-w-3xl mx-auto leading-relaxed px-4">
+          <p className="text-base text-gray-800 md:text-xl font-semibold max-w-3xl mx-auto leading-relaxed px-4">
+                     <span className="text-orange-600 text-2xl">🕉️</span>
+
             Five Days of Divine Grace - Daily Schedule & Sacred Activities
+                                 <span className="text-orange-600 text-2xl">🕉️</span>
+
           </p>
         </div>
       </div>
