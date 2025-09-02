@@ -127,55 +127,25 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
     
     // Send confirmation email on successful payment
     if (paymentData.order_status === 'Success') {
-      console.log('🚀 Payment successful - attempting to send confirmation email...');
-      console.log('📋 Booking Type:', bookingType);
-      console.log('📧 Booking Data for Email:', {
-        customerEmail: bookingData.customerDetails?.email || bookingData.userDetails?.email || bookingData.vendorDetails?.email || bookingData.delegateDetails?.email,
-        orderId: orderId,
-        amount: paymentData.amount,
-        hasBookingData: !!bookingData,
-        bookingKeys: Object.keys(bookingData)
-      });
-      
       try {
         const enrichedBookingData = { ...bookingData, amount: paymentData.amount, order_id: orderId, payment_id: paymentData.tracking_id };
-        console.log('📦 Enriched booking data prepared for email service');
         
         if (bookingType === 'donation') {
-          console.log('📧 Sending donation confirmation email...');
           const { sendDonationConfirmationEmail } = await import('@/services/emailService');
           const emailResult = await sendDonationConfirmationEmail(enrichedBookingData);
-          console.log('✅ Donation email result:', emailResult);
+          console.log('📧 Donation email sent:', emailResult.success ? 'Success' : emailResult.error);
         } else if (bookingType === 'delegate') {
-          console.log('📧 Sending delegate confirmation email...');
           const { sendDelegateConfirmationEmail } = await import('@/services/emailService');
           const emailResult = await sendDelegateConfirmationEmail(enrichedBookingData);
-          console.log('✅ Delegate email result:', emailResult);
+          console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } else {
-          console.log(`📧 Sending ${bookingType} booking confirmation email...`);
           const { sendBookingConfirmationEmail } = await import('@/services/emailService');
           const emailResult = await sendBookingConfirmationEmail(enrichedBookingData, bookingType);
-          console.log('✅ Booking email result:', emailResult);
-          
-          // Additional debugging for main booking types
-          if (!emailResult.success) {
-            console.error('❌ Email failed - detailed error:', {
-              error: emailResult.error,
-              data: emailResult.data,
-              rawResponse: emailResult.rawResponse
-            });
-          }
+          console.log('📧 Confirmation email sent:', emailResult.success ? 'Success' : emailResult.error);
         }
       } catch (emailError) {
-        console.error('❌ Failed to send confirmation email - Exception:', {
-          error: emailError.message,
-          stack: emailError.stack,
-          bookingType,
-          orderId
-        });
+        console.error('❌ Failed to send confirmation email:', emailError);
       }
-    } else {
-      console.log('⚠️ Payment not successful - skipping email:', paymentData.order_status);
     }
     
     return true;
