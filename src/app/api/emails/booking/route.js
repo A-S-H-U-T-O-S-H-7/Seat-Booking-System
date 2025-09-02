@@ -285,34 +285,75 @@ export async function POST(req) {
         });
 
         await browser.close();
-        const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
-        const formData = new FormData();
-        formData.append("name", name);
-        formData.append("email", email);
-        formData.append("order_id", order_id);
-        formData.append("details", details);
-        formData.append("event_date", event_date);
-        formData.append("booking_type", booking_type);
-        formData.append("amount", amount);
-        formData.append("mobile", mobile);
-        formData.append("address", address);
-        formData.append("pan", pan);
-        formData.append("valid_from", valid_from);
-        formData.append("valid_to", valid_to);
-        formData.append("member_pass", pdfBlob, `member_pass.pdf`);
-
-        const resp = await fetch("https://svsamiti.com/havan-booking/email.php", {
-            method: "POST",
-            body: formData,
+        // Send email directly using Nodemailer instead of external PHP API
+        const { transporter } = await import('@/lib/nodemailer');
+        
+        const mailOptions = {
+            from: process.env.SMTP_USER || 'noreply@svsamiti.com',
+            to: email,
+            subject: `${booking_type} - Booking Confirmation - Order #${order_id}`,
+            html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 28px;">🕉️ Booking Confirmed</h1>
+                    <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">SAMUDAYIK VIKAS SAMITI</p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                    <h2 style="color: #2d3748; margin-bottom: 20px;">Dear ${name},</h2>
+                    
+                    <p style="color: #4a5568; line-height: 1.6; margin-bottom: 20px;">
+                        Your booking has been confirmed! We're excited to have you join us for this sacred event.
+                    </p>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin-bottom: 20px;">
+                        <h3 style="color: #2d3748; margin-top: 0;">Booking Details</h3>
+                        <p><strong>Order ID:</strong> ${order_id}</p>
+                        <p><strong>Event:</strong> ${booking_type}</p>
+                        <p><strong>Event Date:</strong> ${event_date}</p>
+                        <p><strong>Amount Paid:</strong> ₹${amount}</p>
+                        <p><strong>Mobile:</strong> ${mobile}</p>
+                        <p><strong>Valid From:</strong> ${valid_from} to ${valid_to}</p>
+                    </div>
+                    
+                    <div style="background: #e6fffa; padding: 15px; border-radius: 8px; border-left: 4px solid #38b2ac; margin-bottom: 20px;">
+                        <p style="margin: 0; color: #2d3748;"><strong>Event Details:</strong></p>
+                        <p style="margin: 5px 0 0 0; color: #4a5568; white-space: pre-line;">${details}</p>
+                    </div>
+                    
+                    <p style="color: #4a5568; line-height: 1.6; margin-bottom: 20px;">
+                        Please find your member pass attached to this email. You must present this pass at the event venue.
+                    </p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <p style="color: #2d3748; font-style: italic; font-size: 18px; margin: 0;">🙏 सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः</p>
+                        <p style="color: #718096; font-size: 14px; margin: 5px 0 0 0;">May all be happy, may all be free from illness</p>
+                    </div>
+                    
+                    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 30px 0;">
+                    
+                    <p style="color: #718096; font-size: 12px; text-align: center; margin: 0;">
+                        This is an automated message. Please do not reply to this email.<br>
+                        For support, contact us at support@svsamiti.com
+                    </p>
+                </div>
+            </div>
+            `,
+            attachments: [
+                {
+                    filename: `Member_Pass_${order_id}.pdf`,
+                    content: pdfBuffer,
+                    contentType: 'application/pdf'
+                }
+            ]
+        };
+        
+        await transporter.sendMail(mailOptions);
+        
+        return NextResponse.json({ 
+            status: true, 
+            message: 'Booking confirmation email sent successfully with member pass attachment!' 
         });
-
-        const result = await resp.json();
-
-        if (result.status === true) {
-            return NextResponse.json({ status: true, message: result.message });
-        } else {
-            return NextResponse.json({ status: false, errors: [result.message || 'Unknown error'] });
-        }
 
     } catch (err) {
         return NextResponse.json({ status: false, errors: [err.message || 'Unknown error occurred'] });
