@@ -9,7 +9,8 @@ import {
   UserIcon,
   PhoneIcon,
   EnvelopeIcon,
-  TicketIcon
+  TicketIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
@@ -24,7 +25,8 @@ export default function ShowBookingsTable({
   onCancel,
   onDelete,
   onApproveCancellation,
-  onRejectCancellation
+  onRejectCancellation,
+  onParticipation
 }) {
   const formatCurrency = (amount) => {
     if (!amount || isNaN(amount)) return '₹0';
@@ -122,18 +124,36 @@ export default function ShowBookingsTable({
         )}
 
         {booking.status === 'confirmed' && (
-          <button
-            onClick={() => onCancel(booking)}
-            disabled={isUpdating}
-            className={`${baseButtonClass} ${
-              isDarkMode 
-                ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
-                : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
-            }`}
-            title="Cancel Booking"
-          >
-            <XCircleIcon className="h-4 w-4" />
-          </button>
+          <>
+            <button
+              onClick={() => onParticipation(booking)}
+              disabled={isUpdating}
+              className={`${baseButtonClass} ${
+                booking.participated
+                  ? (isDarkMode
+                      ? 'bg-green-700 text-green-100 border border-green-600 cursor-default'
+                      : 'bg-green-600 text-white border border-green-600 cursor-default')
+                  : (isDarkMode
+                      ? 'bg-blue-700 hover:bg-blue-600 text-blue-100 border border-blue-600'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600')
+              }`}
+              title={booking.participated ? 'Already Participated' : 'Mark Participation'}
+            >
+              <CheckIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onCancel(booking)}
+              disabled={isUpdating}
+              className={`${baseButtonClass} ${
+                isDarkMode 
+                  ? 'bg-red-700 hover:bg-red-600 text-red-100 border border-red-600' 
+                  : 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
+              }`}
+              title="Cancel Booking"
+            >
+              <XCircleIcon className="h-4 w-4" />
+            </button>
+          </>
         )}
 
         {booking.status === 'cancellation-requested' && (
@@ -233,7 +253,9 @@ export default function ShowBookingsTable({
           <tbody className={`${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
             {bookings.map((booking, index) => (
               <tr key={booking.id} className={`transition-colors duration-150 ${
-                isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50'
+                booking.participated 
+                  ? (isDarkMode ? 'bg-green-900/20 hover:bg-green-800/30 border-l-4 border-green-500' : 'bg-green-50 hover:bg-green-100/70 border-l-4 border-green-400')
+                  : (isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50')
               }`}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -266,8 +288,54 @@ export default function ShowBookingsTable({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="space-y-2">
                     <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {booking.showDetails?.date ? format(new Date(booking.showDetails.date), 'MMM dd, yyyy') : 'N/A'}
-                      {booking.showDetails?.time && ` (${booking.showDetails.time})`}
+                      {(() => {
+                        try {
+                          if (booking.showDetails?.date) {
+                          const showDate = booking.showDetails.date;
+                          let dateObj;
+                            
+                            if (showDate.toDate && typeof showDate.toDate === 'function') {
+                              dateObj = showDate.toDate();
+                            } else if (showDate.seconds) {
+                              dateObj = new Date(showDate.seconds * 1000);
+                            } else if (showDate._seconds) {
+                              dateObj = new Date(showDate._seconds * 1000);
+                            } else if (typeof showDate === 'string') {
+                              // Handle string dates
+                              if (showDate.includes('T') || showDate.includes('-')) {
+                                dateObj = new Date(showDate);
+                              } else {
+                                // Try parsing as timestamp
+                                const timestamp = parseInt(showDate);
+                                if (!isNaN(timestamp)) {
+                                  dateObj = new Date(timestamp);
+                                }
+                              }
+                            } else if (typeof showDate === 'number') {
+                              // Handle timestamp
+                              dateObj = new Date(showDate);
+                            } else if (showDate instanceof Date) {
+                              dateObj = showDate;
+                            } else if (typeof showDate === 'object' && showDate !== null) {
+                              // Handle other object formats
+                              if (showDate.seconds || showDate._seconds) {
+                                const seconds = showDate.seconds || showDate._seconds;
+                                dateObj = new Date(seconds * 1000);
+                              }
+                            }
+                            
+                            if (dateObj && !isNaN(dateObj.getTime())) {
+                              return format(dateObj, 'MMM dd, yyyy') + (booking.showDetails?.time ? ` (${booking.showDetails.time})` : '');
+                            }
+                            
+                            console.warn('Could not parse date:', showDate);
+                          }
+                          return 'N/A';
+                        } catch (error) {
+                          console.error('Error formatting show date:', error, booking.showDetails?.date);
+                          return 'Invalid Date';
+                        }
+                      })()} 
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {booking.showDetails?.selectedSeats?.slice(0, 3).map((seat, idx) => {

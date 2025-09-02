@@ -7,7 +7,8 @@
     XCircle,
     AlertCircle,
     RefreshCw,
-    StoreIcon
+    StoreIcon,
+    UserCheck
   } from 'lucide-react';
 
   export default function StallBookingTable({
@@ -21,7 +22,8 @@
     onConfirm,
     onCancel,
     onApproveCancellation,
-    onRejectCancellation
+    onRejectCancellation,
+    onParticipation
   }) {
     const formatCurrency = (amount) => {
       if (!amount || isNaN(amount)) {
@@ -238,7 +240,22 @@
 
           {booking.status === 'confirmed' && (
             <>
-
+              <button
+                onClick={() => onParticipation(booking)}
+                disabled={isUpdating}
+                className={`${baseButtonClass} ${
+                  booking.participated
+                    ? (isDarkMode
+                        ? 'bg-green-700 text-green-100 border border-green-600 cursor-default'
+                        : 'bg-green-600 text-white border border-green-600 cursor-default')
+                    : (isDarkMode
+                        ? 'bg-blue-700 hover:bg-blue-600 text-blue-100 border border-blue-600'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-600')
+                }`}
+                title={booking.participated ? 'Already Participated' : 'Mark Participation'}
+              >
+                <UserCheck className="h-4 w-4" />
+              </button>
               <button
                 onClick={() => onCancel(booking)}
                 disabled={isUpdating}
@@ -350,7 +367,9 @@
             <tbody className={`${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
               {bookings.map((booking, index) => (
                 <tr key={booking.id} className={`transition-colors duration-150 ${
-                  isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50'
+                  booking.participated 
+                    ? (isDarkMode ? 'bg-green-900/20 hover:bg-green-800/30 border-l-4 border-green-500' : 'bg-green-50 hover:bg-green-100/70 border-l-4 border-green-400')
+                    : (isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/50')
                 }`}>
   <td className="px-6 py-4 whitespace-nowrap">
     <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>

@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const EventPass = () => {
+const EventPass = ({ participantName = "Ashutosh Mohanty", purpose = "Cultural Event", startDate = "Dec 3, 2025", endDate = "Dec 7, 2025" }) => {
+const [isFlipped, setIsFlipped] = useState(false);
+
+const styles = `
+  .perspective-1000 { perspective: 1000px; }
+  .transform-style-preserve-3d { transform-style: preserve-3d; }
+  .backface-hidden { backface-visibility: hidden; }
+  .rotate-y-180 { transform: rotateY(180deg); }
+`;
+
   return (
-    <div className="min-h-screen bg-gray-100 p-2 sm:p-4 flex items-center justify-center">
-      <div className="w-full max-w-5xl h-auto sm:h-80 bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-row border-2 border-orange-200">
+    <>
+
+    <style>{styles}</style>
+
+<div className="min-h-screen bg-gray-100 p-2 sm:p-4 flex items-center justify-center">
+  <div className="w-full max-w-4xl h-auto sm:h-80 relative perspective-1000">
+<div 
+      className={`w-full h-full transform-style-preserve-3d transition-transform duration-700 cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
+      onClick={() => setIsFlipped(!isFlipped)}
+    >
+       <div className="absolute inset-0 w-full h-full backface-hidden">
+        <div className="w-full h-full bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-row border-2 border-orange-200">
         
         {/* Left Section */}
         <div className="flex-1 relative p-2   bg-gradient-to-br from-orange-50 to-yellow-50 overflow-hidden">
@@ -128,9 +147,9 @@ const EventPass = () => {
 
               {/* Participant Info */}
               <div>
-                <h4 className="text-sm sm:text-base md:text-lg  lg:text-2xl font-bold text-gray-900">Rahul Sharma</h4>
-                <p className="text-xs sm:text-sm md:text-base mb-2 lg:text-lg text-gray-700 font-medium">Purpose: Cultural Event</p>
-                <p className="text-xs md:text-sm font-semibold text-gray-700">Valid From: Sept 15, 2025 - Sept 17, 2025</p>
+                <h4 className="text-sm sm:text-base md:text-lg  lg:text-2xl font-bold text-gray-900">{participantName}</h4>
+                <p className="text-xs sm:text-sm md:text-base mb-2 lg:text-lg text-gray-700 font-medium">Purpose: {purpose}</p>
+                <p className="text-xs md:text-sm font-semibold text-gray-700">Valid From: {startDate} - {endDate}</p>
               </div>
             </div>
           </div>
@@ -146,7 +165,7 @@ const EventPass = () => {
         </div>
 
         {/* Right Section - Member Pass */}
-        <div className="w-20 sm:w-24 md:w-32 lg:w-80 bg-gradient-to-br from-red-600 to-orange-600 flex flex-col items-center justify-center text-white relative overflow-hidden py-2 sm:py-4 lg:py-0">
+        <div className="w-20 sm:w-24 md:w-32 lg:w-70 bg-gradient-to-br from-red-600 to-orange-600 flex flex-col items-center justify-center text-white relative overflow-hidden py-2 sm:py-4 lg:py-0">
           
           {/* Background Decorative Pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -179,17 +198,13 @@ const EventPass = () => {
           </div>
 
           {/* QR Code */}
-          <div className="bg-white p-1 sm:p-1 md:p-2 lg:p-3 rounded-lg lg:rounded-xl shadow-lg mb-1 sm:mb-2 md:mb-3 lg:mb-4">
+          <div className="bg-white p-1 sm:p-1 md:p-2 rounded-lg lg:rounded-lg shadow-lg mb-1 sm:mb-2 md:mb-3 lg:mb-4">
             <div className="w-10 sm:w-12 md:w-16 lg:w-24 h-10 sm:h-12 md:h-16 lg:h-24 bg-black rounded-sm lg:rounded-lg relative overflow-hidden">
-              {/* QR Pattern */}
-              <div className="grid grid-cols-12 gap-px w-full h-full p-0.5 lg:p-1">
-                {Array.from({length: 144}).map((_, i) => (
-                  <div 
-                    key={i}
-                    className={`${Math.random() > 0.5 ? 'bg-black' : 'bg-white'} ${i % 13 === 0 || i % 13 === 12 || Math.floor(i/12) === 0 || Math.floor(i/12) === 11 ? 'bg-black' : ''}`}
-                  ></div>
-                ))}
-              </div>
+              <img 
+  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent("SVS PASS | Name: " + participantName + " | Purpose: " + purpose)}`}
+  alt="QR Code"
+  className="w-full h-full object-contain rounded-sm lg:rounded-lg"
+/>
             </div>
           </div>
 
@@ -209,8 +224,31 @@ const EventPass = () => {
             <div className="w-8 sm:w-10 md:w-16 lg:w-20 h-0.5 bg-white opacity-60"></div>
           </div>
         </div>
+
+</div>
+</div>
+
+ {/* BACK SIDE - Terms & Conditions */}
+      <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180">
+        <div className="w-full h-full bg-slate-800 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex items-center justify-center p-4 border-2 border-orange-200">
+          <div className="text-white w-full h-full overflow-y-auto">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 text-center text-orange-300">Terms & Conditions</h2>
+            <ul className="space-y-3 text-xs sm:text-sm md:text-base leading-relaxed">
+              <li>• For security reasons, firearms, cameras, audio and video recorders are strictly not permitted inside the venue.</li>
+              <li>• The complimentary pass (valid for one person only) must be produced for entry to any event.</li>
+              <li>• The organizers reserve the right to add, withdraw or substitute artists and/or vary advertised programs, prices, venues, seating arrangements, and audience capacity without prior notice.</li>
+              <li>• Admission is subject to the organizers and the venue's terms of admission. Late arrivals may result in non-admittance until a suitable break in the performance.</li>
+              <li>• It may be a condition of entry that a search of person and/or their possessions is required at the time of entry.</li>
+              <li>• Entry may be refused if passes are damaged, defaced, or not issued by the organizers.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+</div>
       </div>
     </div>
+    
+    </>
   );
 };
 

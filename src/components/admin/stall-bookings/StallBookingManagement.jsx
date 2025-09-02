@@ -12,6 +12,7 @@ import StallBookingFilters from './StallBookingFilters';
 import StallBookingTable from './StallBookingTable';
 import StallBookingDetailsModal from './StallBookingDetailsModal';
 import StallCancellationModal from './StallCancellationModal';
+import ParticipationModal from '../shared/ParticipationModal';
 import Pagination from './Pagination';
 
 export default function StallBookingManagement() {
@@ -21,6 +22,7 @@ export default function StallBookingManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [participationFilter, setParticipationFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedBooking, setSelectedBooking] = useState(null);
   
@@ -28,6 +30,7 @@ export default function StallBookingManagement() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [showParticipationModal, setShowParticipationModal] = useState(false);
 
   
   const [isUpdating, setIsUpdating] = useState(false);
@@ -39,7 +42,7 @@ export default function StallBookingManagement() {
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, statusFilter, dateFilter]);
+  }, [currentPage, statusFilter, participationFilter, dateFilter]);
 
   // Debounced search effect
   useEffect(() => {
@@ -53,7 +56,7 @@ export default function StallBookingManagement() {
   // Reset current page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter]);
+  }, [statusFilter, participationFilter, dateFilter]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -107,12 +110,12 @@ export default function StallBookingManagement() {
   ...data,
   stallIds: data.stallIds || [data.stallId].filter(Boolean),
   vendorDetails: {
-    name: data.vendorDetails?.ownerName || 'N/A',
-    email: data.vendorDetails?.email || 'N/A',
-    phone: data.vendorDetails?.phone || 'N/A',
-    businessType: data.vendorDetails?.businessType || 'N/A',
-    aadhar: data.vendorDetails?.aadhar,
-    address: data.vendorDetails?.address
+    name: data.vendorDetails?.ownerName || data.vendorDetails?.name || data.ownerName || data.name || 'N/A',
+    email: data.vendorDetails?.email || data.email || 'N/A',
+    phone: data.vendorDetails?.phone || data.phone || 'N/A',
+    businessType: data.vendorDetails?.businessType || data.businessType || 'N/A',
+    aadhar: data.vendorDetails?.aadhar || data.aadhar,
+    address: data.vendorDetails?.address || data.address
   },
   totalAmount: data.payment?.amount || data.totalAmount || data.amount || 0,
 };
@@ -124,15 +127,23 @@ export default function StallBookingManagement() {
         }
       });
 
-      // Apply search filter on client side
+      // Apply search and participation filters on client side
       let filteredBookings = bookingsData;
       if (searchTerm) {
-        filteredBookings = bookingsData.filter(booking => 
+        filteredBookings = filteredBookings.filter(booking => 
           (booking.vendorDetails?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (booking.vendorDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (booking.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (booking.stallIds?.some(stallId => stallId.toLowerCase().includes(searchTerm.toLowerCase())))
         ));
+      }
+      
+      // Apply participation filter
+      if (participationFilter !== 'all') {
+        filteredBookings = filteredBookings.filter(booking => {
+          const hasParticipated = booking.participated === true;
+          return participationFilter === 'yes' ? hasParticipated : !hasParticipated;
+        });
       }
 
       setTotalBookings(filteredBookings.length);
@@ -295,6 +306,8 @@ export default function StallBookingManagement() {
         setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        participationFilter={participationFilter}
+        setParticipationFilter={setParticipationFilter}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
         onSearch={fetchBookings}
@@ -319,6 +332,10 @@ export default function StallBookingManagement() {
   }}
   onApproveCancellation={(bookingId) => handleCancellationRequest(bookingId, 'approve')}
   onRejectCancellation={(bookingId) => handleCancellationRequest(bookingId, 'reject')}
+  onParticipation={(booking) => {
+    setSelectedBooking(booking);
+    setShowParticipationModal(true);
+  }}
 />
 
       {totalBookings > bookingsPerPage && (
@@ -350,6 +367,39 @@ export default function StallBookingManagement() {
         }}
         isUpdating={isUpdating}
         isDarkMode={isDarkMode}
+      />
+
+      <ParticipationModal
+        isOpen={showParticipationModal}
+        onClose={() => setShowParticipationModal(false)}
+        booking={selectedBooking}
+        bookingType="stall"
+        onSuccess={(bookingId) => {
+          // Update the selectedBooking state immediately to reflect changes in UI
+          if (selectedBooking && selectedBooking.id === bookingId) {
+            setSelectedBooking(prevBooking => ({
+              ...prevBooking,
+              participated: !prevBooking.participated, // Toggle participation status
+              participatedAt: prevBooking.participated ? null : new Date(), // Set or clear timestamp
+              participatedBy: prevBooking.participated ? null : adminUser?.uid // Set or clear admin UID
+            }));
+          }
+          
+          // Update the booking in local state to toggle participation
+          setBookings(prev => prev.map(booking => 
+            booking.id === bookingId 
+              ? { 
+                  ...booking, 
+                  participated: !booking.participated, 
+                  participatedAt: booking.participated ? null : new Date(),
+                  participatedBy: booking.participated ? null : adminUser?.uid
+                }
+              : booking
+          ));
+          
+          // Refresh bookings to get updated participation status from server (for accuracy)
+          fetchBookings();
+        }}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import DelegateFilters from './DelegateFilters';
 import DelegateTable from './DelegateTable';
 import DelegateDetailsModal from './DelegateDetailsModal';
 import DelegateCancellationModal from './DelegateCancellationModal';
+import ParticipationModal from '../shared/ParticipationModal';
 import Pagination from '../stall-bookings/Pagination';
 
 export default function DelegateManagement() {
@@ -22,6 +23,7 @@ export default function DelegateManagement() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [participationFilter, setParticipationFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [stats, setStats] = useState({
@@ -35,6 +37,7 @@ export default function DelegateManagement() {
   // Modal states
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [showParticipationModal, setShowParticipationModal] = useState(false);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +46,7 @@ export default function DelegateManagement() {
 
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, statusFilter, dateFilter]);
+  }, [currentPage, statusFilter, participationFilter, dateFilter]);
 
   // Debounced search effect
   useEffect(() => {
@@ -57,7 +60,7 @@ export default function DelegateManagement() {
   // Reset current page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter]);
+  }, [statusFilter, participationFilter, dateFilter]);
 
   // Calculate stats from all bookings
   const calculateStats = (bookingsData) => {
@@ -161,15 +164,23 @@ export default function DelegateManagement() {
         }
       });
 
-      // Apply search filter on client side
+      // Apply search and participation filters on client side
       let filteredBookings = bookingsData;
       if (searchTerm) {
-        filteredBookings = bookingsData.filter(booking => 
+        filteredBookings = filteredBookings.filter(booking => 
           (booking.delegateDetails?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.delegateDetails?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.delegateDetails?.organization?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           booking.id.toLowerCase().includes(searchTerm.toLowerCase())
         ));
+      }
+      
+      // Apply participation filter
+      if (participationFilter !== 'all') {
+        filteredBookings = filteredBookings.filter(booking => {
+          const hasParticipated = booking.participated === true;
+          return participationFilter === 'yes' ? hasParticipated : !hasParticipated;
+        });
       }
 
       setTotalBookings(filteredBookings.length);
@@ -342,6 +353,8 @@ export default function DelegateManagement() {
         setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        participationFilter={participationFilter}
+        setParticipationFilter={setParticipationFilter}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
         onSearch={fetchBookings}
@@ -366,6 +379,10 @@ export default function DelegateManagement() {
         }}
         onApproveCancellation={(bookingId) => handleCancellationRequest(bookingId, 'approve')}
         onRejectCancellation={(bookingId) => handleCancellationRequest(bookingId, 'reject')}
+        onParticipation={(booking) => {
+          setSelectedBooking(booking);
+          setShowParticipationModal(true);
+        }}
       />
 
       {totalBookings > bookingsPerPage && (
@@ -397,6 +414,22 @@ export default function DelegateManagement() {
         }}
         isUpdating={isUpdating}
         isDarkMode={isDarkMode}
+      />
+
+      <ParticipationModal
+        isOpen={showParticipationModal}
+        onClose={() => setShowParticipationModal(false)}
+        booking={selectedBooking}
+        bookingType="delegate"
+        onSuccess={(bookingId) => {
+          // Update the booking in local state to show it as participated
+          setBookings(prev => prev.map(booking => 
+            booking.id === bookingId 
+              ? { ...booking, participated: true, participatedAt: new Date() }
+              : booking
+          ));
+          setShowParticipationModal(false);
+        }}
       />
     </div>
   );

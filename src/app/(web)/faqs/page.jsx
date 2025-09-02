@@ -11,7 +11,7 @@ function page() {
   return (
     <div>
       <FAQ />            
-{/* <EventPass/> */}
+<EventPass/>
     </div>
   )
 }

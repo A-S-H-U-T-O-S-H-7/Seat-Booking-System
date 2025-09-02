@@ -9,7 +9,8 @@ import {
   UserIcon,
   CurrencyRupeeIcon,
   CalendarIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 
 export default function DelegateTable({
@@ -22,7 +23,8 @@ export default function DelegateTable({
   onConfirm,
   onCancel,
   onApproveCancellation,
-  onRejectCancellation
+  onRejectCancellation,
+  onParticipation
 }) {
   const formatCurrency = (amount) => {
     if (!amount || isNaN(amount)) {
@@ -195,6 +197,25 @@ export default function DelegateTable({
           </>
         )}
 
+        {booking.status === 'confirmed' && (
+          <button
+            onClick={() => onParticipation(booking)}
+            disabled={isUpdating}
+            className={`${baseButtonClass} ${
+              booking.participated
+                ? (isDarkMode
+                    ? 'bg-green-600 text-white cursor-default'
+                    : 'bg-green-50 text-green-600 border border-green-200 cursor-default')
+                : (isDarkMode
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200')
+            }`}
+            title={booking.participated ? 'Already Participated' : 'Mark Participation'}
+          >
+            <CheckIcon className="h-4 w-4" />
+          </button>
+        )}
+
         {booking.status === 'cancellation-requested' && (
           <>
             <button
@@ -280,7 +301,11 @@ export default function DelegateTable({
               const payment = booking.payment || {};
               
               return (
-                <tr key={booking.id} className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors duration-150`}>
+                <tr key={booking.id} className={`${
+                  booking.participated 
+                    ? (isDarkMode ? 'bg-green-900/20 hover:bg-green-800/30 border-l-4 border-green-500' : 'bg-green-50 hover:bg-green-100/70 border-l-4 border-green-400')
+                    : (isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50')
+                } transition-colors duration-150`}>
                   {/* Delegate Information */}
                   <td className="px-4 py-4">
                     <div className="flex items-center">

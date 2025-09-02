@@ -5,6 +5,8 @@ export default function StallBookingFilters({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  participationFilter,
+  setParticipationFilter,
   dateFilter,
   setDateFilter,
   onSearch,
@@ -45,7 +47,26 @@ export default function StallBookingFilters({
               <option value="all">All Statuses</option>
               <option value="confirmed">Confirmed</option>
               <option value="cancelled">Cancelled</option>
-                          </select>
+            </select>
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FilterIcon className="h-5 w-5 text-gray-400" />
+            </div>
+          </div>
+          
+          <div className="relative">
+            <select
+              value={participationFilter}
+              onChange={(e) => setParticipationFilter(e.target.value)}
+              className={`appearance-none pl-10 pr-8 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            >
+              <option value="all">All Participation</option>
+              <option value="yes">Participated</option>
+              <option value="no">Not Participated</option>
+            </select>
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FilterIcon className="h-5 w-5 text-gray-400" />
             </div>

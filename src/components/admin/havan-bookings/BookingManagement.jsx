@@ -21,16 +21,16 @@ import PaymentDetailsModal from './PaymentDetailsModal';
 import PriceAdjustmentModal from './PriceAdjustmentModal';
 import CancellationModal from './CancellationModal';
 import Pagination from './Pagination';
+import ParticipationModal from '../shared/ParticipationModal';
 
 export default function BookingManagement() {
-  console.log('🎯 ===== HAVAN BOOKING MANAGEMENT COMPONENT LOADED =====');
-  console.log('🎯 This is the admin Havan Booking Management component');
   const { isDarkMode } = useTheme();
   const { adminUser } = useAdmin();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [participationFilter, setParticipationFilter] = useState('all');
   const [bookingDate, setBookingDate] = useState(null);
   const [eventDate, setEventDate] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -40,6 +40,7 @@ export default function BookingManagement() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [showPriceModal, setShowPriceModal] = useState(false);
+  const [showParticipationModal, setShowParticipationModal] = useState(false);
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,7 +57,7 @@ export default function BookingManagement() {
   // Simple effect like ShowSeatManagement - no debouncing
   useEffect(() => {
     fetchBookings();
-  }, [currentPage, statusFilter, bookingDate, eventDate]);
+  }, [currentPage, statusFilter, participationFilter, bookingDate, eventDate]);
 
   // Debounced search effect only
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function BookingManagement() {
   // Reset current page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, bookingDate, eventDate]);
+  }, [statusFilter, participationFilter, bookingDate, eventDate]);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -155,6 +156,14 @@ export default function BookingManagement() {
           return bookingEventDate.toDateString() === eventDate.toDateString();
         });
       }
+      
+      // Apply participation filter
+      if (participationFilter !== 'all') {
+        filteredBookings = filteredBookings.filter(booking => {
+          const hasParticipated = booking.participated === true;
+          return participationFilter === 'yes' ? hasParticipated : !hasParticipated;
+        });
+      }
 
       setTotalBookings(filteredBookings.length);
       
@@ -172,19 +181,12 @@ export default function BookingManagement() {
   };
 
   const handleStatusUpdate = async (bookingId, newStatus, reason = '') => {
-    console.log('🚀 handleStatusUpdate called with:', { bookingId, newStatus, reason });
     setIsUpdating(true);
     try {
       if (newStatus === 'cancelled') {
         // Use the new cancellation utility
         const bookingData = bookings.find(b => b.id === bookingId);
         if (bookingData) {
-          console.log('Cancelling Havan booking with data:', {
-            id: bookingData.id,
-            seats: bookingData.seats || bookingData.eventDetails?.seats || [],
-            eventDate: bookingData.eventDate || bookingData.eventDetails?.date,
-            shift: bookingData.shift || bookingData.eventDetails?.shift
-          });
           
           const result = await cancelBooking(
             bookingData,
@@ -244,11 +246,9 @@ export default function BookingManagement() {
   // This function is now handled by the cancellation utilities
   const handleSeatRelease = async (bookingId) => {
     // Legacy function - seat release is now handled in cancelBooking utility
-    console.log('Seat release handled by cancellation utility for booking:', bookingId);
   };
 
   const handleCancellationRequest = async (bookingId, action) => {
-    console.log('🚀 handleCancellationRequest called with:', { bookingId, action });
     setIsUpdating(true);
     try {
       const bookingRef = doc(db, 'bookings', bookingId);
@@ -337,6 +337,35 @@ export default function BookingManagement() {
     }
   };
 
+  const handleParticipationSuccess = (bookingId) => {
+    // Update the selectedBooking state immediately to reflect changes in UI
+    if (selectedBooking && selectedBooking.id === bookingId) {
+      setSelectedBooking(prevBooking => ({
+        ...prevBooking,
+        participated: !prevBooking.participated, // Toggle participation status
+        participatedAt: prevBooking.participated ? null : new Date(), // Set or clear timestamp
+        participatedBy: prevBooking.participated ? null : adminUser?.uid // Set or clear admin UID
+      }));
+    }
+    
+    // Also update the bookings array state immediately
+    setBookings(prevBookings => 
+      prevBookings.map(booking => 
+        booking.id === bookingId 
+          ? {
+              ...booking,
+              participated: !booking.participated,
+              participatedAt: booking.participated ? null : new Date(),
+              participatedBy: booking.participated ? null : adminUser?.uid
+            }
+          : booking
+      )
+    );
+    
+    // Still refresh bookings to get updated participation status from server (for accuracy)
+    fetchBookings();
+  };
+
   const totalPages = Math.ceil(totalBookings / bookingsPerPage);
 
   if (loading) {
@@ -350,10 +379,10 @@ export default function BookingManagement() {
   }
 
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
       {/* Booking Filters - Inline like ShowSeatManagement */}
       <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-lg border p-6`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
           {/* Search */}
           <div>
             <label className={`block text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -394,6 +423,27 @@ export default function BookingManagement() {
               <option value="all">🔍 All Status</option>
               <option value="confirmed">✅ Confirmed</option>
               <option value="cancelled">❌ Cancelled</option>
+            </select>
+          </div>
+
+          {/* Participation Filter */}
+          <div>
+            <label className={`block text-sm font-semibold mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              <FunnelIcon className="w-5 h-5 inline mr-2" />
+              Participation
+            </label>
+            <select
+              value={participationFilter}
+              onChange={(e) => setParticipationFilter(e.target.value)}
+              className={`block w-full h-12 px-4 rounded-lg shadow-sm transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
+            >
+              <option value="all">🔍 All</option>
+              <option value="yes">✅ Yes</option>
+              <option value="no">❌ No</option>
             </select>
           </div>
 
@@ -439,6 +489,7 @@ export default function BookingManagement() {
               onClick={() => {
                 setSearchTerm('');
                 setStatusFilter('all');
+                setParticipationFilter('all');
                 setBookingDate(null);
                 setEventDate(null);
               }}
@@ -487,6 +538,10 @@ export default function BookingManagement() {
         }}
         onApproveCancellation={(bookingId) => handleCancellationRequest(bookingId, 'approve')}
         onRejectCancellation={(bookingId) => handleCancellationRequest(bookingId, 'reject')}
+        onParticipation={(booking) => {
+          setSelectedBooking(booking);
+          setShowParticipationModal(true);
+        }}
       />
 
       {totalBookings > bookingsPerPage && (
@@ -539,6 +594,14 @@ export default function BookingManagement() {
         }}
         isUpdating={isUpdating}
         isDarkMode={isDarkMode}
+      />
+
+      <ParticipationModal
+        isOpen={showParticipationModal}
+        onClose={() => setShowParticipationModal(false)}
+        booking={selectedBooking}
+        bookingType="havan"
+        onSuccess={handleParticipationSuccess}
       />
     </div>
   );

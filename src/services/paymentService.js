@@ -156,6 +156,8 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
   }
 }
 
+
+
 /**
  * Update seat availability after payment (for havan bookings)
  */

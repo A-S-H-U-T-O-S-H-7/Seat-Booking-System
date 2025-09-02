@@ -24,6 +24,7 @@ import ShowBookingFilters from './ShowBookingFilters';
 import ShowBookingsTable from './ShowBookingTable';
 import ShowBookingDetailsModal from '../ShowBookingDetailsModal';
 import ShowBookingCancellationModal from './ShowCancellationModal';
+import ParticipationModal from '../shared/ParticipationModal';
 import Pagination from './Pagination';
 
 export default function ShowBookingsPage() {
@@ -33,12 +34,14 @@ export default function ShowBookingsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [participationFilter, setParticipationFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedDate, setSelectedDate] = useState(null);
   const [bookingDate, setBookingDate] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
+  const [showParticipationModal, setShowParticipationModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalBookings, setTotalBookings] = useState(0);
@@ -55,7 +58,7 @@ export default function ShowBookingsPage() {
       // Apply client-side filtering without re-fetching
       applyClientSideFilters();
     }
-  }, [selectedDate, bookingDate, currentPage, statusFilter, dateFilter, searchTerm, allBookingsData]);
+  }, [selectedDate, bookingDate, participationFilter, currentPage, statusFilter, dateFilter, searchTerm, allBookingsData]);
 
   // Debounced search effect
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function ShowBookingsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, dateFilter, selectedDate, bookingDate]);
+  }, [statusFilter, participationFilter, dateFilter, selectedDate, bookingDate]);
 
   // Client-side filtering function that handles both show date and booking date filters
   const applyClientSideFilters = () => {
@@ -160,6 +163,14 @@ export default function ShowBookingsPage() {
         const isMatch = normalizedBookingDate >= targetDate && normalizedBookingDate < nextDay;
         
         return isMatch;
+      });
+    }
+    
+    // Apply participation filter
+    if (participationFilter !== 'all') {
+      filteredBookings = filteredBookings.filter(booking => {
+        const hasParticipated = booking.participated === true;
+        return participationFilter === 'yes' ? hasParticipated : !hasParticipated;
       });
     }
     
@@ -470,6 +481,8 @@ export default function ShowBookingsPage() {
         setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        participationFilter={participationFilter}
+        setParticipationFilter={setParticipationFilter}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
         selectedDate={selectedDate}
@@ -500,6 +513,10 @@ export default function ShowBookingsPage() {
         }}
         onApproveCancellation={(booking) => booking?.id && handleStatusUpdate(booking.id, 'cancelled')}
         onRejectCancellation={(booking) => booking?.id && handleStatusUpdate(booking.id, 'confirmed')}
+        onParticipation={(booking) => {
+          setSelectedBooking(booking);
+          setShowParticipationModal(true);
+        }}
       />
 
       {/* Pagination */}
@@ -532,6 +549,46 @@ export default function ShowBookingsPage() {
         }}
         isUpdating={isUpdating}
         isDarkMode={isDarkMode}
+      />
+
+      <ParticipationModal
+        isOpen={showParticipationModal}
+        onClose={() => setShowParticipationModal(false)}
+        booking={selectedBooking}
+        bookingType="show"
+        onSuccess={(bookingId) => {
+          // Update the selectedBooking state immediately to reflect changes in UI
+          if (selectedBooking && selectedBooking.id === bookingId) {
+            setSelectedBooking(prevBooking => ({
+              ...prevBooking,
+              participated: !prevBooking.participated, // Toggle participation status
+              participatedAt: prevBooking.participated ? null : new Date(), // Set or clear timestamp
+              participatedBy: prevBooking.participated ? null : adminUser?.uid // Set or clear admin UID
+            }));
+          }
+          
+          // Update the booking in local state to toggle participation
+          setBookings(prev => prev.map(booking => 
+            booking.id === bookingId 
+              ? { 
+                  ...booking, 
+                  participated: !booking.participated, 
+                  participatedAt: booking.participated ? null : new Date(),
+                  participatedBy: booking.participated ? null : adminUser?.uid
+                }
+              : booking
+          ));
+          setAllBookingsData(prev => prev.map(booking => 
+            booking.id === bookingId 
+              ? { 
+                  ...booking, 
+                  participated: !booking.participated, 
+                  participatedAt: booking.participated ? null : new Date(),
+                  participatedBy: booking.participated ? null : adminUser?.uid
+                }
+              : booking
+          ));
+        }}
       />
     </div>
   );

@@ -6,6 +6,8 @@ export default function ShowBookingFilters({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  participationFilter,
+  setParticipationFilter,
   dateFilter,
   setDateFilter,
   selectedDate,
@@ -71,6 +73,33 @@ export default function ShowBookingFilters({
                 <option value="all">All Statuses</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="cancelled">Cancelled</option>
+              </select>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FilterIcon className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          
+          {/* Participation Filter */}
+          <div className="flex flex-col">
+            <label className={`text-xs font-medium mb-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
+              Participation
+            </label>
+            <div className="relative">
+              <select
+                value={participationFilter}
+                onChange={(e) => setParticipationFilter(e.target.value)}
+                className={`appearance-none pl-10 pr-8 py-2 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              >
+                <option value="all">All</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
               </select>
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <FilterIcon className="h-5 w-5 text-gray-400" />
