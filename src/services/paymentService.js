@@ -412,7 +412,7 @@ export async function getBookingTypeFromOrderId(orderId, purpose) {
       console.log('✅ Found in donations collection');
       return 'donation';
     }
-    
+     
     // Check delegate bookings
     const delegateBookingRef = doc(db, 'delegateBookings', orderId);
     const delegateDoc = await getDoc(delegateBookingRef);

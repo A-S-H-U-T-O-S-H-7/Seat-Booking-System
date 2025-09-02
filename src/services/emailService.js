@@ -2,6 +2,21 @@
 // Integrates with https://svsamiti.com/havan-booking/email.php
 
 /**
+ * Get the correct base URL for API calls
+ * Works for both development and production environments
+ */
+const getBaseUrl = () => {
+  // Check if we're on the server or client
+  if (typeof window === 'undefined') {
+    // Server-side: use environment variable or localhost
+    return process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  } else {
+    // Client-side: use current origin
+    return window.location.origin;
+  }
+};
+
+/**
  * Sends booking confirmation email using the external API
  * @param {Object} bookingData - The booking information
  * @param {string} bookingType - Type of booking (havan, show, stall, delegate, donation)
@@ -242,8 +257,16 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       };
     }
 
+    // Get the correct base URL for server-side calls
+    const baseUrl = getBaseUrl();
+    console.log('📧 Email Service: Sending booking confirmation email', {
+      bookingType,
+      baseUrl,
+      emailData: { ...emailData, email: emailData.email ? '[HIDDEN]' : 'missing' }
+    });
+    
     // Send JSON request to local Next.js API instead of external PHP
-    const response = await fetch('/api/emails/booking', {
+    const response = await fetch(`${baseUrl}/api/emails/booking`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
