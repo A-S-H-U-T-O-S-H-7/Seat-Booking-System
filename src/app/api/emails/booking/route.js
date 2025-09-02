@@ -309,12 +309,12 @@ export async function POST(req) {
         const result = await resp.json();
 
         if (result.status === true) {
-            return NextResponse.json({ success: true, message: result.message });
+            return NextResponse.json({ status: true, message: result.message });
         } else {
-            return NextResponse.json({ success: false, message: result.message });
+            return NextResponse.json({ status: false, errors: [result.message || 'Unknown error'] });
         }
 
     } catch (err) {
-        return NextResponse.json({ success: false, message: err.message });
+        return NextResponse.json({ status: false, errors: [err.message || 'Unknown error occurred'] });
     }
 }

@@ -626,24 +626,7 @@ function PaymentSuccessContent() {
                                   
                                   console.log('🔍 Final formatted date:', formattedDate);
                                   
-                                  // Alert for debugging
-                                  if (typeof window !== 'undefined') {
-                                    setTimeout(() => {
-                                      alert(`🔍 SUCCESS PAGE DATE DEBUG:
-` +
-                                        `Raw eventDate: ${JSON.stringify(bookingDetails.eventDate)}
-` +
-                                        `Type: ${typeof bookingDetails.eventDate}
-` +
-                                        `Has seconds: ${bookingDetails.eventDate?.seconds ? 'Yes - ' + bookingDetails.eventDate.seconds : 'No'}
-` +
-                                        `Parsed Date: ${date}
-` +
-                                        `Date ISO: ${date.toISOString()}
-` +
-                                        `Formatted: ${formattedDate}`);
-                                    }, 1000);
-                                  }
+                                  // Debug alert removed
                                   
                                   return formattedDate;
                                 }
