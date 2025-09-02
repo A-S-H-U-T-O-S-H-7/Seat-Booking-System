@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>📧 Email System Test</h1>
+    <p>Use this form to test your email functionality directly.</p>
+    
+    <form id="emailTestForm">
+        <div class="form-group">
+            <label for="email">Email Address (Change to your email):</label>
+            <input type="email" id="email" name="email" value="your-email@gmail.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="name">Customer Name:</label>
+            <input type="text" id="name" name="name" value="Test Customer" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="booking_type">Booking Type:</label>
+            <select id="booking_type" name="booking_type">
+                <option value="Havan">Havan</option>
+                <option value="Show">Show</option>
+                <option value="Stall">Stall</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" name="amount" value="500" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="mobile">Mobile:</label>
+            <input type="tel" id="mobile" name="mobile" value="9999999999" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="details">Booking Details:</label>
+            <textarea id="details" name="details" rows="3">Test Havan Booking - Seat 1, 2, 3</textarea>
+        </div>
+        
+        <button type="submit">🚀 Test Email Send</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('emailTestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Sending test email...';
+            resultDiv.className = 'result';
+            
+            try {
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Add additional fields
+                data.order_id = 'TEST-' + Date.now();
+                data.event_date = '2024-12-25';
+                data.address = 'Test Address, Test City';
+                data.pan = 'TESTPAN123';
+                data.valid_from = new Date().toISOString().split('T')[0];
+                const validTo = new Date();
+                validTo.setDate(validTo.getDate() + 30);
+                data.valid_to = validTo.toISOString().split('T')[0];
+                
+                console.log('Sending test data:', data);
+                
+                const response = await fetch('/api/emails/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                console.log('Test result:', result);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = '✅ Test completed!\n\nResult: ' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Test failed!\n\nError: ' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result error';
+                }
+                
+            } catch (error) {
+                console.error('Test error:', error);
+                resultDiv.innerHTML = '❌ Test failed!\n\nError: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        });
+    </script>
+</body>
+</html>

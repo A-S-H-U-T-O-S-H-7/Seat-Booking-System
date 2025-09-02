@@ -285,28 +285,66 @@ export async function POST(req) {
         });
 
         await browser.close();
+        
+        // Debug: Log the input data received from emailService
+        console.log('📧 Email API received data:', {
+            name, email, order_id, details, event_date, booking_type, 
+            amount, mobile, address, pan, valid_from, valid_to
+        });
+        
         const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
         const formData = new FormData();
-        formData.append("name", name);
-        formData.append("email", email);
-        formData.append("order_id", order_id);
-        formData.append("details", details);
-        formData.append("event_date", event_date);
-        formData.append("booking_type", booking_type);
-        formData.append("amount", amount);
-        formData.append("mobile", mobile);
-        formData.append("address", address);
-        formData.append("pan", pan);
-        formData.append("valid_from", valid_from);
-        formData.append("valid_to", valid_to);
-        formData.append("member_pass", pdfBlob, `member_pass.pdf`);
+        
+        // Add all required fields to FormData with validation
+        if (name && name.trim()) formData.append("name", name.trim());
+        if (email && email.trim()) formData.append("email", email.trim());
+        if (order_id && order_id.trim()) formData.append("order_id", order_id.trim());
+        if (details && details.trim()) formData.append("details", details.trim());
+        if (event_date && event_date.trim()) formData.append("event_date", event_date.trim());
+        if (booking_type && booking_type.trim()) formData.append("booking_type", booking_type.trim());
+        if (amount && amount.toString().trim()) formData.append("amount", amount.toString().trim());
+        if (mobile && mobile.toString().trim()) formData.append("mobile", mobile.toString().trim());
+        if (address && address.trim()) formData.append("address", address.trim());
+        if (pan && pan.trim()) formData.append("pan", pan.trim());
+        if (valid_from && valid_from.trim()) formData.append("valid_from", valid_from.trim());
+        if (valid_to && valid_to.trim()) formData.append("valid_to", valid_to.trim());
+        formData.append("member_pass", pdfBlob, `member_pass_${order_id}.pdf`);
+        
+        // Debug: Log FormData contents (for debugging)
+        console.log('📦 FormData being sent to PHP API:');
+        for (let [key, value] of formData.entries()) {
+            if (key === 'member_pass') {
+                console.log(`  ${key}: [PDF Blob - ${value.size} bytes]`);
+            } else {
+                console.log(`  ${key}: "${value}"`);
+            }
+        }
+        
+        console.log('🔗 Calling PHP API:', 'https://svsamiti.com/havan-booking/email.php');
 
         const resp = await fetch("https://svsamiti.com/havan-booking/email.php", {
             method: "POST",
             body: formData,
         });
-
-        const result = await resp.json();
+        
+        console.log('📡 PHP API response status:', resp.status, resp.statusText);
+        
+        const responseText = await resp.text();
+        console.log('📥 PHP API raw response:', responseText);
+        
+        let result;
+        try {
+            result = JSON.parse(responseText);
+            console.log('✅ PHP API parsed response:', result);
+        } catch (parseError) {
+            console.error('❌ Failed to parse PHP API response:', parseError.message);
+            console.error('📄 Raw response was:', responseText);
+            return NextResponse.json({ 
+                status: false, 
+                message: 'Invalid response from PHP email API',
+                errors: ['Failed to parse PHP API response']
+            });
+        }
 
         if (result.status === true) {
             return NextResponse.json({ 
