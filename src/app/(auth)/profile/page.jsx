@@ -384,6 +384,44 @@ const ProfilePage = () => {
     }
   };
 
+  // Handle booking status updates from individual booking cards
+  const handleBookingStatusUpdate = async (bookingId, newStatus) => {
+    console.log(`🔄 Handling status update for booking ${bookingId}: ${newStatus}`);
+    
+    // Always refresh bookings to get latest data
+    await fetchUserBookings();
+    
+    // If status changed to cancelled, also trigger cleanup to ensure consistency
+    if (newStatus === 'cancelled') {
+      try {
+        console.log('🧹 Triggering manual cleanup after cancellation...');
+        await manualCleanup();
+      } catch (error) {
+        console.error('❌ Manual cleanup failed:', error);
+      }
+    }
+  };
+
+  // Auto-refresh havan bookings periodically to catch status updates
+  useEffect(() => {
+    if (activeTab === 'havan' && bookings.length > 0) {
+      const hasPendingBookings = bookings.some(booking => booking.status === 'pending_payment');
+      
+      if (hasPendingBookings) {
+        console.log('🔄 Setting up periodic refresh for pending havan bookings...');
+        const refreshInterval = setInterval(() => {
+          console.log('⏰ Auto-refreshing havan bookings...');
+          fetchUserBookings();
+        }, 30000); // Refresh every 30 seconds when there are pending bookings
+        
+        return () => {
+          console.log('🛑 Stopping periodic refresh for havan bookings');
+          clearInterval(refreshInterval);
+        };
+      }
+    }
+  }, [activeTab, bookings]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -453,6 +491,7 @@ const ProfilePage = () => {
             booking={booking} 
             getShiftLabel={getShiftLabel}
             getShiftTime={getShiftTime}
+            onStatusUpdate={handleBookingStatusUpdate}
           />
         ));
       case 'show':

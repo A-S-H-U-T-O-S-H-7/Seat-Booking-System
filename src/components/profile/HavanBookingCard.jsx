@@ -1,12 +1,66 @@
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import PassReceiptModal from '../PassReceiptModal';
 
-const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime }) => {
+const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate }) => {
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(booking.status);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Monitor real-time status changes for pending bookings
+  useEffect(() => {
+    if (!booking.id || booking.status !== 'pending_payment') {
+      return;
+    }
+
+    console.log(`🔄 Setting up real-time monitoring for booking ${booking.id}`);
+    
+    const unsubscribe = onSnapshot(
+      doc(db, 'bookings', booking.id),
+      (doc) => {
+        if (doc.exists()) {
+          const updatedBooking = doc.data();
+          console.log(`📊 Status update for booking ${booking.id}: ${booking.status} -> ${updatedBooking.status}`);
+          
+          if (updatedBooking.status !== currentStatus) {
+            setCurrentStatus(updatedBooking.status);
+            
+            // Notify parent component if status changed to cancelled
+            if (updatedBooking.status === 'cancelled' && onStatusUpdate) {
+              console.log(`🔄 Notifying parent about cancellation: ${booking.id}`);
+              onStatusUpdate(booking.id, updatedBooking.status);
+            }
+          }
+        }
+      },
+      (error) => {
+        console.error(`❌ Error monitoring booking ${booking.id}:`, error);
+      }
+    );
+
+    return () => {
+      console.log(`🛑 Stopping monitoring for booking ${booking.id}`);
+      unsubscribe();
+    };
+  }, [booking.id, booking.status, currentStatus, onStatusUpdate]);
+
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    if (onStatusUpdate) {
+      setIsLoading(true);
+      try {
+        console.log(`🔄 Manual refresh triggered for booking ${booking.id}`);
+        await onStatusUpdate(booking.id, 'refresh');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
   return (
     <div className={`border rounded-xl p-3 sm:p-6 transform hover:scale-[1.02] transition-all duration-200 ${
-      booking.status === 'cancelled' 
+      currentStatus === 'cancelled' 
         ? 'border-red-200 bg-red-50 shadow-md' 
         : 'border-gray-200 bg-white shadow-lg hover:shadow-xl'
     }`}>
@@ -14,16 +68,32 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime }) => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${
-              booking.status === 'confirmed' 
+              currentStatus === 'confirmed' 
                 ? 'bg-green-100 text-green-800 border border-green-200' 
-                : booking.status === 'cancelled'
+                : currentStatus === 'cancelled'
                 ? 'bg-red-100 text-red-800 border border-red-200'
                 : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
             }`}>
-              {booking.status === 'confirmed' ? '✓ Confirmed' : 
-                booking.status === 'cancelled' ? '✗ Cancelled' : 
-                booking.status}
+              {currentStatus === 'confirmed' ? '✓ Confirmed' : 
+                currentStatus === 'cancelled' ? '✗ Cancelled' : 
+                currentStatus}
             </span>
+            
+            {/* Show refresh button for pending payments */}
+            {currentStatus === 'pending_payment' && (
+              <button
+                onClick={handleManualRefresh}
+                disabled={isLoading}
+                className={`px-2 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                  isLoading 
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200'
+                }`}
+                title="Refresh status"
+              >
+                {isLoading ? '⟳' : '🔄'} Refresh
+              </button>
+            )}
           </div>
           <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
             ID: {booking.id || booking.bookingId || 'N/A'}
@@ -74,7 +144,7 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime }) => {
             <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
           </div>
           
-          {booking.status === 'confirmed' && (
+          {currentStatus === 'confirmed' && (
             <div className="flex flex-col sm:flex-row items-center gap-2">
               <button
                 onClick={() => setIsPassModalOpen(true)}

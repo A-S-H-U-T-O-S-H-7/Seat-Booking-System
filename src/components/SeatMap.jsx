@@ -156,7 +156,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
       console.log(`🔇 [USER] Unsubscribing from seat availability listener: ${docId}`);
       unsubscribe();
     };
-  }, [selectedDate, selectedShift, seatAvailability]);
+  }, [selectedDate, selectedShift]);
 
   const getSeatStatus = (seatId) => {
     // First try the exact seat ID
@@ -177,6 +177,16 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
     }
     
     if (!availability) return 'available';
+    
+    console.log(`🔍 [USER] Seat ${seatId} status check:`, {
+      seatId,
+      hasAvailability: !!availability,
+      isBooked: availability.booked,
+      isBlocked: availability.blocked,
+      blockedReason: availability.blockedReason,
+      userId: availability.userId,
+      bookingId: availability.bookingId
+    });
     
     // CRITICAL: Check booked BEFORE blocked to prioritize confirmed bookings
     if (availability.booked) return 'booked';

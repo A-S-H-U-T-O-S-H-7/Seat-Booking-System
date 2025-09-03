@@ -22,6 +22,7 @@ export default function SeatManagement() {
   const { adminUser } = useAdmin();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedShift, setSelectedShift] = useState('morning');
+  const [syncingData, setSyncingData] = useState(false);
   const [seatAvailability, setSeatAvailability] = useState({});
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // grid, list
@@ -144,21 +145,50 @@ export default function SeatManagement() {
     const docId = `${dateKey}_${selectedShift}`;
     
     console.log(`👁️ [ADMIN] Setting up real-time listener for seat availability: ${docId}`);
+    console.log(`🔍 [ADMIN] Date: ${selectedDate}, Shift: ${selectedShift}, DateKey: ${dateKey}`);
     
     const unsubscribe = onSnapshot(
       doc(db, 'seatAvailability', docId),
       (docSnap) => {
+        console.log(`📄 [ADMIN] Document snapshot received for ${docId}:`, {
+          exists: docSnap.exists(),
+          id: docSnap.id,
+          metadata: docSnap.metadata
+        });
+        
         if (docSnap.exists()) {
-          const newSeats = docSnap.data().seats || {};
+          const docData = docSnap.data();
+          console.log(`📊 [ADMIN] Raw document data:`, docData);
+          
+          const newSeats = docData.seats || {};
           const seatsCount = Object.keys(newSeats).length;
-          console.log(`🔄 [ADMIN] Seat availability updated for ${docId}:`, {
+          
+          // Enhanced logging with detailed seat breakdown
+          const seatStats = {
             totalSeats: seatsCount,
             availableSeats: Object.values(newSeats).filter(s => !s.blocked && !s.booked).length,
             bookedSeats: Object.values(newSeats).filter(s => s.booked).length,
             blockedSeats: Object.values(newSeats).filter(s => s.blocked).length,
             adminBlockedSeats: Object.values(newSeats).filter(s => s.blocked && s.blockedReason === 'Blocked by admin').length,
             paymentBlockedSeats: Object.values(newSeats).filter(s => s.blocked && s.blockedReason !== 'Blocked by admin').length
-          });
+          };
+          
+          console.log(`🔄 [ADMIN] Seat availability updated for ${docId}:`, seatStats);
+          
+          // Log detailed info about booked seats
+          const bookedSeats = Object.entries(newSeats).filter(([_, seat]) => seat.booked);
+          if (bookedSeats.length > 0) {
+            console.log(`📋 [ADMIN] Currently booked seats (${bookedSeats.length}):`);
+            bookedSeats.forEach(([seatId, seat]) => {
+              console.log(`  - ${seatId}:`, {
+                customerName: seat.customerName,
+                bookingId: seat.bookingId,
+                userId: seat.userId,
+                bookedAt: seat.bookedAt,
+                confirmedAt: seat.confirmedAt
+              });
+            });
+          }
           
           // Log any newly booked seats
           const previousSeats = seatAvailability;
@@ -171,7 +201,9 @@ export default function SeatManagement() {
                 seatId,
                 customerName: newSeat.customerName,
                 bookingId: newSeat.bookingId,
-                bookedAt: newSeat.bookedAt
+                userId: newSeat.userId,
+                bookedAt: newSeat.bookedAt,
+                confirmedAt: newSeat.confirmedAt
               });
             }
             
@@ -187,6 +219,41 @@ export default function SeatManagement() {
           setSeatAvailability(newSeats);
         } else {
           console.log(`📋 [ADMIN] No seat availability document found for ${docId}`);
+          console.log(`🔍 [ADMIN] Trying to check if document exists in other collections...`);
+          
+          // Try checking if bookings exist in the bookings collection for this date/shift
+          const checkBookingsCollection = async () => {
+            try {
+              const bookingsQuery = query(
+                collection(db, 'bookings'),
+                where('eventDate', '>=', new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())),
+                where('eventDate', '<', new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1)),
+                where('shift', '==', selectedShift),
+                where('status', '==', 'confirmed')
+              );
+              
+              const bookingsSnapshot = await getDocs(bookingsQuery);
+              console.log(`🔍 [ADMIN] Found ${bookingsSnapshot.size} confirmed bookings in 'bookings' collection for ${dateKey}_${selectedShift}`);
+              
+              if (bookingsSnapshot.size > 0) {
+                console.log(`⚠️ [ADMIN] ISSUE FOUND: Bookings exist but seatAvailability document is missing!`);
+                bookingsSnapshot.forEach(doc => {
+                  const booking = doc.data();
+                  console.log(`📋 [ADMIN] Booking ${doc.id}:`, {
+                    seats: booking.seats || booking.selectedSeats,
+                    customerName: booking.customerDetails?.name,
+                    status: booking.status,
+                    eventDate: booking.eventDate,
+                    shift: booking.shift
+                  });
+                });
+              }
+            } catch (error) {
+              console.error('❌ [ADMIN] Error checking bookings collection:', error);
+            }
+          };
+          
+          checkBookingsCollection();
           setSeatAvailability({});
         }
         setLoading(false);
@@ -202,7 +269,7 @@ export default function SeatManagement() {
       console.log(`🔇 [ADMIN] Unsubscribing from seat availability listener: ${docId}`);
       unsubscribe();
     };
-  }, [selectedDate, selectedShift, seatAvailability]);
+  }, [selectedDate, selectedShift]);
 
   const generateSeats = () => {
     if (!layoutSettings.blocks || layoutSettings.blocks.length === 0) {
@@ -235,6 +302,83 @@ export default function SeatManagement() {
   };
 
   const allSeats = generateSeats();
+
+  // Function to sync missing seat availability from bookings collection
+  const syncSeatAvailabilityFromBookings = async () => {
+    if (!selectedDate || !selectedShift) return;
+    
+    setSyncingData(true);
+    try {
+      const dateKey = formatDateKey(selectedDate);
+      const docId = `${dateKey}_${selectedShift}`;
+      
+      console.log(`🔄 [ADMIN] Starting sync for missing seatAvailability document: ${docId}`);
+      
+      // Query for confirmed bookings on this date/shift
+      const bookingsQuery = query(
+        collection(db, 'bookings'),
+        where('eventDate', '>=', new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())),
+        where('eventDate', '<', new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + 1)),
+        where('shift', '==', selectedShift),
+        where('status', '==', 'confirmed')
+      );
+      
+      const bookingsSnapshot = await getDocs(bookingsQuery);
+      
+      if (bookingsSnapshot.size === 0) {
+        console.log('📝 [ADMIN] No confirmed bookings found for this date/shift');
+        toast.info('No confirmed bookings found for this date and shift.');
+        return;
+      }
+      
+      // Build seat availability from bookings
+      const seatAvailabilityData = {};
+      let totalSeatsProcessed = 0;
+      
+      bookingsSnapshot.forEach(doc => {
+        const booking = doc.data();
+        const seats = booking.seats || booking.selectedSeats || [];
+        
+        console.log(`📋 [ADMIN] Processing booking ${doc.id}: ${seats.length} seats`);
+        
+        seats.forEach(seatId => {
+          seatAvailabilityData[seatId] = {
+            booked: true,
+            blocked: false,
+            userId: booking.userId,
+            customerName: booking.customerDetails?.name || 'Unknown',
+            bookingId: doc.id,
+            bookedAt: booking.createdAt || booking.confirmedAt,
+            confirmedAt: booking.confirmedAt || booking.createdAt
+          };
+          totalSeatsProcessed++;
+        });
+      });
+      
+      // Create the seatAvailability document
+      const availabilityRef = doc(db, 'seatAvailability', docId);
+      await setDoc(availabilityRef, {
+        seats: seatAvailabilityData,
+        lastUpdated: new Date(),
+        date: dateKey,
+        shift: selectedShift,
+        syncedFromBookings: true,
+        syncedAt: new Date()
+      });
+      
+      console.log(`✅ [ADMIN] Successfully synced ${totalSeatsProcessed} booked seats to seatAvailability`);
+      toast.success(`Successfully synced ${totalSeatsProcessed} booked seats from ${bookingsSnapshot.size} bookings!`);
+      
+      // Update local state
+      setSeatAvailability(seatAvailabilityData);
+      
+    } catch (error) {
+      console.error('❌ [ADMIN] Error syncing seat availability:', error);
+      toast.error('Failed to sync seat availability from bookings');
+    } finally {
+      setSyncingData(false);
+    }
+  };
 
   const fetchSeatAvailability = async () => {
     if (!selectedDate || !selectedShift) return;
@@ -277,6 +421,19 @@ export default function SeatManagement() {
     }
     
     if (!availability) return 'available';
+    
+    console.log(`👁️ [ADMIN] Seat ${seatId} status check:`, {
+      seatId,
+      hasAvailability: !!availability,
+      isBooked: availability.booked,
+      isBlocked: availability.blocked,
+      blockedReason: availability.blockedReason,
+      userId: availability.userId,
+      bookingId: availability.bookingId,
+      customerName: availability.customerName,
+      bookedAt: availability.bookedAt,
+      blockedAt: availability.blockedAt
+    });
     
     // CRITICAL: Check booked BEFORE blocked to prioritize confirmed bookings
     if (availability.booked) return 'booked';
@@ -914,6 +1071,38 @@ export default function SeatManagement() {
             <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Selected</span>
           </div>
         </div>
+
+        {/* Sync Button for Missing Data */}
+        {Object.keys(seatAvailability).length === 0 && (
+          <div className={`mt-6 p-4 rounded-xl border ${
+            isDarkMode ? 'bg-yellow-900/20 border-yellow-700' : 'bg-yellow-50 border-yellow-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-yellow-300' : 'text-yellow-800'} mb-1`}>
+                  ⚠️ No Seat Data Found
+                </h3>
+                <p className={`text-xs ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
+                  Seat availability data is missing. You can sync from confirmed bookings.
+                </p>
+              </div>
+              <button
+                onClick={syncSeatAvailabilityFromBookings}
+                disabled={syncingData}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {syncingData ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                Sync Data
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Status Summary */}
         <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">

@@ -185,23 +185,35 @@ async function updateSeatAvailabilityAfterPayment(bookingData, isPaymentSuccessf
     const currentAvailability = availabilityDoc.data().seats || {};
     const updatedAvailability = { ...currentAvailability };
     
-    if (isPaymentSuccessful) {
-      // Payment successful - confirm seat bookings
-      console.log('✅ [HAVAN] Processing successful payment for seats:', seats);
-      seats.forEach(seatId => {
-        if (updatedAvailability[seatId]) {
-          console.log(`🔄 [HAVAN] Marking seat ${seatId} as booked (was ${updatedAvailability[seatId].blocked ? 'blocked' : 'available'})`);
-          updatedAvailability[seatId] = {
-            ...updatedAvailability[seatId],
-            booked: true,
-            blocked: false,
-            confirmedAt: serverTimestamp()
-          };
-        } else {
-          console.warn(`⚠️ [HAVAN] Seat ${seatId} not found in current availability`);
-        }
-      });
+   // In updateSeatAvailabilityAfterPayment function:
+if (isPaymentSuccessful) {
+  // Payment successful - confirm seat bookings
+  console.log('✅ [HAVAN] Processing successful payment for seats:', seats);
+  seats.forEach(seatId => {
+    if (updatedAvailability[seatId]) {
+      console.log(`🔄 [HAVAN] Marking seat ${seatId} as booked`);
+      updatedAvailability[seatId] = {
+        ...updatedAvailability[seatId], // Preserve all existing data
+        booked: true,
+        blocked: false,
+        confirmedAt: serverTimestamp()
+        // Don't overwrite userId, customerName, bookingId, etc.
+      };
     } else {
+      console.warn(`⚠️ [HAVAN] Seat ${seatId} not found in current availability`);
+      // Create new entry with all booking details
+      updatedAvailability[seatId] = {
+        booked: true,
+        blocked: false,
+        userId: bookingData.userId,
+        customerName: bookingData.customerDetails?.name,
+        bookingId: bookingData.bookingId || bookingData.id,
+        bookedAt: serverTimestamp(),
+        confirmedAt: serverTimestamp()
+      };
+    }
+  });
+} else {
       // Payment failed - release seats
       console.log('❌ [HAVAN] Processing failed payment, releasing seats:', seats);
       seats.forEach(seatId => {
