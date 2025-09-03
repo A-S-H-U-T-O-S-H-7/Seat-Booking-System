@@ -38,9 +38,20 @@ export default function ShowAuditorium() {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch show settings from Firebase on component mount
-  // Pricing is handled by the context with real-time sync
   useEffect(() => {
     const fetchShowSettings = async () => {
       try {
@@ -61,19 +72,11 @@ export default function ShowAuditorium() {
     fetchShowSettings();
   }, []);
 
-  // Re-generate seats when pricing settings change to ensure price sync
-  useEffect(() => {
-    // This will trigger re-render when context priceSettings change
-    // ensuring all seat prices are updated with the latest settings
-  }, [priceSettings]);
-
   // Helper function to get price for a specific block
   const getPriceForBlock = (blockId) => {
-    // Use pricing settings from context, which has real-time sync
     const contextPricing = priceSettings?.seatTypes;
     
     if (blockId === 'A' || blockId === 'B') {
-      // Both Block A and B use VIP pricing (which is synced to Block A in context)
       return contextPricing?.VIP?.price || 1200;
     }
     
@@ -85,7 +88,6 @@ export default function ShowAuditorium() {
       return contextPricing?.REGULAR_D?.price || 400;
     }
     
-    // Fallback
     return 500;
   };
 
@@ -93,16 +95,14 @@ export default function ShowAuditorium() {
   const generateSeatLayout = () => {
     const seats = {};
     
-    // Premium VIP Section - Dynamic based on settings
+    // Premium VIP Section
     showSettings.seatLayout.premiumBlocks.forEach(block => {
-      if (!block.isActive) return; // Skip inactive blocks
+      if (!block.isActive) return;
       
       for (let row = 1; row <= block.maxRows; row++) {
-        // Generate seat pairs for this premium block
         for (let pairIndex = 0; pairIndex < block.maxPairsPerRow; pairIndex++) {
-          const letter = String.fromCharCode(65 + pairIndex); // A, B, C, D...
+          const letter = String.fromCharCode(65 + pairIndex);
           
-          // Seat 1 in pair
           const seatId1 = `${block.id}-R${row}-${letter}1`;
           seats[seatId1] = {
             id: seatId1,
@@ -118,7 +118,6 @@ export default function ShowAuditorium() {
             pairPosition: 1
           };
           
-          // Seat 2 in pair
           const seatId2 = `${block.id}-R${row}-${letter}2`;
           seats[seatId2] = {
             id: seatId2,
@@ -137,9 +136,9 @@ export default function ShowAuditorium() {
       }
     });
 
-    // Regular Section - Dynamic based on settings
+    // Regular Section
     showSettings.seatLayout.regularBlocks.forEach(block => {
-      if (!block.isActive) return; // Skip inactive blocks
+      if (!block.isActive) return;
       
       for (let row = 1; row <= block.maxRows; row++) {
         for (let seat = 1; seat <= block.maxSeatsPerRow; seat++) {
@@ -162,26 +161,23 @@ export default function ShowAuditorium() {
     return seats;
   };
 
-  // Get seats with availability data and handle cancellation status
+  // Get seats with availability data
   const baseSeats = generateSeatLayout();
   const allSeats = Object.keys(baseSeats).reduce((acc, seatId) => {
     const baseSeat = baseSeats[seatId];
     const availabilityData = seatAvailability[seatId] || {};
     
-    // Check if seat was recently released from cancellation
     const wasReleased = availabilityData.releasedAt && 
                        (!availabilityData.booked && !availabilityData.blocked);
     
     acc[seatId] = {
       ...baseSeat,
-      // Update price with current dynamic pricing
       price: getPriceForBlock(baseSeat.section),
       isBooked: !!availabilityData.booked,
       isBlocked: !!availabilityData.blocked,
       isAvailable: isSeatAvailable(seatId),
       isSelected: selectedSeats.includes(seatId),
       wasReleased: wasReleased,
-      // Additional booking info for better UX
       bookingId: availabilityData.bookingId,
       userId: availabilityData.userId,
       releasedAt: availabilityData.releasedAt
@@ -215,10 +211,9 @@ export default function ShowAuditorium() {
     if (seat.isBlocked) return 'bg-gray-600 cursor-not-allowed';
     if (seat.isSelected) return 'bg-blue-600 text-white';
     
-    // Special styling for recently released seats (brief highlight)
     if (seat.wasReleased) {
       const releaseTime = seat.releasedAt?.toDate ? seat.releasedAt.toDate() : null;
-      const isRecent = releaseTime && (Date.now() - releaseTime.getTime()) < 30000; // 30 seconds
+      const isRecent = releaseTime && (Date.now() - releaseTime.getTime()) < 30000;
       if (isRecent) {
         if (seat.section === 'A' || seat.section === 'B') {
           return 'bg-gradient-to-br from-green-300 to-emerald-400 animate-pulse';
@@ -256,10 +251,9 @@ export default function ShowAuditorium() {
       return;
     }
 
-    // Show confirmation for recently released seats
     if (seat.wasReleased) {
       const releaseTime = seat.releasedAt?.toDate ? seat.releasedAt.toDate() : null;
-      const isRecent = releaseTime && (Date.now() - releaseTime.getTime()) < 30000; // 30 seconds
+      const isRecent = releaseTime && (Date.now() - releaseTime.getTime()) < 30000;
       if (isRecent) {
         toast.success('This seat was recently released and is now available!', {
           duration: 2000,
@@ -268,13 +262,11 @@ export default function ShowAuditorium() {
       }
     }
 
-    // Toggle selection by calling context function
     selectSeat(seat.id);
   };
 
   // Render VIP section
   const renderVIPSection = () => {
-    // Get active premium blocks and their maximum rows for dynamic rendering
     const activePremiumBlocks = showSettings.seatLayout.premiumBlocks.filter(block => block.isActive);
     const maxVipRows = Math.max(...activePremiumBlocks.map(block => block.maxRows), 0);
     const blockASettings = activePremiumBlocks.find(block => block.id === 'A');
@@ -393,7 +385,6 @@ export default function ShowAuditorium() {
 
   // Render Regular section
   const renderRegularSection = () => {
-    // Get active regular blocks and their maximum rows for dynamic rendering
     const activeRegularBlocks = showSettings.seatLayout.regularBlocks.filter(block => block.isActive);
     const maxRegularRows = Math.max(...activeRegularBlocks.map(block => block.maxRows), 0);
     const blockCSettings = activeRegularBlocks.find(block => block.id === 'C');
@@ -502,7 +493,7 @@ export default function ShowAuditorium() {
   };
 
   return (
-    <div className={`p-2 md:p-6 rounded-lg border bg-white border-gray-200`}>
+    <div className={`p-2 md:p-3 rounded-lg border bg-white border-gray-200`}>
       {/* Header with zoom controls */}
       <div className="flex justify-between items-center mb-3">
         <h2 className={`text-sm md:text-xl font-semibold md:font-bold mb-2 text-gray-900`}>
@@ -528,7 +519,7 @@ export default function ShowAuditorium() {
         </div>
       </div>
 
-      {/* Free Seats Summary - Mobile Optimized */}
+      {/* Free Seats Summary */}
       <div className="mb-4 md:mb-6 p-2 md:p-4 rounded-lg md:rounded-xl border md:border-2 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-blue-300 shadow-md md:shadow-lg">
         <div className="flex flex-col gap-2 md:gap-4">
           <div className="text-center md:text-left">
@@ -587,17 +578,20 @@ export default function ShowAuditorium() {
           <span className="text-gray-700">Reserved</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 md:w-5 h-4 md:h-5 bg-gray-600 rounded-md"></div>
+          <div className="w-4 md:w-5 h-4  bg-gray-600 rounded-md"></div>
           <span className="text-gray-700">Blocked</span>
         </div>
       </div>
 
-      {/* Auditorium Layout */}
+      {/* Auditorium Layout - Fixed height for desktop, auto for mobile */}
       <div 
-        className="overflow-auto max-h-screen"
-        style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
+        className={`overflow-auto ${isMobile ? '' : 'max-h-[370vh]'}`}
+        style={{ 
+          transform: `scale(${zoomLevel})`, 
+          transformOrigin: 'top center'
+        }}
       >
-        <div className="min-w-max">
+        <div className="min-w-max pb-4">
           
           {/* Stage */}
           <div className="text-center mb-6 md:mb-8">
@@ -634,7 +628,6 @@ export default function ShowAuditorium() {
         </div>
       </div>
 
-
       {/* Selection Summary */}
       {selectedSeats.length > 0 && (
         <div className="mt-3 md:mt-4 p-1 md:p-2 rounded-xl border-2 shadow-lg sticky bottom-4 z-10 bg-white border-gray-200">
@@ -645,13 +638,12 @@ export default function ShowAuditorium() {
                 Selected Seats ({selectedSeats.length})
               </h4>
               
-              {/* Seat Pills - Clean format similar to screenshot */}
+              {/* Seat Pills */}
               <div className="flex flex-wrap gap-2">
                 {selectedSeats.map(seatId => {
                   const seat = allSeats[seatId];
                   const isVIP = seat.section === 'A' || seat.section === 'B';
                   
-                  // Simple seat display format: B-R5-B1 (₹1000)
                   const seatDisplay = seatId;
                   
                   return (
@@ -691,7 +683,7 @@ export default function ShowAuditorium() {
                 )}
               </div>
               
-              {/* Discount Badges - Enhanced for Combined Discounts */}
+              {/* Discount Badges */}
               <div className="text-right space-y-1">
                 {(() => {
                   const currentDiscount = getCurrentDiscountInfo();
@@ -699,7 +691,6 @@ export default function ShowAuditorium() {
                     if (currentDiscount.type === 'combined') {
                       return (
                         <div className="space-y-1">
-                          
                           <div className="text-xs text-green-700">
                             {currentDiscount.earlyBird.percent}% Early Bird + {currentDiscount.bulk.percent}% Bulk
                           </div>
@@ -747,8 +738,8 @@ export default function ShowAuditorium() {
           </div>
           
           {/* Scroll Down Section */}
-          <div className=" mt-1 flex justify-end border-gray-200">
-            <div className="flex  max-w-[230px] items-center gap-2 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+          <div className="mt-1 flex justify-end border-gray-200">
+            <div className="flex max-w-[200px] items-center gap-2 bg-rose-50 border border-rose-200 rounded px-2 py-1">
               <div className="flex items-center gap-1">
                 <Info className="h-3 w-3 text-rose-500 flex-shrink-0" />
                 <span className="text-rose-800 text-xs font-medium">
@@ -773,6 +764,6 @@ export default function ShowAuditorium() {
           </div>
         </div>
       )}
-      </div>
+    </div>
   );
 }

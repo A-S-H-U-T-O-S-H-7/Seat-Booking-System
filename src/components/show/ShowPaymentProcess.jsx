@@ -205,56 +205,15 @@ const ShowPaymentProcess = () => {
               <div className="flex flex-col sm:flex-row justify-between items-start text-center sm:text-left gap-4">
                 <div className="flex-1">
                   
-                  <div className="space-y-2 text-sm">
-                    {/* Show base amount and discounts */}
-                    {getDiscountAmount() > 0 && (
-                      <div className="space-y-1 mb-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Base Amount:</span>
-                          <span className="text-gray-500 line-through">₹{getBaseAmount()?.toLocaleString('en-IN') || 0}</span>
-                        </div>
+                 
                         
-                        {/* Enhanced discount display - show combined discounts */}
-                        {(() => {
-                          const currentDiscount = getCurrentDiscountInfo();
-                          if (currentDiscount) {
-                            if (currentDiscount.type === 'combined') {
-                              return (
-                                <div className="space-y-1">
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-green-600">Early Bird Discount ({currentDiscount.earlyBird.percent}%):</span>
-                                    <span className="text-green-600">-₹{currentDiscount.earlyBird.amount.toLocaleString('en-IN')}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-blue-600">Bulk Discount ({currentDiscount.bulk.percent}%):</span>
-                                    <span className="text-blue-600">-₹{currentDiscount.bulk.amount.toLocaleString('en-IN')}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center font-semibold">
-                                    <span className="text-purple-600">Total Savings ({currentDiscount.percent.toFixed(1)}%):</span>
-                                    <span className="text-purple-600">-₹{currentDiscount.amount.toLocaleString('en-IN')}</span>
-                                  </div>
-                                </div>
-                              );
-                            } else {
-                              return (
-                                <div className="flex justify-between items-center">
-                                  <span className="text-green-600">{currentDiscount.type === 'earlyBird' ? 'Early Bird' : 'Bulk'} Discount ({currentDiscount.percent}%):</span>
-                                  <span className="text-green-600">-₹{currentDiscount.amount.toLocaleString('en-IN')}</span>
-                                </div>
-                              );
-                            }
-                          }
-                          return null;
-                        })()
-                        }
-                      </div>
-                    )}
+                       
                     
                     <div className="flex justify-between items-center font-bold text-lg">
                       <span className="text-rose-800">Total Amount:</span>
                       {/* <span className="text-rose-800">₹{getTotalAmount()?.toLocaleString('en-IN') || 0}</span> */}
                     </div>
-                  </div>
+                
                   
                   <p className="text-xs max-w-lg mt-3 text-orange-600">All payments made for Havan seats, stalls, and show seats will be considered <span className="font-bold text-sm">Donations</span> to <span className="font-bold text-sm">SVS</span>. With your contribution, you will become a valued member of SVS, and your donation will be eligible for exemption under <span className="font-bold text-sm">Section 80G</span> of the Income Tax Act.</p>
                 </div>
@@ -263,35 +222,17 @@ const ShowPaymentProcess = () => {
                   <div className="text-center">
                     <p className="text-sm font-medium text-rose-600 mb-1">Final Amount</p>
                     <div className="text-2xl sm:text-3xl font-bold text-rose-800">
-                      ₹{getTotalAmount()?.toLocaleString('en-IN') || 0}
+                      ₹{(getTotalAmount() || 0).toLocaleString('en-IN')}
                     </div>
                     {getDiscountAmount() > 0 && (
                       <div className="mt-2 space-y-1">
                         <p className="text-xs text-gray-500 line-through">
-                          Originally ₹{getBaseAmount()?.toLocaleString('en-IN') || 0}
+                          Price ₹{(getBaseAmount() || 0).toLocaleString('en-IN')}
                         </p>
                         <p className="text-sm text-green-600 font-semibold">
-                          You saved ₹{getDiscountAmount()?.toLocaleString('en-IN') || 0}!
+                          You saved ₹{(getDiscountAmount() || 0).toLocaleString('en-IN')}!
                         </p>
-                        {/* Show combined discount badges */}
-                        {(() => {
-                          const currentDiscount = getCurrentDiscountInfo();
-                          if (currentDiscount && currentDiscount.type === 'combined') {
-                            return (
-                              <div className="flex flex-wrap justify-center gap-1 mt-2">
-                                <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                                  🎉 {currentDiscount.earlyBird.percent}% Early Bird
-                                </span>
-                                <span className="text-xs text-gray-400">+</span>
-                                <span className="inline-block text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                                  🎯 {currentDiscount.bulk.percent}% Bulk
-                                </span>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()
-                        }
+                        
                       </div>
                     )}
                   </div>
@@ -341,7 +282,7 @@ const ShowPaymentProcess = () => {
               ) : (
                 <span className="flex items-center justify-center">
                   <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-                  Pay ₹{getTotalAmount()?.toLocaleString('en-IN') || 0}
+                  Pay ₹{(getTotalAmount() || 0).toLocaleString('en-IN')}
                 </span>
               )}
             </button>

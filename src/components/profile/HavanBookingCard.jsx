@@ -12,6 +12,8 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [isExpired, setIsExpired] = useState(false);
   const [isAutoCancelling, setIsAutoCancelling] = useState(false);
+  const [showAllSeats, setShowAllSeats] = useState(false);
+
 
   // Monitor real-time status changes for pending bookings
   useEffect(() => {
@@ -212,15 +214,32 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
             </p>
           </div>
           
-          <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Seats</p>
-            <p className="text-sm font-bold text-gray-900">
-              {booking.eventDetails?.seatCount || 0} seat{(booking.eventDetails?.seatCount || 0) > 1 ? 's' : ''}
-            </p>
-            <p className="text-xs text-gray-600 truncate">
-              {(booking.eventDetails?.seats || []).join(', ') || 'No seats specified'}
-            </p>
-          </div>
+         <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+  <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-1">Seats</p>
+  <p className="text-sm font-bold text-gray-900">
+    {booking.eventDetails?.seatCount || 0} seat{(booking.eventDetails?.seatCount || 0) > 1 ? 's' : ''}
+  </p>
+  <div className="text-xs font-semibold text-gray-600">
+    {(booking.eventDetails?.seats || []).length > 0 ? (
+      <>
+        {(showAllSeats 
+          ? (booking.eventDetails?.seats || []) 
+          : (booking.eventDetails?.seats || []).slice(0, 3)
+        ).join(', ')}
+        {(booking.eventDetails?.seats || []).length > 3 && (
+          <button 
+            onClick={() => setShowAllSeats(!showAllSeats)}
+            className="ml-1 text-purple-600 hover:text-purple-800 underline"
+          >
+            {showAllSeats ? 'Show less' : ` +${(booking.eventDetails?.seats || []).length - 3} more`}
+          </button>
+        )}
+      </>
+    ) : (
+      'No seats specified'
+    )}
+  </div>
+</div>
           
           <div className="bg-green-50 p-3 rounded-lg border border-green-100">
             <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Amount Paid</p>

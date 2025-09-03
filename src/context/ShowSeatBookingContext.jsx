@@ -581,23 +581,33 @@ export const ShowSeatBookingProvider = ({ children }) => {
   const getCurrentDiscountInfo = () => {
     const breakdown = getPricingBreakdown();
     const combinedDiscount = breakdown.discounts.combined;
+    const baseAmount = getBaseAmount();
     
     if (!combinedDiscount.applied || combinedDiscount.percent === 0) {
       return null;
     }
 
+    // Calculate total discount amount
+    const totalDiscountAmount = Math.round((baseAmount * combinedDiscount.percent) / 100);
+
     // If both discounts are applied
     if (combinedDiscount.earlyBird && combinedDiscount.bulk) {
+      const earlyBirdAmount = Math.round((baseAmount * combinedDiscount.earlyBird.percent) / 100);
+      const bulkAmount = Math.round((baseAmount * combinedDiscount.bulk.percent) / 100);
+      
       return {
         type: 'combined',
         percent: combinedDiscount.percent,
+        amount: totalDiscountAmount,
         label: 'Early Bird + Bulk Discount',
         earlyBird: {
           percent: combinedDiscount.earlyBird.percent,
+          amount: earlyBirdAmount,
           label: 'Early Bird'
         },
         bulk: {
           percent: combinedDiscount.bulk.percent,
+          amount: bulkAmount,
           label: 'Bulk Discount'
         }
       };
@@ -608,6 +618,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
       return {
         type: 'earlyBird',
         percent: combinedDiscount.percent,
+        amount: totalDiscountAmount,
         label: 'Early Bird Discount'
       };
     }
@@ -617,6 +628,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
       return {
         type: 'bulk',
         percent: combinedDiscount.percent,
+        amount: totalDiscountAmount,
         label: 'Bulk Discount'
       };
     }

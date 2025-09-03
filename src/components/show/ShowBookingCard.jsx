@@ -4,12 +4,10 @@ import { useState } from 'react';
 import { cancelBooking } from '@/utils/cancellationUtils';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
-import PassReceiptModal from '../PassReceiptModal';
 
 const ShowBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const canCancelBooking = (eventDate) => {
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
@@ -40,24 +38,6 @@ const ShowBookingCard = ({ booking, onCancel }) => {
            booking.showDetails?.seatPrices?.[seatString] || 
            booking.showDetails?.seatPrices?.[seat] ||
            (getSeatCategory(seat) === 'VIP' ? 1500 : getSeatCategory(seat) === 'Premium' ? 1000 : 750);
-  };
-
-  // Helper function to check if payment is confirmed
-  const isPaymentConfirmed = () => {
-    if (!booking.payment) return false;
-    
-    const paymentStatus = booking.payment.status?.toLowerCase();
-    const confirmedStatuses = ['completed', 'confirmed', 'paid', 'success', 'successful'];
-    
-    // Debug logging - remove this after fixing
-    console.log('Payment status check:', {
-      bookingId: booking.id || booking.bookingId,
-      paymentStatus: booking.payment.status,
-      paymentObject: booking.payment,
-      isConfirmed: confirmedStatuses.includes(paymentStatus)
-    });
-    
-    return confirmedStatuses.includes(paymentStatus);
   };
 
   return (
@@ -137,7 +117,7 @@ const ShowBookingCard = ({ booking, onCancel }) => {
           <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-200">
             <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-2">SELECTED SEATS</p>
             <div className="flex flex-wrap gap-1">
-              {booking.showDetails.selectedSeats.slice(0, 8).map((seat, index) => {
+              {booking.showDetails.selectedSeats.slice(0, 10).map((seat, index) => {
                 const displaySeat = typeof seat === 'string' ? seat : 
                                   typeof seat === 'object' ? (seat.seatId || seat.id || seat.number || `S${index + 1}`) : 
                                   String(seat || `S${index + 1}`);
@@ -150,9 +130,9 @@ const ShowBookingCard = ({ booking, onCancel }) => {
                   </span>
                 );
               })}
-              {booking.showDetails.selectedSeats.length > 8 && (
+              {booking.showDetails.selectedSeats.length > 10 && (
                 <span className="px-2 py-1 bg-indigo-200 text-indigo-900 rounded text-xs font-medium">
-                  +{booking.showDetails.selectedSeats.length - 8} more
+                  +{booking.showDetails.selectedSeats.length - 10} more
                 </span>
               )}
             </div>
@@ -168,19 +148,7 @@ const ShowBookingCard = ({ booking, onCancel }) => {
             )} */}
           </div>
 
-          {booking.status === 'confirmed' && (
-            <div className="flex flex-col sm:flex-row items-center gap-2">
-              <button
-                onClick={() => setIsPassModalOpen(true)}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[120px]"
-              >
-                📄 Pass & Receipt
-              </button>
-            </div>
-          )}
-
-          {/* Cancel button code - kept for future use
-          {booking.status === 'confirmed' && (
+          {/* {booking.status === 'confirmed' && (
             <div className="flex flex-col sm:flex-row items-center gap-2">
               {booking.showDetails?.date && canCancelBooking(booking.showDetails.date) ? (
                 <div className="text-center">
@@ -249,13 +217,6 @@ const ShowBookingCard = ({ booking, onCancel }) => {
           )} */}
         </div>
       </div>
-      
-      {/* Pass & Receipt Modal */}
-      <PassReceiptModal
-        isOpen={isPassModalOpen}
-        onClose={() => setIsPassModalOpen(false)}
-        booking={booking}
-      />
     </div>
   );
 };

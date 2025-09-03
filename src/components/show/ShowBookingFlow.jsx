@@ -83,7 +83,7 @@ const ShowBookingFlow = () => {
   };
 
   const getContainerMaxWidth = () => {
-    return currentStep === 2 ? "max-w-8xl" : "max-w-6xl";
+    return currentStep === 2 ? "max-w-7xl" : "max-w-6xl";
   };
 
   const renderStepContent = () => {
@@ -311,7 +311,7 @@ const ShowBookingFlow = () => {
           </div>
  
           {/* Step Content */}
-          <div className="bg-white rounded-3xl shadow-xl border border-rose-200 p-3 md:p-4 mb-8">
+          <div className="bg-white rounded-3xl shadow-xl border border-rose-200 p-2  mb-8">
             {renderStepContent()}
           </div>
 
