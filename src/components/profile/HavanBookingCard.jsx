@@ -19,35 +19,28 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
       return;
     }
 
-    console.log(`🔄 Setting up real-time monitoring for booking ${booking.id}`);
-    
     const unsubscribe = onSnapshot(
       doc(db, 'bookings', booking.id),
       (doc) => {
         if (doc.exists()) {
           const updatedBooking = doc.data();
-          console.log(`📊 Status update for booking ${booking.id}: ${booking.status} -> ${updatedBooking.status}`);
           
           if (updatedBooking.status !== currentStatus) {
             setCurrentStatus(updatedBooking.status);
             
             // Notify parent component if status changed to cancelled
             if (updatedBooking.status === 'cancelled' && onStatusUpdate) {
-              console.log(`🔄 Notifying parent about cancellation: ${booking.id}`);
               onStatusUpdate(booking.id, updatedBooking.status);
             }
           }
         }
       },
       (error) => {
-        console.error(`❌ Error monitoring booking ${booking.id}:`, error);
+        console.error(`Error monitoring booking ${booking.id}:`, error);
       }
     );
 
-    return () => {
-      console.log(`🛑 Stopping monitoring for booking ${booking.id}`);
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [booking.id, booking.status, currentStatus, onStatusUpdate]);
 
   // Auto-cancel when expiry time is crossed for pending payments
@@ -55,8 +48,6 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
     if (booking.status !== 'pending_payment' || !booking.expiryTime || currentStatus !== 'pending_payment') {
       return;
     }
-
-    console.log(`⏰ Monitoring expiry for booking ${booking.id}`);
 
     // Parse expiry time from different formats
     let expiryTime;
@@ -75,11 +66,11 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
 
       // Validate the parsed date
       if (isNaN(expiryTime.getTime())) {
-        console.error(`❌ Invalid expiryTime for booking ${booking.id}:`, booking.expiryTime);
+        console.error(`Invalid expiryTime for booking ${booking.id}:`, booking.expiryTime);
         return;
       }
     } catch (error) {
-      console.error(`❌ Error parsing expiryTime for booking ${booking.id}:`, error);
+      console.error(`Error parsing expiryTime for booking ${booking.id}:`, error);
       return;
     }
 
@@ -87,7 +78,6 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
       const now = new Date();
       
       if (now >= expiryTime && !isExpired && !isAutoCancelling) {
-        console.log(`⏰ Booking ${booking.id} has expired, triggering auto-cancel`);
         setIsExpired(true);
         handleAutoCancel();
       }
@@ -99,10 +89,7 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
     // Check every 10 seconds
     const interval = setInterval(checkExpiry, 10000);
 
-    return () => {
-      console.log(`🛑 Stopping expiry monitoring for booking ${booking.id}`);
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, [booking.id, booking.status, booking.expiryTime, currentStatus, isExpired, isAutoCancelling]);
 
   // Auto-cancel function when expiry is reached
@@ -112,7 +99,6 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
     }
 
     setIsAutoCancelling(true);
-    console.log(`🚫 Auto-cancelling expired booking: ${booking.id}`);
 
     try {
       // Update booking status to cancelled
@@ -129,7 +115,6 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
       
       // Notify parent component
       if (onStatusUpdate) {
-        console.log(`🔄 Notifying parent about auto-cancellation: ${booking.id}`);
         await onStatusUpdate(booking.id, 'cancelled');
       }
 
@@ -139,7 +124,7 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
       });
 
     } catch (error) {
-      console.error(`❌ Error auto-cancelling booking ${booking.id}:`, error);
+      console.error(`Error auto-cancelling booking ${booking.id}:`, error);
       toast.error('Failed to cancel expired booking');
     } finally {
       setIsAutoCancelling(false);
@@ -151,7 +136,6 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
     if (onStatusUpdate) {
       setIsLoading(true);
       try {
-        console.log(`🔄 Manual refresh triggered for booking ${booking.id}`);
         await onStatusUpdate(booking.id, 'refresh');
       } finally {
         setIsLoading(false);
@@ -249,9 +233,9 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
           <div className="text-xs text-gray-500 space-y-1">
             <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
-            {/* {currentStatus === 'cancelled' && booking.cancellationReason && (
+            {currentStatus === 'cancelled' && booking.cancellationReason && (
               <p className="text-red-600 font-medium">❌ {booking.cancellationReason}</p>
-            )} */}
+            )}
           </div>
           
           {currentStatus === 'confirmed' && (
