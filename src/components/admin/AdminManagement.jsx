@@ -47,6 +47,11 @@ export default function AdminManagement() {
     { id: 'view_havan_bookings', name: 'Havan Bookings' },
     { id: 'view_stall_bookings', name: 'Stall Bookings' },
     { id: 'view_show_bookings', name: 'Show Bookings' },
+    { id: 'view_delegate_bookings', name: 'Delegate Bookings' },
+    
+    // New Management Sections
+    { id: 'view_donations', name: 'Donations' },
+    { id: 'view_sponsor_performer', name: 'Sponsors & Performers' },
     
     // Cancellation & Refund Management
     { id: 'manage_cancellations', name: 'Cancellation & Refunds' },

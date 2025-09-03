@@ -1,6 +1,28 @@
 import React, { useState } from 'react';
 
-const EventPass = ({ participantName = "Ashutosh Mohanty", purpose = "Cultural Event", startDate = "Dec 3, 2025", endDate = "Dec 7, 2025" }) => {
+const EventPass = ({ booking, participantName, purpose, startDate, endDate }) => {
+  
+  // Extract data from booking or use fallback props - try multiple possible fields
+  const name = booking?.userDetails?.name || 
+               booking?.userDetails?.displayName ||
+               booking?.user?.name ||
+               booking?.user?.displayName ||
+               booking?.customerDetails?.name ||
+               booking?.customerDetails?.displayName ||
+               booking?.vendorDetails?.name ||
+               booking?.vendorDetails?.ownerName ||
+               booking?.name ||
+               booking?.displayName ||
+               participantName || 
+               "Participant";  const eventPurpose = booking?.showDetails ? "Show Reservation" : 
+                       booking?.stallIds ? "Stall Reservation" : 
+                       booking?.eventDetails ? "Havan Ceremony" : 
+                       purpose || "Cultural Event";
+  const eventStartDate = booking?.showDetails?.date ? new Date(booking.showDetails.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+                         booking?.eventDetails?.date ? new Date(booking.eventDetails.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+                         startDate || "Dec 3, 2025";
+  const eventEndDate = booking?.eventDetails?.endDate ? new Date(booking.eventDetails.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+                       endDate || eventStartDate;
 const [isFlipped, setIsFlipped] = useState(false);
 
 const styles = `
@@ -8,6 +30,30 @@ const styles = `
   .transform-style-preserve-3d { transform-style: preserve-3d; }
   .backface-hidden { backface-visibility: hidden; }
   .rotate-y-180 { transform: rotateY(180deg); }
+  
+  @keyframes pulse-glow {
+    0%, 100% { 
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% { 
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+  
+  @keyframes finger-bounce {
+    0%, 100% { transform: translateY(0px) rotate(-15deg); }
+    50% { transform: translateY(-3px) rotate(-15deg); }
+  }
+  
+  .pulse-animation {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .finger-bounce {
+    animation: finger-bounce 1.5s ease-in-out infinite;
+  }
 `;
 
   return (
@@ -15,14 +61,26 @@ const styles = `
 
     <style>{styles}</style>
 
-<div className="min-h-screen bg-gray-100 p-2 sm:p-4 flex items-center justify-center">
+<div className="  flex items-center justify-center">
   <div className="w-full max-w-4xl h-auto sm:h-80 relative perspective-1000">
 <div 
       className={`w-full h-full transform-style-preserve-3d transition-transform duration-700 cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
       onClick={() => setIsFlipped(!isFlipped)}
     >
        <div className="absolute inset-0 w-full h-full backface-hidden">
-        <div className="w-full h-full bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-row border-2 border-orange-200">
+        <div className="w-full h-full bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 rounded-xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-row border-2 border-orange-200 relative">
+        
+        {/* Tap Indicator - Top Right Corner */}
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-10 flex items-center space-x-1">
+          
+          
+          
+          
+          {/* Tap Text */}
+          <span className="text-white font-bold text-xs sm:text-sm bg-blue-900 px-2 py-2 rounded-full shadow-md animate-bounce ">
+            TAP 👆🏻
+          </span>
+        </div>
         
         {/* Left Section */}
         <div className="flex-1 relative p-2   bg-gradient-to-br from-orange-50 to-yellow-50 overflow-hidden">
@@ -147,9 +205,9 @@ const styles = `
 
               {/* Participant Info */}
               <div>
-                <h4 className="text-sm sm:text-base md:text-lg  lg:text-2xl font-bold text-gray-900">{participantName}</h4>
-                <p className="text-xs sm:text-sm md:text-base mb-2 lg:text-lg text-gray-700 font-medium">Purpose: {purpose}</p>
-                <p className="text-xs md:text-sm font-semibold text-gray-700">Valid From: {startDate} - {endDate}</p>
+                <h4 className="text-sm sm:text-base md:text-lg  lg:text-2xl font-bold text-gray-900">{name}</h4>
+                <p className="text-xs sm:text-sm md:text-base mb-2 lg:text-lg text-gray-700 font-medium">Purpose: {eventPurpose}</p>
+                <p className="text-xs md:text-sm font-semibold text-gray-700">Valid From: {eventStartDate} - {eventEndDate}</p>
               </div>
             </div>
           </div>
@@ -201,7 +259,7 @@ const styles = `
           <div className="bg-white p-1 sm:p-1 md:p-2 rounded-lg lg:rounded-lg shadow-lg mb-1 sm:mb-2 md:mb-3 lg:mb-4">
             <div className="w-10 sm:w-12 md:w-16 lg:w-24 h-10 sm:h-12 md:h-16 lg:h-24 bg-black rounded-sm lg:rounded-lg relative overflow-hidden">
               <img 
-  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent("SVS PASS | Name: " + participantName + " | Purpose: " + purpose)}`}
+  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`SVS PASS | Name: ${name} | Purpose: ${eventPurpose} | Event Date: ${eventStartDate}${eventEndDate !== eventStartDate ? ' - ' + eventEndDate : ''} | Seat Details: ${booking?.seatDetails || booking?.stallIds?.join(', ') || 'General'} | Seat Count: ${booking?.seatCount || booking?.stallIds?.length || '1'} | Shift: ${booking?.shift || 'N/A'} | ID: ${booking?.id || booking?.bookingId || 'N/A'}`)}`}
   alt="QR Code"
   className="w-full h-full object-contain rounded-sm lg:rounded-lg"
 />

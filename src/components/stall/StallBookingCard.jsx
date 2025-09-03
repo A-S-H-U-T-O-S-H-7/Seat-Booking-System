@@ -5,10 +5,12 @@ import { cancelBooking } from '@/utils/cancellationUtils';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { getStallEventSettings, calculateEventDays } from '@/services/systemSettingsService';
+import PassReceiptModal from '../PassReceiptModal';
 
 const StallBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [eventStartDate, setEventStartDate] = useState(booking.eventDetails?.startDate);
   const [eventEndDate, setEventEndDate] = useState(booking.eventDetails?.endDate);
   const [eventDuration, setEventDuration] = useState('Loading...');
@@ -198,7 +200,19 @@ const StallBookingCard = ({ booking, onCancel }) => {
             )} */}
           </div>
 
-          {/* {booking.status === 'confirmed' && (
+          {booking.status === 'confirmed' && (
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <button
+                onClick={() => setIsPassModalOpen(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[120px]"
+              >
+                📄 Pass & Receipt
+              </button>
+            </div>
+          )}
+
+          {/* Cancel button code - kept for future use
+          {booking.status === 'confirmed' && (
             <div className="flex flex-col sm:flex-row items-center gap-2">
               {canCancelBooking(eventStartDate) ? (
                 <div className="text-center">
@@ -246,6 +260,13 @@ const StallBookingCard = ({ booking, onCancel }) => {
           )} */}
         </div>
       </div>
+      
+      {/* Pass & Receipt Modal */}
+      <PassReceiptModal
+        isOpen={isPassModalOpen}
+        onClose={() => setIsPassModalOpen(false)}
+        booking={booking}
+      />
     </div>
   );
 };

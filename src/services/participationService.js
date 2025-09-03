@@ -147,16 +147,12 @@ const getCollectionName = (bookingType) => {
 export const canUndoParticipation = (user) => {
   if (!user) return false;
   
-  // Check various possible admin role formats
+  // Only allow super admin to undo participation
   return (
     user.role === 'super_admin' ||
     user.role === 'superadmin' ||
-    user.role === 'admin' ||
     user.isSuperAdmin === true ||
-    user.isAdmin === true ||
-    user.customClaims?.role === 'super_admin' ||
-    user.customClaims?.admin === true ||
-    user.admin === true
+    user.customClaims?.role === 'super_admin'
   );
 };
 

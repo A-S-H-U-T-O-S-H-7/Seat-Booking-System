@@ -1,6 +1,9 @@
 import { format } from 'date-fns';
+import { useState } from 'react';
+import PassReceiptModal from '../PassReceiptModal';
 
 const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime }) => {
+  const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   return (
     <div className={`border rounded-xl p-3 sm:p-6 transform hover:scale-[1.02] transition-all duration-200 ${
       booking.status === 'cancelled' 
@@ -70,8 +73,26 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime }) => {
           <div className="text-xs text-gray-500 space-y-1">
             <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
           </div>
+          
+          {booking.status === 'confirmed' && (
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <button
+                onClick={() => setIsPassModalOpen(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[120px]"
+              >
+                📄 Pass & Receipt
+              </button>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Pass & Receipt Modal */}
+      <PassReceiptModal
+        isOpen={isPassModalOpen}
+        onClose={() => setIsPassModalOpen(false)}
+        booking={booking}
+      />
     </div>
   );
 };
