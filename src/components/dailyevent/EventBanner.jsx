@@ -6,7 +6,7 @@ export default function EventBanner() {
       {/* Left Bottom Corner */}
       <div className="absolute  -left-1 -bottom-3 md:-left-2 md:-bottom-5 z-10">
         <img 
-          src="/greenflower.png" 
+          src="/flowerevent1.png" 
           alt="Decorative Flower" 
           className="w-24 h-24 md:w-36 md:h-36 object-contain -rotate-90 opacity-80"
         />
@@ -14,7 +14,7 @@ export default function EventBanner() {
       {/* Right Bottom Corner */}
       <div className="absolute -right-2 -bottom-2 md:-right-3 md:-bottom-3 z-10">
         <img 
-          src="/greenflower.png" 
+          src="/flowerevent1.png" 
           alt="Decorative Flower" 
           className="w-24 h-24 md:w-36 md:h-36 object-contain opacity-80 rotate-180 "
         />
@@ -23,7 +23,7 @@ export default function EventBanner() {
       {/* Left Top Corner */}
       <div className="absolute -left-3 -top-1 md:-left-3 md:-top-3 z-10">
         <img 
-          src="/fgreenflower.png" 
+          src="/flowerevent1.png" 
           alt="Decorative Flower" 
           className="w-24 h-24 md:w-36 md:h-36 opacity-80 object-contain  "
         />
@@ -32,7 +32,7 @@ export default function EventBanner() {
       {/* Right Top Corner */}
       <div className="absolute -right-1 -top-3 md:-right-2 md:-top-5 z-10">
         <img 
-          src="/greenflower.png" 
+          src="/flowerevent1.png" 
           alt="Decorative Border" 
           className="w-24 h-24 md:w-36 md:h-36 opacity-80 object-contain rotate-90"
         />
