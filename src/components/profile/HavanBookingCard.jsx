@@ -171,7 +171,7 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
             )}
             
             {/* Show refresh button for pending payments */}
-            {currentStatus === 'pending_payment' && !isAutoCancelling && (
+            {/* {currentStatus === 'pending_payment' && !isAutoCancelling && (
               <button
                 onClick={handleManualRefresh}
                 disabled={isLoading}
@@ -184,7 +184,7 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
               >
                 {isLoading ? '⟳' : '🔄'} Refresh
               </button>
-            )}
+            )} */}
           </div>
           <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
             ID: {booking.id || booking.bookingId || 'N/A'}
@@ -233,9 +233,9 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
           <div className="text-xs text-gray-500 space-y-1">
             <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
-            {currentStatus === 'cancelled' && booking.cancellationReason && (
+            {/* {currentStatus === 'cancelled' && booking.cancellationReason && (
               <p className="text-red-600 font-medium">❌ {booking.cancellationReason}</p>
-            )}
+            )} */}
           </div>
           
           {currentStatus === 'confirmed' && (
