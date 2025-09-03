@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Download } from 'lucide-react';
 import MemberPass from './MemberPass';
 import { toast } from 'react-hot-toast';
+import DonationReceipt from './Receipt';
 
 const PassReceiptModal = ({ isOpen, onClose, booking }) => {
   const [activeTab, setActiveTab] = useState('pass');
@@ -156,13 +157,10 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
             </div>
           )}
           
-          {activeTab === 'receipt' && (
-            <div className="flex items-center justify-center h-80 text-gray-500 bg-gradient-to-br from-gray-50 to-gray-100">
-              <div className="text-center p-8">
-                <div className="text-6xl mb-6 animate-bounce">🧾</div>
-                <h3 className="text-2xl font-semibold mb-3 text-gray-700">Receipt View Coming Soon</h3>
-                <p className="text-gray-600 max-w-sm">You can download the receipt using the download button in the bottom right corner</p>
-              </div>
+          {activeTab === 'receipt' && booking && (
+            <div className="py-4 px-1 md:px-4">
+              <DonationReceipt booking={booking} />
+              
             </div>
           )}
         </div>
