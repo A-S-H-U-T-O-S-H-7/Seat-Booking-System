@@ -10,10 +10,14 @@ import Footer from '@/components/home/Footer';
 import ImageModal from '@/components/ImageModal';
 import { Heart, Sparkles } from 'lucide-react';
 import DonateBar from '@/components/donation/DonationBar';
+import { useSeatCleanup } from '@/hooks/useSeatCleanup';
 
 export default function BookingPage() {
   const router = useRouter();
   const [showEventLayoutModal, setShowEventLayoutModal] = useState(false);
+  
+  // Initialize seat cleanup service for havan bookings
+  const { manualCleanup } = useSeatCleanup();
 
   const handleBack = () => {
     router.back();

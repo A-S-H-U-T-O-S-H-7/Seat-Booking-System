@@ -143,25 +143,66 @@ export default function SeatManagement() {
     const dateKey = formatDateKey(selectedDate);
     const docId = `${dateKey}_${selectedShift}`;
     
+    console.log(`👁️ [ADMIN] Setting up real-time listener for seat availability: ${docId}`);
+    
     const unsubscribe = onSnapshot(
       doc(db, 'seatAvailability', docId),
       (docSnap) => {
         if (docSnap.exists()) {
-          setSeatAvailability(docSnap.data().seats || {});
+          const newSeats = docSnap.data().seats || {};
+          const seatsCount = Object.keys(newSeats).length;
+          console.log(`🔄 [ADMIN] Seat availability updated for ${docId}:`, {
+            totalSeats: seatsCount,
+            availableSeats: Object.values(newSeats).filter(s => !s.blocked && !s.booked).length,
+            bookedSeats: Object.values(newSeats).filter(s => s.booked).length,
+            blockedSeats: Object.values(newSeats).filter(s => s.blocked).length,
+            adminBlockedSeats: Object.values(newSeats).filter(s => s.blocked && s.blockedReason === 'Blocked by admin').length,
+            paymentBlockedSeats: Object.values(newSeats).filter(s => s.blocked && s.blockedReason !== 'Blocked by admin').length
+          });
+          
+          // Log any newly booked seats
+          const previousSeats = seatAvailability;
+          Object.keys(newSeats).forEach(seatId => {
+            const newSeat = newSeats[seatId];
+            const prevSeat = previousSeats[seatId];
+            
+            if (newSeat.booked && (!prevSeat || !prevSeat.booked)) {
+              console.log(`✅ [ADMIN] New booking detected:`, {
+                seatId,
+                customerName: newSeat.customerName,
+                bookingId: newSeat.bookingId,
+                bookedAt: newSeat.bookedAt
+              });
+            }
+            
+            if (newSeat.blocked && (!prevSeat || !prevSeat.blocked)) {
+              console.log(`🔒 [ADMIN] Seat blocked:`, {
+                seatId,
+                reason: newSeat.blockedReason,
+                blockedAt: newSeat.blockedAt
+              });
+            }
+          });
+          
+          setSeatAvailability(newSeats);
         } else {
+          console.log(`📋 [ADMIN] No seat availability document found for ${docId}`);
           setSeatAvailability({});
         }
         setLoading(false);
       },
       (error) => {
-        console.error('Error listening to seat availability:', error);
+        console.error(`❌ [ADMIN] Error listening to seat availability for ${docId}:`, error);
         toast.error('Failed to load real-time seat availability');
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
-  }, [selectedDate, selectedShift]);
+    return () => {
+      console.log(`🔇 [ADMIN] Unsubscribing from seat availability listener: ${docId}`);
+      unsubscribe();
+    };
+  }, [selectedDate, selectedShift, seatAvailability]);
 
   const generateSeats = () => {
     if (!layoutSettings.blocks || layoutSettings.blocks.length === 0) {
@@ -237,13 +278,30 @@ export default function SeatManagement() {
     
     if (!availability) return 'available';
     
-    if (availability.blocked) return 'blocked';
+    // CRITICAL: Check booked BEFORE blocked to prioritize confirmed bookings
     if (availability.booked) return 'booked';
+    if (availability.blocked) return 'blocked';
     return 'available';
   };
 
   const getSeatInfo = (seatId) => {
-    const availability = seatAvailability[seatId];
+    // First try the exact seat ID
+    let availability = seatAvailability[seatId];
+    
+    // If not found, try the old format (backward compatibility)
+    if (!availability) {
+      // Convert new format A1-K1-S1 to old format A-1-K1-S1
+      const oldFormatId = seatId.replace(/^([A-Z])(\d+)-/, '$1-$2-');
+      availability = seatAvailability[oldFormatId];
+    }
+    
+    // If still not found, try the new format (in case current ID is old format)
+    if (!availability) {
+      // Convert old format A-1-K1-S1 to new format A1-K1-S1
+      const newFormatId = seatId.replace(/^([A-Z])-(\d+)-/, '$1$2-');
+      availability = seatAvailability[newFormatId];
+    }
+    
     if (!availability) return null;
     
     return {
@@ -270,23 +328,63 @@ export default function SeatManagement() {
       return;
     }
 
-    // Filter out booked seats for blocking/unblocking
-    const eligibleSeats = selectedSeats.filter(seatId => {
+    // Analyze selected seats for detailed feedback
+    const seatAnalysis = selectedSeats.reduce((acc, seatId) => {
       const status = getSeatStatus(seatId);
+      const seatInfo = getSeatInfo(seatId);
+      
       if (status === 'booked') {
-        return false;
+        acc.bookedSeats.push({ id: seatId, customerName: seatInfo?.customerName });
+      } else if (action === 'block' && status === 'blocked') {
+        const isAdminBlocked = seatInfo?.blockedReason === 'Blocked by admin';
+        if (isAdminBlocked) {
+          acc.alreadyAdminBlocked.push(seatId);
+        } else {
+          acc.paymentBlocked.push(seatId);
+        }
+      } else if (action === 'unblock' && status !== 'blocked') {
+        acc.notBlocked.push(seatId);
+      } else {
+        acc.eligible.push(seatId);
       }
-      if (action === 'block' && status === 'blocked') {
-        return false;
-      }
-      if (action === 'unblock' && status !== 'blocked') {
-        return false;
-      }
-      return true;
+      return acc;
+    }, {
+      eligible: [],
+      bookedSeats: [],
+      alreadyAdminBlocked: [],
+      paymentBlocked: [],
+      notBlocked: []
     });
 
+    // Provide detailed feedback about ineligible seats
+    const messages = [];
+    if (seatAnalysis.bookedSeats.length > 0) {
+      const bookedList = seatAnalysis.bookedSeats.slice(0, 3).map(s => `${s.id}${s.customerName ? ` (${s.customerName})` : ''}`).join(', ');
+      const remaining = seatAnalysis.bookedSeats.length > 3 ? ` and ${seatAnalysis.bookedSeats.length - 3} more` : '';
+      messages.push(`${seatAnalysis.bookedSeats.length} seats are already booked: ${bookedList}${remaining}`);
+    }
+    
+    if (seatAnalysis.alreadyAdminBlocked.length > 0) {
+      messages.push(`${seatAnalysis.alreadyAdminBlocked.length} seats are already admin-blocked`);
+    }
+    
+    if (seatAnalysis.paymentBlocked.length > 0) {
+      messages.push(`${seatAnalysis.paymentBlocked.length} seats are temporarily blocked (payment in progress)`);
+    }
+    
+    if (seatAnalysis.notBlocked.length > 0) {
+      messages.push(`${seatAnalysis.notBlocked.length} seats are not blocked`);
+    }
+
+    if (messages.length > 0 && seatAnalysis.eligible.length === 0) {
+      toast.error(`Cannot ${action} selected seats:\n\n${messages.join('\n')}`, { duration: 6000 });
+      return;
+    } else if (messages.length > 0) {
+      toast.warning(`${messages.join('\n')}\n\nProceeding with ${seatAnalysis.eligible.length} eligible seats.`, { duration: 4000 });
+    }
+
+    const eligibleSeats = seatAnalysis.eligible;
     if (eligibleSeats.length === 0) {
-      toast.error(`No eligible seats to ${action}`);
       return;
     }
 
@@ -308,27 +406,33 @@ export default function SeatManagement() {
       const seats = currentData.seats || {};
       
       eligibleSeats.forEach(seatId => {
+        const currentSeat = seats[seatId] || {};
+        const isCurrentlyBooked = currentSeat.booked;
+        
         if (action === 'block') {
           seats[seatId] = {
-            ...(seats[seatId] || {}),
+            ...currentSeat,
             blocked: true,
             blockedReason: 'Blocked by admin',
             blockedAt: new Date(),
-            booked: false,
-            userId: null,
-            customerName: null,
-            bookingId: null
+            // Preserve booking info if seat is already booked, otherwise clear it
+            booked: isCurrentlyBooked ? true : false,
+            userId: isCurrentlyBooked ? currentSeat.userId : null,
+            customerName: isCurrentlyBooked ? currentSeat.customerName : null,
+            bookingId: isCurrentlyBooked ? currentSeat.bookingId : null,
+            bookedAt: isCurrentlyBooked ? currentSeat.bookedAt : null
           };
         } else if (action === 'unblock') {
           seats[seatId] = {
-            ...(seats[seatId] || {}),
+            ...currentSeat,
             blocked: false,
             blockedReason: null,
             blockedAt: null,
             booked: false,
             userId: null,
             customerName: null,
-            bookingId: null
+            bookingId: null,
+            bookedAt: null
           };
         }
       });
@@ -369,6 +473,7 @@ export default function SeatManagement() {
 
   const getSeatColor = (seatId) => {
     const status = getSeatStatus(seatId);
+    const seatInfo = getSeatInfo(seatId);
     const isSelected = selectedSeats.includes(seatId);
     
     if (isSelected) {
@@ -382,9 +487,18 @@ export default function SeatManagement() {
         : 'bg-blue-500 text-white border border-blue-400';
     }
     if (status === 'blocked') {
-      return isDarkMode 
-        ? 'bg-red-700 text-red-200 border border-red-600' 
-        : 'bg-red-500 text-white border border-red-400';
+      // Differentiate between admin-blocked and payment-blocked
+      const isAdminBlocked = seatInfo?.blockedReason === 'Blocked by admin';
+      if (isAdminBlocked) {
+        return isDarkMode 
+          ? 'bg-red-700 text-red-200 border border-red-600' 
+          : 'bg-red-500 text-white border border-red-400';
+      } else {
+        // Payment-blocked seats (temporary)
+        return isDarkMode 
+          ? 'bg-orange-700 text-orange-200 border border-orange-600' 
+          : 'bg-orange-500 text-white border border-orange-400';
+      }
     }
     return isDarkMode 
       ? 'bg-green-700 text-green-100 hover:bg-green-600 border border-green-600' 
@@ -774,6 +888,30 @@ export default function SeatManagement() {
               <option value="booked">Booked</option>
               <option value="blocked">Blocked</option>
             </select>
+          </div>
+        </div>
+
+        {/* Status Legend */}
+        <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs sm:text-sm mb-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded border border-green-400"></div>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Available</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-500 rounded border border-blue-400"></div>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Booked</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded border border-red-400"></div>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Admin Blocked</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-orange-500 rounded border border-orange-400"></div>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Payment Processing</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-blue-100 dark:bg-blue-800 rounded border-2 border-blue-500"></div>
+            <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Selected</span>
           </div>
         </div>
 

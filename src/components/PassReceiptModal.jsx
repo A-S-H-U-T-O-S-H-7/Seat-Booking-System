@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download } from 'lucide-react';
 import MemberPass from './MemberPass';
-import { toast } from 'react-hot-toast';
 import DonationReceipt from './Receipt';
 
 const PassReceiptModal = ({ isOpen, onClose, booking }) => {
@@ -36,54 +35,7 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
     };
   }, [isOpen, onClose]);
 
-  const handleDownload = async (type) => {
-    if (!booking?.id && !booking?.bookingId) {
-      toast.error('Booking ID not found');
-      return;
-    }
-
-    setIsDownloading(true);
-    try {
-      const orderId = booking.id || booking.bookingId;
-      
-      const headers = new Headers();
-      headers.append("Content-Type", "application/json");
-      
-      const requestOptions = {
-        method: "GET",
-        headers: headers,
-        redirect: "follow"
-      };
-
-      const response = await fetch(`https://svsamiti.com/havan-booking/order.php?order_id=${orderId}`, requestOptions);
-      const result = await response.json();
-      
-      if (result.success) {
-        const downloadUrl = type === 'pass' ? result.member_pass_url : result.receipt_url;
-        
-        if (downloadUrl) {
-          // Create a temporary link element and trigger download
-          const link = document.createElement('a');
-          link.href = downloadUrl;
-          link.download = `${orderId}_${type}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          toast.success(`${type === 'pass' ? 'Member Pass' : 'Receipt'} downloaded successfully!`);
-        } else {
-          toast.error(`${type === 'pass' ? 'Member Pass' : 'Receipt'} URL not found`);
-        }
-      } else {
-        toast.error(result.message || 'Failed to get download links');
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Error downloading file');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  
 
   if (!isOpen || !mounted) return null;
 
@@ -165,44 +117,7 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
           )}
         </div>
 
-        {/* Floating Download Button */}
-        <div className="absolute bottom-6 right-6 z-10">
-          <button
-            onClick={() => handleDownload(activeTab)}
-            disabled={isDownloading}
-            className={`
-              relative overflow-hidden
-              bg-gradient-to-r from-emerald-500 to-emerald-600 
-              hover:from-emerald-600 hover:to-emerald-700 
-              text-white p-4 rounded-full shadow-lg hover:shadow-xl 
-              transition-all duration-300 transform hover:scale-110 
-              disabled:opacity-50 disabled:cursor-not-allowed
-              group animate-bounce
-              ${isDownloading ? 'animate-pulse' : 'hover:animate-none'}
-            `}
-            title={`Download ${activeTab === 'pass' ? 'Member Pass' : 'Receipt'}`}
-          >
-            {/* Ripple Effect */}
-            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 rounded-full transition-opacity duration-300"></div>
-            
-            {/* Icon */}
-            <Download 
-              size={24} 
-              className={`relative z-10 transition-transform duration-300 ${
-                isDownloading ? 'animate-spin' : 'group-hover:scale-110'
-              }`} 
-            />
-            
-            {/* Glow Effect */}
-            <div className="absolute inset-0 rounded-full bg-emerald-400 opacity-0 group-hover:opacity-30 blur-md scale-150 transition-all duration-300"></div>
-          </button>
-          
-          {/* Download Label */}
-          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-            Download {activeTab === 'pass' ? 'Pass' : 'Receipt'}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-          </div>
-        </div>
+        
 
         {/* Loading Overlay */}
         {isDownloading && (

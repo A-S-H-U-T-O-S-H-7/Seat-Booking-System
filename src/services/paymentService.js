@@ -167,29 +167,49 @@ async function updateSeatAvailabilityAfterPayment(bookingData, isPaymentSuccessf
     const dateKey = formatDateKey(eventDate);
     const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${shift}`);
     
+    console.log('🔄 [HAVAN] Updating seat availability after payment:', {
+      bookingId: bookingData.id || bookingData.bookingId,
+      isPaymentSuccessful,
+      dateKey,
+      shift,
+      seats,
+      docPath: `${dateKey}_${shift}`
+    });
+    
     const availabilityDoc = await getDoc(availabilityRef);
-    if (!availabilityDoc.exists()) return;
+    if (!availabilityDoc.exists()) {
+      console.error('❌ [HAVAN] Seat availability document does not exist:', `${dateKey}_${shift}`);
+      return;
+    }
     
     const currentAvailability = availabilityDoc.data().seats || {};
     const updatedAvailability = { ...currentAvailability };
     
     if (isPaymentSuccessful) {
       // Payment successful - confirm seat bookings
+      console.log('✅ [HAVAN] Processing successful payment for seats:', seats);
       seats.forEach(seatId => {
         if (updatedAvailability[seatId]) {
+          console.log(`🔄 [HAVAN] Marking seat ${seatId} as booked (was ${updatedAvailability[seatId].blocked ? 'blocked' : 'available'})`);
           updatedAvailability[seatId] = {
             ...updatedAvailability[seatId],
             booked: true,
             blocked: false,
             confirmedAt: serverTimestamp()
           };
+        } else {
+          console.warn(`⚠️ [HAVAN] Seat ${seatId} not found in current availability`);
         }
       });
     } else {
       // Payment failed - release seats
+      console.log('❌ [HAVAN] Processing failed payment, releasing seats:', seats);
       seats.forEach(seatId => {
         if (updatedAvailability[seatId] && updatedAvailability[seatId].bookingId === bookingData.bookingId) {
+          console.log(`🗑️ [HAVAN] Releasing seat ${seatId}`);
           delete updatedAvailability[seatId];
+        } else {
+          console.warn(`⚠️ [HAVAN] Seat ${seatId} not found or booking ID mismatch`);
         }
       });
     }

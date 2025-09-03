@@ -103,23 +103,60 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
     if (!selectedDate || !selectedShift) return;
 
     const dateKey = formatDateKey(selectedDate);
-    const availabilityRef = doc(db, 'seatAvailability', `${dateKey}_${selectedShift}`);
+    const docId = `${dateKey}_${selectedShift}`;
+    const availabilityRef = doc(db, 'seatAvailability', docId);
+    
+    console.log(`👥 [USER] Setting up real-time listener for seat availability: ${docId}`);
     
     const unsubscribe = onSnapshot(availabilityRef, (docSnap) => {
       if (docSnap.exists()) {
-        setSeatAvailability(docSnap.data().seats || {});
+        const newSeats = docSnap.data().seats || {};
+        const seatsCount = Object.keys(newSeats).length;
+        console.log(`🔄 [USER] Seat availability updated for ${docId}:`, {
+          totalSeats: seatsCount,
+          availableSeats: Object.values(newSeats).filter(s => !s.blocked && !s.booked).length,
+          bookedSeats: Object.values(newSeats).filter(s => s.booked).length,
+          blockedSeats: Object.values(newSeats).filter(s => s.blocked).length,
+          adminBlockedSeats: Object.values(newSeats).filter(s => s.blocked && s.blockedReason === 'Blocked by admin').length,
+          paymentBlockedSeats: Object.values(newSeats).filter(s => s.blocked && s.blockedReason !== 'Blocked by admin').length
+        });
+        
+        // Log any seat status changes that affect user visibility
+        const previousSeats = seatAvailability;
+        Object.keys(newSeats).forEach(seatId => {
+          const newSeat = newSeats[seatId];
+          const prevSeat = previousSeats[seatId];
+          
+          if (newSeat.booked && (!prevSeat || !prevSeat.booked)) {
+            console.log(`❌ [USER] Seat now unavailable (booked): ${seatId}`);
+          }
+          
+          if (newSeat.blocked && (!prevSeat || !prevSeat.blocked)) {
+            console.log(`🚫 [USER] Seat now unavailable (blocked): ${seatId} - ${newSeat.blockedReason}`);
+          }
+          
+          if (!newSeat.blocked && !newSeat.booked && (prevSeat?.blocked || prevSeat?.booked)) {
+            console.log(`✅ [USER] Seat now available: ${seatId}`);
+          }
+        });
+        
+        setSeatAvailability(newSeats);
       } else {
+        console.log(`📋 [USER] No seat availability document found for ${docId}`);
         setSeatAvailability({});
       }
       setLoading(false);
     }, (error) => {
-      console.error('Error fetching seat availability:', error);
+      console.error(`❌ [USER] Error fetching seat availability for ${docId}:`, error);
       toast.error('Failed to load seat availability');
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [selectedDate, selectedShift]);
+    return () => {
+      console.log(`🔇 [USER] Unsubscribing from seat availability listener: ${docId}`);
+      unsubscribe();
+    };
+  }, [selectedDate, selectedShift, seatAvailability]);
 
   const getSeatStatus = (seatId) => {
     // First try the exact seat ID
@@ -141,8 +178,9 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
     
     if (!availability) return 'available';
     
-    if (availability.blocked) return 'blocked';
+    // CRITICAL: Check booked BEFORE blocked to prioritize confirmed bookings
     if (availability.booked) return 'booked';
+    if (availability.blocked) return 'blocked';
     return 'available';
   };
 

@@ -16,6 +16,7 @@ import DelegateCard from '@/components/deligateRegistration/DelegateCard';
 import DonationCard from '@/components/donation/DonationCard';
 import ImageModal from '@/components/ImageModal';
 import { useShifts } from '@/hooks/useShifts';
+import { useSeatCleanup } from '@/hooks/useSeatCleanup';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { parseISO } from 'date-fns';
@@ -34,6 +35,9 @@ const ProfilePage = () => {
   const [showEventLayoutModal, setShowEventLayoutModal] = useState(false);
 
   const { getShiftLabel, getShiftTime } = useShifts();
+  
+  // Initialize seat cleanup for havan bookings auto-cancellation
+  const { manualCleanup } = useSeatCleanup();
 
   useEffect(() => {
     if (user) {
