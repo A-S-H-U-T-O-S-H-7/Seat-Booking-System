@@ -1,13 +1,17 @@
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import PassReceiptModal from '../PassReceiptModal';
+import { toast } from 'react-hot-toast';
 
 const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate }) => {
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(booking.status);
   const [isLoading, setIsLoading] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [isExpired, setIsExpired] = useState(false);
+  const [isAutoCancelling, setIsAutoCancelling] = useState(false);
 
   // Monitor real-time status changes for pending bookings
   useEffect(() => {
@@ -46,6 +50,102 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
     };
   }, [booking.id, booking.status, currentStatus, onStatusUpdate]);
 
+  // Auto-cancel when expiry time is crossed for pending payments
+  useEffect(() => {
+    if (booking.status !== 'pending_payment' || !booking.expiryTime || currentStatus !== 'pending_payment') {
+      return;
+    }
+
+    console.log(`⏰ Monitoring expiry for booking ${booking.id}`);
+
+    // Parse expiry time from different formats
+    let expiryTime;
+    try {
+      if (booking.expiryTime instanceof Date) {
+        expiryTime = booking.expiryTime;
+      } else if (booking.expiryTime?.toDate) {
+        // Firestore Timestamp
+        expiryTime = booking.expiryTime.toDate();
+      } else if (booking.expiryTime?.seconds) {
+        // Firestore Timestamp object
+        expiryTime = new Date(booking.expiryTime.seconds * 1000);
+      } else {
+        expiryTime = new Date(booking.expiryTime);
+      }
+
+      // Validate the parsed date
+      if (isNaN(expiryTime.getTime())) {
+        console.error(`❌ Invalid expiryTime for booking ${booking.id}:`, booking.expiryTime);
+        return;
+      }
+    } catch (error) {
+      console.error(`❌ Error parsing expiryTime for booking ${booking.id}:`, error);
+      return;
+    }
+
+    const checkExpiry = () => {
+      const now = new Date();
+      
+      if (now >= expiryTime && !isExpired && !isAutoCancelling) {
+        console.log(`⏰ Booking ${booking.id} has expired, triggering auto-cancel`);
+        setIsExpired(true);
+        handleAutoCancel();
+      }
+    };
+
+    // Check immediately
+    checkExpiry();
+
+    // Check every 10 seconds
+    const interval = setInterval(checkExpiry, 10000);
+
+    return () => {
+      console.log(`🛑 Stopping expiry monitoring for booking ${booking.id}`);
+      clearInterval(interval);
+    };
+  }, [booking.id, booking.status, booking.expiryTime, currentStatus, isExpired, isAutoCancelling]);
+
+  // Auto-cancel function when expiry is reached
+  const handleAutoCancel = async () => {
+    if (isAutoCancelling || currentStatus !== 'pending_payment') {
+      return; // Prevent duplicate cancellations
+    }
+
+    setIsAutoCancelling(true);
+    console.log(`🚫 Auto-cancelling expired booking: ${booking.id}`);
+
+    try {
+      // Update booking status to cancelled
+      const bookingRef = doc(db, 'bookings', booking.id);
+      await updateDoc(bookingRef, {
+        status: 'cancelled',
+        cancellationReason: 'Payment expired - auto-cancelled',
+        cancelledAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      // Update local status immediately
+      setCurrentStatus('cancelled');
+      
+      // Notify parent component
+      if (onStatusUpdate) {
+        console.log(`🔄 Notifying parent about auto-cancellation: ${booking.id}`);
+        await onStatusUpdate(booking.id, 'cancelled');
+      }
+
+      toast.error(`Booking ${booking.id} expired and was automatically cancelled`, {
+        duration: 6000,
+        icon: '⏰'
+      });
+
+    } catch (error) {
+      console.error(`❌ Error auto-cancelling booking ${booking.id}:`, error);
+      toast.error('Failed to cancel expired booking');
+    } finally {
+      setIsAutoCancelling(false);
+    }
+  };
+
   // Manual refresh function
   const handleManualRefresh = async () => {
     if (onStatusUpdate) {
@@ -79,8 +179,15 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
                 currentStatus}
             </span>
             
+            {/* Show auto-cancelling indicator when booking is being cancelled */}
+            {isAutoCancelling && (
+              <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200 animate-pulse">
+                ⏳ Cancelling...
+              </div>
+            )}
+            
             {/* Show refresh button for pending payments */}
-            {currentStatus === 'pending_payment' && (
+            {currentStatus === 'pending_payment' && !isAutoCancelling && (
               <button
                 onClick={handleManualRefresh}
                 disabled={isLoading}
@@ -142,6 +249,9 @@ const HavanBookingCard = ({ booking, getShiftLabel, getShiftTime, onStatusUpdate
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-gray-200 gap-3">
           <div className="text-xs text-gray-500 space-y-1">
             <p>🕐 Reserved: {format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a')}</p>
+            {/* {currentStatus === 'cancelled' && booking.cancellationReason && (
+              <p className="text-red-600 font-medium">❌ {booking.cancellationReason}</p>
+            )} */}
           </div>
           
           {currentStatus === 'confirmed' && (

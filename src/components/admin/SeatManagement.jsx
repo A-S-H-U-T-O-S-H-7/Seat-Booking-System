@@ -21,7 +21,7 @@ import {
 export default function SeatManagement() {
   const { adminUser } = useAdmin();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedShift, setSelectedShift] = useState('morning');
+  const [selectedShift, setSelectedShift] = useState(''); // Don't hardcode, let shifts loading set this
   const [syncingData, setSyncingData] = useState(false);
   const [seatAvailability, setSeatAvailability] = useState({});
   const [loading, setLoading] = useState(false);
@@ -122,7 +122,9 @@ export default function SeatManagement() {
           
           // Set default shift if none selected and shifts are available
           if (!selectedShift && activeShifts.length > 0) {
-            setSelectedShift(activeShifts[0].id);
+            const firstActiveShift = activeShifts[0].id;
+            console.log(`🔄 [ADMIN] Setting default shift to first active shift: ${firstActiveShift}`);
+            setSelectedShift(firstActiveShift);
           }
         } else {
           setShifts([]);
