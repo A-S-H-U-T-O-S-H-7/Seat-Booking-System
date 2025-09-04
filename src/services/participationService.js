@@ -308,10 +308,10 @@ export const getSeatAttendanceStatus = async (bookingId, bookingType) => {
  */
 export const markSeatAttendance = async (bookingId, bookingType, unitId, status, markedBy, notes = '') => {
   try {
-    if (!['present', 'absent'].includes(status)) {
+    if (!['present', 'absent', 'pending'].includes(status)) {
       return {
         success: false,
-        message: 'Invalid status. Must be "present" or "absent"'
+        message: 'Invalid status. Must be "present", "absent", or "pending"'
       };
     }
 
@@ -372,7 +372,7 @@ export const markMultipleSeatsAttendance = async (bookingId, bookingType, unitUp
     const batch = writeBatch(db);
     
     unitUpdates.forEach(({ unitId, status, notes = '' }) => {
-      if (['present', 'absent'].includes(status)) {
+      if (['present', 'absent', 'pending'].includes(status)) {
         const seatRef = doc(db, collectionName, bookingId, 'seats', unitId);
         batch.update(seatRef, {
           status: status,

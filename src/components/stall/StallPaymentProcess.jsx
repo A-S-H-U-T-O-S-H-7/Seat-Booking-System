@@ -62,10 +62,9 @@ const StallPaymentProcess = ({ vendorDetails }) => {
     fetchEventDates();
   }, []);
 
-  const generateBookingId = () => {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `STALL-${timestamp}-${random}`;
+  const generateBookingId = async () => {
+    const { generateSequentialBookingId } = await import('@/services/bookingIdService');
+    return await generateSequentialBookingId('stall');
   };
 
   const initiatePayment = async () => {
@@ -85,7 +84,7 @@ const StallPaymentProcess = ({ vendorDetails }) => {
     
     try {
       // Create pending booking first
-      const generatedBookingId = generateBookingId();
+      const generatedBookingId = await generateBookingId();
       
       // Create pending booking in Firebase
       await processStallBooking({

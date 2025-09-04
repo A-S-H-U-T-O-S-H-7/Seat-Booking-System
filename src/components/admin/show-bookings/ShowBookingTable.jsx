@@ -108,20 +108,7 @@ export default function ShowBookingsTable({
           <EyeIcon className="h-4 w-4" />
         </button>
 
-        {booking.status === 'pending' && (
-          <button
-            onClick={() => onConfirm(booking)}
-            disabled={isUpdating}
-            className={`${baseButtonClass} ${
-              isDarkMode 
-                ? 'bg-green-700 hover:bg-green-600 text-green-100 border border-green-600' 
-                : 'bg-green-600 hover:bg-green-700 text-white border border-green-600'
-            }`}
-            title="Confirm Booking"
-          >
-            <CheckCircleIcon className="h-4 w-4" />
-          </button>
-        )}
+        {/* Pending Status: No action buttons shown (only View Details) */}
 
         {booking.status === 'confirmed' && (
           <>

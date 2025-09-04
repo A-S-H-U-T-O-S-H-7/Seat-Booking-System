@@ -681,14 +681,19 @@ export const ShowSeatBookingProvider = ({ children }) => {
       const dateObj = new Date(state.selectedDate);
       const dateKey = formatDateKey(dateObj);
       
+      // Generate sequential booking ID
+      const { generateSequentialBookingId } = await import('@/services/bookingIdService');
+      const bookingId = await generateSequentialBookingId('show');
+      
       // Create booking document
-      const bookingRef = doc(collection(db, 'showBookings'));
+      const bookingRef = doc(db, 'showBookings', bookingId);
       const expiryTime = paymentDetails.method === 'pending_payment' 
         ? new Date(Date.now() + 5 * 60 * 1000) 
         : null;
       
       const bookingData = {
-        id: bookingRef.id,
+        id: bookingId,
+        bookingId: bookingId,
         userId: user.uid,
         userEmail: user.email,
         showDetails: {
@@ -731,7 +736,7 @@ export const ShowSeatBookingProvider = ({ children }) => {
         updatedSeats[seatId] = {
           booked: paymentDetails.method !== 'pending_payment', // Only mark as booked if payment is confirmed
           blocked: paymentDetails.method === 'pending_payment', // Block seats during pending payment
-          bookingId: bookingRef.id,
+          bookingId: bookingId,
           userId: user.uid,
           bookedAt: paymentDetails.method !== 'pending_payment' ? serverTimestamp() : null,
           blockedAt: paymentDetails.method === 'pending_payment' ? serverTimestamp() : null,

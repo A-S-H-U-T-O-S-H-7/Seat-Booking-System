@@ -168,7 +168,9 @@ const PaymentProcess = ({ customerDetails }) => {
 
   const createPendingBooking = async () => {
     const dateKey = formatDateKey(selectedDate);
-    const bookingId = 'BK' + Date.now();
+    // Import the booking ID service
+    const { generateSequentialBookingId } = await import('@/services/bookingIdService');
+    const bookingId = await generateSequentialBookingId('havan');
 
     try {
       await runTransaction(db, async (transaction) => {
