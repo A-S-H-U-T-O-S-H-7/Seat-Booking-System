@@ -1,8 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { markAsParticipated, undoParticipation, canUndoParticipation } from '@/services/participationService';
+import { 
+  markAsParticipated, 
+  undoParticipation, 
+  canUndoParticipation,
+  ensureSeatSubcollectionExists,
+  getSeatAttendanceStatus,
+  markSeatAttendance,
+  markMultipleSeatsAttendance
+} from '@/services/participationService';
 import { useAuth } from '@/context/AuthContext';
 import { useAdmin } from '@/context/AdminContext';
 
@@ -14,10 +22,148 @@ const ParticipationModal = ({
   onSuccess 
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSeatAttendance, setShowSeatAttendance] = useState(false);
+  const [seatAttendanceData, setSeatAttendanceData] = useState({});
+  const [loadingSeatData, setLoadingSeatData] = useState(false);
   const { user } = useAuth();
   const { adminUser, isSuperAdmin } = useAdmin();
 
   // Component now properly uses AdminContext for permission checking
+
+  // Helper function to check if booking type supports seat-level attendance
+  const supportsSeatsAttendance = () => {
+    return ['havan', 'show', 'stall'].includes(bookingType);
+  };
+
+  // Get the units array for this booking
+  const getUnitsArray = () => {
+    if (!booking) return [];
+    
+    try {
+      switch (bookingType) {
+        case 'havan':
+          return booking?.seats || booking?.selectedSeats || [];
+        case 'show':
+          return booking?.showDetails?.selectedSeats || [];
+        case 'stall':
+          return booking?.stallIds || [];
+        default:
+          return [];
+      }
+    } catch (error) {
+      console.error('Error getting units array:', error);
+      return [];
+    }
+  };
+
+  const unitsArray = getUnitsArray();
+  const hasMultipleUnits = unitsArray.length > 1;
+
+  // Load seat attendance data when dropdown is shown
+  useEffect(() => {
+    if (showSeatAttendance && supportsSeatsAttendance() && unitsArray.length > 0) {
+      loadSeatAttendanceData();
+    }
+  }, [showSeatAttendance, booking?.id]);
+
+  const loadSeatAttendanceData = async () => {
+    if (!booking?.id || !supportsSeatsAttendance()) return;
+    
+    setLoadingSeatData(true);
+    try {
+      // Ensure seat subcollection exists
+      await ensureSeatSubcollectionExists(booking.id, bookingType, unitsArray);
+      
+      // Fetch attendance status for all seats/stalls
+      const attendanceData = {};
+      for (const unitId of unitsArray) {
+        const status = await getSeatAttendanceStatus(booking.id, bookingType, unitId);
+        attendanceData[unitId] = status;
+      }
+      
+      setSeatAttendanceData(attendanceData);
+    } catch (error) {
+      console.error('Error loading seat attendance data:', error);
+      toast.error('Failed to load seat attendance data');
+    } finally {
+      setLoadingSeatData(false);
+    }
+  };
+
+  const handleSeatAttendanceChange = async (unitId, status) => {
+    try {
+      const result = await markSeatAttendance(booking.id, bookingType, unitId, status, user.uid);
+      
+      if (result.success) {
+        // Update local state
+        setSeatAttendanceData(prev => ({
+          ...prev,
+          [unitId]: {
+            ...prev[unitId],
+            status,
+            updatedAt: new Date(),
+            updatedBy: user.uid
+          }
+        }));
+        
+        // Check if all seats are now present and auto-mark participation
+        const updatedData = { ...seatAttendanceData };
+        updatedData[unitId] = { ...updatedData[unitId], status };
+        
+        const allPresent = Object.values(updatedData).every(data => data.status === 'present');
+        
+        if (allPresent && !booking.participated) {
+          toast.success(`${bookingType === 'stall' ? 'Stall' : 'Seat'} marked as ${status}. All units present - marking booking as participated!`);
+          setTimeout(() => handleMarkParticipated(), 1000);
+        } else {
+          toast.success(`${bookingType === 'stall' ? 'Stall' : 'Seat'} ${unitId} marked as ${status}`);
+        }
+      } else {
+        toast.error(result.message || 'Failed to update attendance');
+      }
+    } catch (error) {
+      console.error('Error updating seat attendance:', error);
+      toast.error('Failed to update attendance');
+    }
+  };
+
+  const handleBulkAttendance = async (status) => {
+    try {
+      const result = await markMultipleSeatsAttendance(
+        booking.id, 
+        bookingType, 
+        unitsArray, 
+        status, 
+        user.uid
+      );
+      
+      if (result.success) {
+        // Update all seats in local state
+        const updatedData = {};
+        unitsArray.forEach(unitId => {
+          updatedData[unitId] = {
+            status,
+            updatedAt: new Date(),
+            updatedBy: user.uid
+          };
+        });
+        setSeatAttendanceData(updatedData);
+        
+        // If all marked as present, auto-mark participation
+        if (status === 'present' && !booking.participated) {
+          toast.success(`All ${bookingType === 'stall' ? 'stalls' : 'seats'} marked as ${status} - marking booking as participated!`);
+          setTimeout(() => handleMarkParticipated(), 1000);
+        } else {
+          toast.success(`All ${bookingType === 'stall' ? 'stalls' : 'seats'} marked as ${status}`);
+        }
+      } else {
+        toast.error(result.message || 'Failed to bulk update attendance');
+      }
+    } catch (error) {
+      console.error('Error bulk updating attendance:', error);
+      toast.error('Failed to bulk update attendance');
+    }
+  };
 
   if (!isOpen || !booking) return null;
 
@@ -238,8 +384,8 @@ const ParticipationModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-lg bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -354,6 +500,141 @@ const ParticipationModal = ({
               )
             )}
           </div>
+
+          {/* Seat Attendance Tracking */}
+          {supportsSeatsAttendance() && hasMultipleUnits && (
+            <div className="mt-4">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setShowSeatAttendance(!showSeatAttendance)}
+                  className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 text-left flex items-center justify-between transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      Per-{bookingType === 'stall' ? 'Stall' : 'Seat'} Attendance
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {unitsArray.length} {bookingType === 'stall' ? 'stalls' : 'seats'} • Click to {showSeatAttendance ? 'hide' : 'show'}
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <svg 
+                      className={`w-5 h-5 text-gray-500 transition-transform ${showSeatAttendance ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </button>
+                
+                {showSeatAttendance && (
+                  <div className="border-t border-gray-200 bg-white">
+                    {loadingSeatData ? (
+                      <div className="p-4 text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-sm text-gray-600">Loading attendance data...</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4">
+                        {/* Bulk Actions */}
+                        <div className="mb-4 flex gap-2">
+                          <button
+                            onClick={() => handleBulkAttendance('present')}
+                            className="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-800 rounded text-sm transition-colors"
+                          >
+                            Mark All Present
+                          </button>
+                          <button
+                            onClick={() => handleBulkAttendance('absent')}
+                            className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 rounded text-sm transition-colors"
+                          >
+                            Mark All Absent
+                          </button>
+                          <button
+                            onClick={() => handleBulkAttendance('pending')}
+                            className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-sm transition-colors"
+                          >
+                            Reset All
+                          </button>
+                        </div>
+                        
+                        {/* Individual Seat/Stall Controls */}
+                        <div className="space-y-3">
+                          {unitsArray.map(unitId => {
+                            const attendanceData = seatAttendanceData[unitId] || { status: 'pending' };
+                            const statusColors = {
+                              present: 'bg-green-100 text-green-800 border-green-200',
+                              absent: 'bg-red-100 text-red-800 border-red-200',
+                              pending: 'bg-gray-100 text-gray-800 border-gray-200'
+                            };
+                            
+                            return (
+                              <div key={unitId} className="flex flex-col space-y-2">
+                                {/* Seat/Stall ID Line */}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {bookingType === 'stall' ? 'Stall' : 'Seat'} {unitId}
+                                  </span>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => handleSeatAttendanceChange(unitId, 'present')}
+                                      className={`px-2 py-1 text-xs rounded transition-colors ${
+                                        attendanceData.status === 'present'
+                                          ? 'bg-green-600 text-white'
+                                          : 'bg-gray-100 hover:bg-green-100 text-gray-700 hover:text-green-800'
+                                      }`}
+                                    >
+                                      Present
+                                    </button>
+                                    <button
+                                      onClick={() => handleSeatAttendanceChange(unitId, 'absent')}
+                                      className={`px-2 py-1 text-xs rounded transition-colors ${
+                                        attendanceData.status === 'absent'
+                                          ? 'bg-red-600 text-white'
+                                          : 'bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-800'
+                                      }`}
+                                    >
+                                      Absent
+                                    </button>
+                                    <button
+                                      onClick={() => handleSeatAttendanceChange(unitId, 'pending')}
+                                      className={`px-2 py-1 text-xs rounded transition-colors ${
+                                        attendanceData.status === 'pending'
+                                          ? 'bg-gray-600 text-white'
+                                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                      }`}
+                                    >
+                                      Pending
+                                    </button>
+                                  </div>
+                                </div>
+                                
+                                {/* Status Line */}
+                                <div className="flex items-center justify-between text-xs text-gray-500">
+                                  <span className={`px-2 py-1 rounded border capitalize ${statusColors[attendanceData.status]}`}>
+                                    {attendanceData.status}
+                                  </span>
+                                  {attendanceData.updatedAt && (
+                                    <span>
+                                      Updated: {new Date(attendanceData.updatedAt).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Warning for already participated */}
           {booking.participated && !isSuperAdmin && !canUndoParticipation(adminUser) && (
