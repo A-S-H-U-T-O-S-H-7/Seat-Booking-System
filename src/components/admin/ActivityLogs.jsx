@@ -36,8 +36,9 @@ export default function ActivityLogs() {
   const [actionFilter, setActionFilter] = useState('all'); // all, create, read, update, delete
   const [adminFilter, setAdminFilter] = useState('all'); // all, specific admin
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [admins, setAdmins] = useState([]);
+  const [cursors, setCursors] = useState([]); // Stack of document cursors for each page
+  const [hasNextPage, setHasNextPage] = useState(false);
   const logsPerPage = 50;
 
   useEffect(() => {
@@ -49,6 +50,13 @@ export default function ActivityLogs() {
       setLoading(false);
     }
   }, [currentPage, filterBy, actionFilter, adminFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setCursors([]);
+    setHasNextPage(false);
+  }, [filterBy, actionFilter, adminFilter]);
 
   const fetchAdmins = async () => {
     try {
@@ -115,30 +123,51 @@ export default function ActivityLogs() {
         queryConstraints.push(where('adminId', '==', adminFilter));
       }
 
-      // Add ordering and pagination
+      // Add ordering
       queryConstraints.push(orderBy('timestamp', 'desc'));
-      queryConstraints.push(limit(logsPerPage));
-
-      // Apply pagination offset if not first page
+      
+      // Apply pagination using cursor stack
       if (currentPage > 1) {
-        // In a real implementation, you'd need to store the last document from previous page
-        // For now, we'll use a simple offset approach
-        queryConstraints.push(startAfter((currentPage - 1) * logsPerPage));
+        const cursorIndex = currentPage - 2; // Index for the cursor we need
+        if (cursors[cursorIndex]) {
+          queryConstraints.push(startAfter(cursors[cursorIndex]));
+        }
       }
+      
+      // Fetch one extra to detect if there are more pages
+      queryConstraints.push(limit(logsPerPage + 1));
 
       logsQuery = query(logsQuery, ...queryConstraints);
       const snapshot = await getDocs(logsQuery);
       
       const logsData = [];
-      snapshot.forEach(doc => {
+      const docs = snapshot.docs;
+      
+      // Check if we have more data than the page size
+      const hasMore = docs.length > logsPerPage;
+      const docsToDisplay = hasMore ? docs.slice(0, logsPerPage) : docs;
+      
+      docsToDisplay.forEach(doc => {
         logsData.push({ id: doc.id, ...doc.data() });
       });
 
-      // Get total count for pagination (simplified approach)
-      const totalQuery = query(collection(db, 'adminLogs'), orderBy('timestamp', 'desc'));
-      const totalSnapshot = await getDocs(totalQuery);
-      setTotalPages(Math.ceil(totalSnapshot.size / logsPerPage));
-
+      // Update cursor stack for forward navigation
+      if (docsToDisplay.length > 0) {
+        const lastDoc = docsToDisplay[docsToDisplay.length - 1];
+        
+        // Update cursors array - store the last document of current page for next page
+        const newCursors = [...cursors];
+        if (currentPage === 1 && hasMore) {
+          // Starting from page 1, add cursor for page 2
+          newCursors[0] = lastDoc;
+        } else if (currentPage > 1 && hasMore) {
+          // Add cursor for next page
+          newCursors[currentPage - 1] = lastDoc;
+        }
+        setCursors(newCursors);
+      }
+      
+      setHasNextPage(hasMore);
       setLogs(logsData);
     } catch (error) {
       console.error('Error fetching logs:', error);
@@ -488,11 +517,11 @@ export default function ActivityLogs() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {(hasNextPage || currentPage > 1) && (
         <div className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-4`}>
           <div className="flex items-center justify-between">
             <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-700'}`}>
-              Page {currentPage} of {totalPages}
+              Page {currentPage}{hasNextPage ? ` (more available)` : ''}
             </div>
             <div className="flex space-x-2">
               <button
@@ -508,8 +537,8 @@ export default function ActivityLogs() {
                 Previous
               </button>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={!hasNextPage}
                 className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                   isDarkMode
                     ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'

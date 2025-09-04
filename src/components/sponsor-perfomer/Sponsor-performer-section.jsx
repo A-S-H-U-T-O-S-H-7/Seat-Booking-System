@@ -34,7 +34,7 @@ export default function SponsorPerformerSection() {
   const handleSponsorSubmit = async () => {
     if (sponsorForm.name && sponsorForm.email && sponsorForm.phone && sponsorForm.address) {
       try {
-        await createSponsorApplication(sponsorForm);
+        const result = await createSponsorApplication(sponsorForm);
         
         // Send confirmation email
         try {
@@ -58,7 +58,7 @@ export default function SponsorPerformerSection() {
   const handlePerformerSubmit = async () => {
     if (performerForm.name && performerForm.email && performerForm.phone && performerForm.address && performerForm.performanceType) {
       try {
-        await createPerformerApplication(performerForm);
+        const result = await createPerformerApplication(performerForm);
         
         // Send confirmation email
         try {

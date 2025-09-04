@@ -13,6 +13,7 @@ import {
 } from '@/services/participationService';
 import { useAuth } from '@/context/AuthContext';
 import { useAdmin } from '@/context/AdminContext';
+import adminLogger from '@/lib/adminLogger';
 
 const ParticipationModal = ({ 
   isOpen, 
@@ -171,6 +172,20 @@ const ParticipationModal = ({
       const result = await markSeatAttendance(booking.id, bookingType, unitId, status, user.uid);
       
       if (result.success) {
+        // Log the seat attendance change
+        try {
+          await adminLogger.logSeatActivity(
+            adminUser,
+            'update',
+            `${booking.id}-${unitId}`,
+            `Updated ${bookingType === 'stall' ? 'stall' : 'seat'} ${unitId} attendance to '${status}' for ${bookingType} booking ${booking.id}. Customer: ${booking.customerDetails?.name || booking.userDetails?.name || booking.vendorDetails?.name || booking.delegateDetails?.name || 'Unknown'}`,
+            await adminLogger.getClientIP(),
+            adminLogger.getUserAgent()
+          );
+        } catch (logError) {
+          console.error('Failed to log seat attendance activity:', logError);
+        }
+        
         // Update local state
         setSeatAttendanceData(prev => ({
           ...prev,
@@ -229,6 +244,20 @@ const ParticipationModal = ({
       );
       
       if (result.success) {
+        // Log the bulk attendance update
+        try {
+          await adminLogger.logSeatActivity(
+            adminUser,
+            'update',
+            `${booking.id}-bulk`,
+            `Bulk updated all ${bookingType === 'stall' ? 'stalls' : 'seats'} (${unitsArray.join(', ')}) attendance to '${status}' for ${bookingType} booking ${booking.id}. Customer: ${booking.customerDetails?.name || booking.userDetails?.name || booking.vendorDetails?.name || booking.delegateDetails?.name || 'Unknown'}`,
+            await adminLogger.getClientIP(),
+            adminLogger.getUserAgent()
+          );
+        } catch (logError) {
+          console.error('Failed to log bulk attendance activity:', logError);
+        }
+        
         // Update all seats in local state
         const updatedData = {};
         unitsArray.forEach(unitId => {
@@ -300,6 +329,20 @@ const ParticipationModal = ({
       const result = await markAsParticipated(booking.id, bookingType, user.uid);
       
       if (result.success) {
+        // Log the participation activity
+        try {
+          await adminLogger.logBookingActivity(
+            adminUser,
+            'update',
+            booking.id,
+            `Marked ${bookingType} booking as participated. Customer: ${booking.customerDetails?.name || booking.userDetails?.name || booking.vendorDetails?.name || booking.delegateDetails?.name || 'Unknown'}. ${unitsArray.length > 0 ? `Units: ${unitsArray.join(', ')}` : ''}`,
+            await adminLogger.getClientIP(),
+            adminLogger.getUserAgent()
+          );
+        } catch (logError) {
+          console.error('Failed to log participation activity:', logError);
+        }
+        
         toast.success('✅ Marked as participated successfully! All seats marked as present.');
         onSuccess(booking.id);
         onClose();
@@ -357,6 +400,20 @@ const ParticipationModal = ({
       const result = await undoParticipation(booking.id, bookingType, user.uid);
       
       if (result.success) {
+        // Log the undo participation activity
+        try {
+          await adminLogger.logBookingActivity(
+            adminUser,
+            'update',
+            booking.id,
+            `Undid participation for ${bookingType} booking. Customer: ${booking.customerDetails?.name || booking.userDetails?.name || booking.vendorDetails?.name || booking.delegateDetails?.name || 'Unknown'}. ${unitsArray.length > 0 ? `Units: ${unitsArray.join(', ')}` : ''}`,
+            await adminLogger.getClientIP(),
+            adminLogger.getUserAgent()
+          );
+        } catch (logError) {
+          console.error('Failed to log undo participation activity:', logError);
+        }
+        
         toast.success(`✅ Participation undone successfully by ${adminUser?.name}! All seat attendance reset to pending.`);
         
         // Refresh seat attendance data to ensure it's loaded from database

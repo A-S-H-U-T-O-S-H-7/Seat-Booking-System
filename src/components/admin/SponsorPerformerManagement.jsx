@@ -25,9 +25,12 @@ import {
   updatePerformerStatus,
   searchApplications
 } from '@/services/sponsorPerformerService';
+import adminLogger from '@/lib/adminLogger';
+import { useAdmin } from '@/context/AdminContext';
 
 export default function SponsorPerformerManagement() {
   const { isDarkMode } = useTheme();
+  const { adminUser } = useAdmin();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState(null);
@@ -150,6 +153,20 @@ export default function SponsorPerformerManagement() {
         await updateSponsorStatus(selectedApplication.id, newStatus, statusNotes);
       } else {
         await updatePerformerStatus(selectedApplication.id, newStatus, statusNotes);
+      }
+
+      // Log the status update activity
+      try {
+        await adminLogger.logSystemActivity(
+          adminUser,
+          'update',
+          `${selectedApplication.type}_application`,
+          `Updated ${selectedApplication.type} application status from '${selectedApplication.status}' to '${newStatus}' for ${selectedApplication.name} (${selectedApplication.email}). ${selectedApplication.performanceType ? `Performance Type: ${selectedApplication.performanceType}. ` : ''}${statusNotes ? `Notes: ${statusNotes}` : 'No notes provided.'}`,
+          await adminLogger.getClientIP(),
+          adminLogger.getUserAgent()
+        );
+      } catch (logError) {
+        console.error('Failed to log application status update:', logError);
       }
 
       toast.success(`Application ${newStatus} successfully`);
