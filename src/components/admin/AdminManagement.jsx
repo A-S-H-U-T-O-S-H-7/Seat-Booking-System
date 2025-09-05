@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import adminLogger from '@/lib/adminLogger';
 import { toast } from 'react-hot-toast';
 import { useAdmin } from '@/context/AdminContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -179,15 +180,33 @@ export default function AdminManagement() {
       return;
     }
 
-    if (!confirm('Are you sure you want to remove this admin? This action cannot be undone.')) {
+    // Find the admin to be deleted for logging
+    const adminToDelete = admins.find(admin => admin.id === adminId);
+    if (!adminToDelete) {
+      toast.error('Admin not found');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to remove admin "${adminToDelete.name}"? This action cannot be undone and will immediately revoke their access.`)) {
       return;
     }
 
     setIsUpdating(true);
     try {
+      // Delete admin document from Firestore
       await deleteDoc(doc(db, 'admins', adminId));
+      
+      // Log the admin deletion activity
+      await adminLogger.logAdminActivity(
+        adminUser,
+        'delete',
+        adminId,
+        `Removed admin: ${adminToDelete.name} (${adminToDelete.email})`
+      );
+      
+      // Update local state
       setAdmins(prev => prev.filter(admin => admin.id !== adminId));
-      toast.success('Admin removed successfully');
+      toast.success(`Admin "${adminToDelete.name}" has been removed successfully. Their access has been revoked immediately.`);
     } catch (error) {
       console.error('Error deleting admin:', error);
       toast.error('Failed to remove admin');

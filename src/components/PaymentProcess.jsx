@@ -9,7 +9,7 @@ import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { formatDateKey } from '@/utils/dateUtils';
 import { useShifts } from '@/hooks/useShifts';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react'; 
 
 const PaymentProcess = ({ customerDetails }) => {
   const [processing, setProcessing] = useState(false);

@@ -72,7 +72,7 @@ export function AdminProvider({ children }) {
         
         // Set up real-time listener for admin data updates
         const adminRef = doc(db, 'admins', adminDocId);
-        adminUnsubscribe = onSnapshot(adminRef, (doc) => {
+        adminUnsubscribe = onSnapshot(adminRef, async (doc) => {
           if (doc.exists()) {
             const updatedData = doc.data();
             setAdminData(updatedData);
@@ -86,6 +86,17 @@ export function AdminProvider({ children }) {
               lastLogin: updatedData.lastLogin
             };
             setAdminUser(updatedAdminInfo);
+          } else {
+            // Admin document was deleted - revoke access immediately
+            console.log('Admin document deleted - logging out user');
+            setAdminUser(null);
+            setAdminData(null);
+            try {
+              await signOut(auth);
+              router.push('/admin/login?message=access_revoked');
+            } catch (error) {
+              console.error('Error signing out after admin deletion:', error);
+            }
           }
         });
       } else {

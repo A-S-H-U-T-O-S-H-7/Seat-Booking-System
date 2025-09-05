@@ -1,6 +1,6 @@
 "use client";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -16,6 +16,21 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Check if user was redirected here due to access being revoked
+    const message = searchParams.get('message');
+    if (message === 'access_revoked') {
+      toast.error('Your admin access has been revoked. Please contact the system administrator.', {
+        duration: 6000,
+        style: {
+          background: '#DC2626',
+          color: '#FFFFFF',
+        },
+      });
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     setFormData({
