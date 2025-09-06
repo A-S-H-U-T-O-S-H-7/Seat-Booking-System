@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -8,14 +8,8 @@ import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 
-export default function AdminLogin() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
+// Component that handles search params with Suspense
+function AccessRevokedHandler() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -31,6 +25,18 @@ export default function AdminLogin() {
       });
     }
   }, [searchParams]);
+
+  return null; // This component doesn't render anything
+}
+
+function AdminLoginForm() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e) => {
     setFormData({
@@ -325,5 +331,16 @@ export default function AdminLogin() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLogin() {
+  return (
+    <>
+      <AdminLoginForm />
+      <Suspense fallback={null}>
+        <AccessRevokedHandler />
+      </Suspense>
+    </>
   );
 }
