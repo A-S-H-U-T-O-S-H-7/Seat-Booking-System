@@ -218,8 +218,7 @@ const ShowBookingCard = ({ booking, onCancel }) => {
               )}
             </div>
           )} */}
-        </div>
-        {booking.status === 'confirmed' && (
+          {booking.status === 'confirmed' && (
             <div className="flex flex-col sm:flex-row items-center gap-2">
               <button
                 onClick={() => setIsPassModalOpen(true)}
@@ -229,8 +228,12 @@ const ShowBookingCard = ({ booking, onCancel }) => {
               </button>
             </div>
           )}
+        </div>
+
+       
         
       </div>
+
             {/* Pass & Receipt Modal */}
       <PassReceiptModal
         isOpen={isPassModalOpen}
