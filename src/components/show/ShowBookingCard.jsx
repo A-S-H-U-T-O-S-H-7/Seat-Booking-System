@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { cancelBooking } from '@/utils/cancellationUtils';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
+import PassReceiptModal from '../PassReceiptModal';
 
 const ShowBookingCard = ({ booking, onCancel }) => {
   const { user } = useAuth();
   const [isCancelling, setIsCancelling] = useState(false);
+    const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+  
   const canCancelBooking = (eventDate) => {
     const today = new Date();
     const daysUntilEvent = differenceInDays(eventDate, today);
@@ -72,7 +75,7 @@ const ShowBookingCard = ({ booking, onCancel }) => {
           <span className="text-xs sm:text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
             ID: {booking.id || booking.bookingId || 'N/A'}
           </span>
-        </div>
+        </div> 
         
         {/* Main booking details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -216,8 +219,26 @@ const ShowBookingCard = ({ booking, onCancel }) => {
             </div>
           )} */}
         </div>
+        {booking.status === 'confirmed' && (
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <button
+                onClick={() => setIsPassModalOpen(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md min-w-[120px]"
+              >
+                📄 Pass & Receipt
+              </button>
+            </div>
+          )}
+        
       </div>
+            {/* Pass & Receipt Modal */}
+      <PassReceiptModal
+        isOpen={isPassModalOpen}
+        onClose={() => setIsPassModalOpen(false)}
+        booking={booking}
+      />
     </div>
+    
   );
 };
 

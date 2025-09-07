@@ -249,14 +249,14 @@ const styles = `
 
                 {/* Member Pass Text */}
                 <div className="text-center mb-1 sm:mb-2 md:mb-3 lg:mb-4">
-                  <h5 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold tracking-wide">MEMBER PASS</h5>
+                  <h5 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold tracking-wide">MEMBER PASS</h5> 
                 </div>
 
                 {/* QR Code */}
                 <div className="bg-white p-1 sm:p-1 md:p-2 rounded-lg lg:rounded-lg shadow-lg mb-1 sm:mb-2 md:mb-3 lg:mb-4">
                   <div className="w-12 sm:w-12 md:w-16 lg:w-24 h-12 sm:h-12 md:h-16 lg:h-24 bg-black rounded-sm lg:rounded-lg relative overflow-hidden">
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`SVS PASS | Name: ${name} | Purpose: ${eventPurpose} | Event Date: ${eventStartDate}${eventEndDate !== eventStartDate ? ' - ' + eventEndDate : ''} | Seat Details: ${booking?.seatDetails || booking?.stallIds?.join(', ') || 'General'} | Seat Count: ${booking?.seatCount || booking?.stallIds?.length || '1'} | Shift: ${booking?.shift || 'N/A'} | ID: ${booking?.id || booking?.bookingId || 'N/A'}`)}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`SVS PASS | Name: ${name} | Purpose: ${eventPurpose} | Event Date: ${eventStartDate}${eventEndDate !== eventStartDate ? ' - ' + eventEndDate : ''} | Seat Details: ${booking?.eventDetails?.seats || booking?.stallIds?.join(', ') || booking?.showDetails?.selectedSeats || 'General'} | Seat Count: ${booking?.seatCount || booking?.stallIds?.length || booking.showDetails.selectedSeats.length || '1'} | Shift: ${booking?.shift || 'N/A'} | ID: ${booking?.id || booking?.bookingId || 'N/A'}`)}`}
                       alt="QR Code"
                       className="w-full h-full object-contain rounded-sm lg:rounded-lg"
                     />
