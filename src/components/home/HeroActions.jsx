@@ -11,7 +11,7 @@ function HeroActions({ user }) {
   return (
     <div className="flex justify-center items-center py-4 md:py-8 px-2 md:px-4">
       {user ? (
-        <div className="flex flex-row gap-12 md:gap-12 lg:gap-20 items-center justify-center w-full  flex-wrap">
+        <div className="flex flex-row gap-6 md:gap-12 lg:gap-20 items-center justify-center w-full  flex-wrap">
           
           {/* Havan Booking Circle */}
           <div className="group relative flex items-center justify-center">

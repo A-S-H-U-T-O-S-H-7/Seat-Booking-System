@@ -12,13 +12,13 @@ function ShowModal({ isOpen, onClose }) {
       ></div>
       
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4">
         <div 
-          className="bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 rounded-3xl shadow-2xl max-w-2xl w-full mx-4 transform transition-all duration-300 scale-100 border border-white/50 backdrop-blur-lg max-h-[90vh] overflow-y-auto"
+          className="bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 rounded-3xl shadow-2xl max-w-2xl w-full mx-1 md:mx-4 transform transition-all duration-300 scale-100 border border-white/50 backdrop-blur-lg max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="relative p-6 pb-4">
+          <div className="relative p-4  md:p-6 pb-2 md:pb-4">
             {/* Close Button */}
             <button
               onClick={onClose}
@@ -44,7 +44,7 @@ function ShowModal({ isOpen, onClose }) {
               
               {/* Free Entry Badge */}
               <div className="inline-block animate-bounce">
-                <div className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 text-white font-black text-lg px-6 py-2 rounded-full shadow-2xl border-4 border-white transform hover:scale-105 transition-transform duration-200 relative overflow-hidden ">
+                <div className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 text-white font-black text-base md:text-lg px-2 md:px-6 py-2 rounded-full shadow-2xl border-4 border-white transform hover:scale-105 transition-transform duration-200 relative overflow-hidden ">
                   <span className="relative z-10 tracking-wider">🎉 FREE ENTRY 🎉</span>
                 </div>
               </div>
@@ -52,31 +52,31 @@ function ShowModal({ isOpen, onClose }) {
           </div>
           
           {/* Content */}
-          <div className="px-6 pb-6">
+          <div className="px-2 md:px-6 pb-2 md:pb-6">
             {/* Welcome Quote */}
-            <div className="text-center mb-5 p-3 bg-white/60 rounded-2xl shadow-inner">
+            <div className="text-center mb-2 md:mb-5 p-1 md:p-3 bg-white/60 rounded-2xl shadow-inner">
               <p className="text-gray-700 text-base leading-relaxed font-medium italic">
                 "🎭 Where culture meets celebration, and every moment becomes a memory to cherish forever! 🌟"
               </p>
             </div>
             
             {/* Event Details - Side by side layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               {/* Duration */}
-              <div className="flex items-center justify-center p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl shadow-sm">
+              <div className="flex items-center justify-center p-2 pb-8 md:pb-0 md:p-4 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl shadow-sm">
                 <div className="text-center">
                   <div className="text-xl mb-2">📅</div>
-                  <div className="text-gray-700 font-semibold text-sm">5 Amazing Days</div>
-                  <div className="text-blue-600 font-bold text-base">3rd Dec - 7th Dec</div>
+                  <div className="text-gray-700 font-semibold pb-2 md:pb-0 text-sm">5 Amazing Days</div>
+                  <div className="text-blue-600 font-bold text-sm md:text-base">3rd Dec - 7th Dec</div>
                 </div>
               </div>
               
               {/* Timing */}
-              <div className="flex items-center justify-center p-4 bg-gradient-to-r from-cyan-100 to-teal-100 rounded-2xl shadow-sm">
+              <div className="flex items-center justify-center p-2 pb-8 md:pb-0 md:p-4 bg-gradient-to-r from-cyan-100 to-teal-100 rounded-2xl shadow-sm">
                 <div className="text-center">
                   <div className="text-xl mb-2">🕐</div>
-                  <div className="text-gray-700 font-semibold text-sm">Evening Shows</div>
-                  <div className="text-teal-600 font-bold text-base">5:00 PM - 10:00 PM</div>
+                  <div className="text-gray-700 font-semibold pb-2 md:pb-0 text-sm">Evening Shows</div>
+                  <div className="text-teal-600 font-bold text-sm md:text-base">5:00 PM - 10:00 PM</div>
                 </div>
               </div>
             </div>
