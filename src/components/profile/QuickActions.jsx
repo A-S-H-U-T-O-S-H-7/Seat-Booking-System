@@ -7,11 +7,11 @@ const QuickActions = ({ onRefresh }) => {
       label: '🎫 Reserve Havan Spot',
       color: 'from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700'
     },
-    {
-      href: '/booking/show',
-      label: '🎭 Reserve Show Spot',
-      color: 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'
-    },
+    // {
+    //   href: '/booking/show',
+    //   label: '🎭 Reserve Show Spot',
+    //   color: 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'
+    // },
     {
       href: '/booking/stall',
       label: '🏪 Reserve Your Stall',

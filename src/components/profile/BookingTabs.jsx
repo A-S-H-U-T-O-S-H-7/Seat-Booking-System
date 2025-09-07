@@ -3,7 +3,7 @@ const BookingTabs = ({ activeTab, setActiveTab, counts }) => {
     <div className="flex bg-gray-100 rounded-lg p-1">
       {[
         { key: 'havan', label: 'Havan', count: counts.havan, color: 'orange' },
-        { key: 'show', label: 'Shows', count: counts.show, color: 'purple' },
+        // { key: 'show', label: 'Shows', count: counts.show, color: 'purple' },
         { key: 'stall', label: 'Stalls', count: counts.stall, color: 'green' },
         { key: 'delegates', label: 'Delegates', count: counts.delegates, color: 'yellow' },
         { key: 'donations', label: 'Donations', count: counts.donations, color: 'pink' }

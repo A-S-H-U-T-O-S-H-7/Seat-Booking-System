@@ -1,10 +1,17 @@
 import Link from "next/link";
+import { useState } from "react";
+import ShowModal from "./ShowModal";
 
 function HeroActions({ user }) {
+
+   const [isShowModalOpen, setIsShowModalOpen] = useState(false);
+
+  const openShowModal = () => setIsShowModalOpen(true);
+  const closeShowModal = () => setIsShowModalOpen(false);
   return (
     <div className="flex justify-center items-center py-4 md:py-8 px-2 md:px-4">
       {user ? (
-        <div className="flex flex-row gap-4 md:gap-12 lg:gap-20 items-center justify-center w-full  flex-wrap">
+        <div className="flex flex-row gap-12 md:gap-12 lg:gap-20 items-center justify-center w-full  flex-wrap">
           
           {/* Havan Booking Circle */}
           <div className="group relative flex items-center justify-center">
@@ -171,10 +178,8 @@ function HeroActions({ user }) {
 
           {/* Show Booking Circle */}
           <div className="group relative flex items-center justify-center">
-            {/* Mobile Version - Simple Round Button */}
             <div className="block md:hidden relative">
-              <Link
-                href="/booking/show"
+              <button onClick={openShowModal}
                 className="relative group flex items-center justify-center
                            w-16 h-16 sm:w-18 sm:h-18
                            bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500
@@ -193,15 +198,13 @@ function HeroActions({ user }) {
                     Show
                   </span>
                 </div>
-              </Link>
+              </button>
               
-              {/* Mobile Floating particles */}
               <div className="absolute -bottom-2 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-cyan-400 rounded-full animate-bounce delay-300"></div>
               <div className="absolute -top-1 -left-2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full animate-pulse delay-500"></div>
               <div className="absolute -bottom-3 left-1 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-teal-400 rounded-full animate-ping delay-700"></div>
             </div>
             
-            {/* Desktop Version - Original Design */}
             <div className="hidden md:block">
               <div className="absolute -inset-3 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-teal-500/20 rounded-full blur-xl opacity-75 animate-pulse group-hover:opacity-100 group-hover:blur-lg transition-all duration-500"></div>
               
@@ -214,8 +217,7 @@ function HeroActions({ user }) {
               </div>
               
               <div className="relative w-16 h-16 group-hover:w-72 group-hover:h-14 transition-all duration-700 ease-out flex items-center justify-center">
-                <Link
-                  href="/booking/show"
+                <button onClick={openShowModal}
                   className="absolute inset-0 rounded-full group-hover:rounded-2xl
                              bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500
                              hover:shadow-2xl hover:shadow-blue-500/30 cursor-pointer
@@ -238,7 +240,7 @@ function HeroActions({ user }) {
                       Reserve Your Show Spot
                     </span>
                   </div>
-                </Link>
+                </button>
               </div>
               
               <div className="absolute -bottom-2 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-bounce delay-300"></div>
@@ -368,6 +370,8 @@ function HeroActions({ user }) {
           </div>
         </div>
       )}
+            <ShowModal isOpen={isShowModalOpen} onClose={closeShowModal} />
+
     </div>
   );
 }

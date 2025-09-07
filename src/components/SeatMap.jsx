@@ -7,6 +7,7 @@ import { useBooking } from '@/context/BookingContext';
 import { formatDateKey } from '@/utils/dateUtils';
 import { Info, ChevronDown } from 'lucide-react';
 import { useSeatCleanup } from '@/hooks/useSeatCleanup';
+import BenefitsModal from './havan/HavanSamagri';
 
 const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = [] }) => {
   const [seatAvailability, setSeatAvailability] = useState({});
@@ -14,6 +15,7 @@ const SeatMap = ({ selectedDate, selectedShift, onSeatSelect, selectedSeats = []
   const [layoutSettings, setLayoutSettings] = useState({
     blocks: []
   });
+  const [showBenefitsModal, setShowBenefitsModal] = useState(true); 
 
   const scrollToBottom = () => {
   window.scrollTo({
@@ -381,11 +383,19 @@ default:
     return (
       <div key={blockConfig.id} className="bg-gradient-to-br from-orange-50 to-amber-50 p-2 sm:p-3 md:p-4 rounded-xl border-2 border-orange-200 shadow-lg hover:shadow-xl transition-shadow duration-300">
         {/* Block Header */}
+        {/* <span className="sm:hidden">🏦 {blockConfig.id} 🏦</span> */}
         <div className="text-center mb-2 sm:mb-4">
-          <h3 className="text-sm sm:text-lg md:text-xl font-bold text-orange-800 bg-gradient-to-r from-orange-100 to-amber-100 p-2 sm:p-3 rounded-lg border border-orange-300 shadow-sm">
-            <span className="sm:hidden">🏦 {blockConfig.id} 🏦</span>
-            <span className="hidden sm:inline">🏦 {blockConfig.name} 🏦</span>
-          </h3>
+         <h3 className="text-sm sm:text-lg md:text-xl font-bold text-orange-800 bg-gradient-to-r from-orange-100 to-amber-100 p-2 sm:p-3 rounded-lg border border-orange-300 shadow-sm">
+  <div className="flex items-center justify-between flex-wrap gap-2">
+    <span>🏦 {blockConfig.name} 🏦</span>
+    <button
+      onClick={() => setShowBenefitsModal(true)}
+      className="bg-gradient-to-r from-yellow-300 to-orange-400 border border-amber-300 hover:from-yellow-400 hover:to-orange-500 cursor-pointer rounded-md px-2 py-1 text-gray-800 text-xs sm:text-sm font-medium transition-all duration-200 hover:shadow-md"
+    >
+      Included Benefits
+    </button>
+  </div>
+</h3>
         </div>
         
         {/* Dynamic Kund grid based on block configuration */}
@@ -403,6 +413,11 @@ default:
             });
           }).flat()}
         </div>
+        {/* Benefits Modal */}
+<BenefitsModal 
+  isOpen={showBenefitsModal}
+  onClose={() => setShowBenefitsModal(false)}
+/>
       </div>
     );
   };

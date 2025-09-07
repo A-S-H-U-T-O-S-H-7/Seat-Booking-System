@@ -216,7 +216,7 @@ const StallMap = () => {
             </div>
             <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-full">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>₹{priceSettings.defaultStallPrice.toLocaleString()} per stall</span>
+              <span>₹{priceSettings.defaultStallPrice.toLocaleString()} per stall for 5 Days</span>
             </div>
             <div className="flex items-center gap-1 bg-purple-50 text-purple-700 px-3 py-2 rounded-full">
               <div className="w-2 h-2 bg-purple-500 rounded-full"></div>

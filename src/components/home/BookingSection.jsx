@@ -11,7 +11,7 @@ function BookingSection({ user }) {
               Choose Your Participation Type
             </h3>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2  md:gap-4">
+            <div className="grid grid-cols-3 gap-2  md:gap-4">
               {/* Havan Seat Booking */}
               <Link
                 href="/booking/havan"
@@ -63,7 +63,7 @@ function BookingSection({ user }) {
               </Link>
  
               {/* Show Seat Booking */}
-              <Link
+              {/* <Link
                 href="/booking/show"
                 className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
@@ -85,7 +85,7 @@ function BookingSection({ user }) {
                 <p className="text-gray-700 text-center text-xs sm:text-sm leading-relaxed hidden md:block mt-2">
                   Pick your spot for cultural shows and performances.
                 </p>
-              </Link>
+              </Link> */}
 
               {/* Delegates Booking */}
               <Link
