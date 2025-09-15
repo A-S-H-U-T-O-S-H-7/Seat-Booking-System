@@ -286,7 +286,12 @@ const styles = `
 
                 {/* Member Pass Text */}
                 <div className="text-center mb-1 sm:mb-2 md:mb-3 lg:mb-4">
-                  <h5 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold tracking-wide">MEMBER PASS</h5> 
+                  <h5 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold tracking-wide">
+                    {(booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal') || 
+                     (booking?.totalAmount || 0) === 0
+                      ? 'FREE ENTRY PASS'
+                      : 'MEMBER PASS'}
+                  </h5> 
                 </div>
 
                 {/* QR Code */}

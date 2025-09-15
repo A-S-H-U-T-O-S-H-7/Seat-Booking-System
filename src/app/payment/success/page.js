@@ -324,6 +324,21 @@ function PaymentSuccessContent() {
                     );
                   }
                   
+                  // Helper function to get business type display name
+                  const getBusinessTypeDisplay = (businessType) => {
+                    const businessTypes = {
+                      food: 'Food & Beverages',
+                      handicrafts: 'Handicrafts & Arts',
+                      clothing: 'Clothing & Apparel',
+                      jewelry: 'Jewelry & Accessories',
+                      books: 'Books & Literature',
+                      toys: 'Toys & Games',
+                      electronics: 'Electronics',
+                      general: 'General Merchandise'
+                    };
+                    return businessTypes[businessType] || businessType || 'General';
+                  };
+                  
                   // Stall booking details
                   if (bookingType === 'stall') {
                     return (
@@ -353,23 +368,7 @@ function PaymentSuccessContent() {
                           <div>
                             <p className="font-medium text-gray-700">Business Type:</p>
                             <p className="text-gray-900 capitalize">
-                              {(() => {
-                                // Helper function to get business type display name
-                                const getBusinessTypeDisplay = (businessType) => {
-                                  const businessTypes = {
-                                    food: 'Food & Beverages',
-                                    handicrafts: 'Handicrafts & Arts',
-                                    clothing: 'Clothing & Apparel',
-                                    jewelry: 'Jewelry & Accessories',
-                                    books: 'Books & Literature',
-                                    toys: 'Toys & Games',
-                                    electronics: 'Electronics',
-                                    general: 'General Merchandise'
-                                  };
-                                  return businessTypes[businessType] || businessType || 'General';
-                                };
-                                return getBusinessTypeDisplay(bookingDetails?.vendorDetails?.businessType);
-                              })()} 
+                              {getBusinessTypeDisplay(bookingDetails?.vendorDetails?.businessType)}
                             </p>
                           </div>
                         </div>
@@ -387,6 +386,21 @@ function PaymentSuccessContent() {
                               {bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || 0} stall{(bookingDetails?.numberOfStalls || bookingDetails?.stallIds?.length || 0) !== 1 ? 's' : ''}
                             </p>
                           </div>
+                        </div>
+                        
+                        {/* Business Description */}
+                        <div>
+                          <p className="font-medium text-gray-700 mb-1">Business Description:</p>
+                          <p className="text-gray-900 text-sm">
+                            {(() => {
+                              const businessType = bookingDetails?.vendorDetails?.businessType;
+                              const contactPerson = bookingDetails?.vendorDetails?.ownerName;
+                              if (businessType && contactPerson) {
+                                return `${contactPerson} - ${getBusinessTypeDisplay(businessType)}`;
+                              }
+                              return getBusinessTypeDisplay(businessType) || 'No description available';
+                            })()} 
+                          </p>
                         </div>
                         
                         {/* Additional Stall Information */}

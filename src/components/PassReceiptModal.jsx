@@ -66,10 +66,20 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
         <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-1">
-              {isFreeBooking ? 'Member Pass' : 'Pass & Receipt'}
+              {isFreeBooking ? (
+                (booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal') || 
+                (booking?.totalAmount || 0) === 0
+                  ? 'Free Entry Pass'
+                  : 'Member Pass'
+              ) : 'Pass & Receipt'}
             </h2>
             <p className="text-sm text-gray-600">
-              {isFreeBooking ? 'View your member pass' : 'View and download your documents'}
+              {isFreeBooking ? (
+                (booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal') || 
+                (booking?.totalAmount || 0) === 0
+                  ? 'View your free entry pass'
+                  : 'View your member pass'
+              ) : 'View and download your documents'}
             </p>
           </div>
           <button
@@ -91,7 +101,12 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
               }`}
             >
-              <span className="relative z-10">Member Pass</span>
+              <span className="relative z-10">
+                {(booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal') || 
+                 (booking?.totalAmount || 0) === 0
+                  ? 'Free Entry Pass'
+                  : 'Member Pass'}
+              </span>
               {activeTab === 'pass' && (
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-t-full shadow-lg"></div>
               )}
@@ -119,7 +134,12 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
         ) : (
           <div className="bg-emerald-50 border-b border-emerald-100">
             <div className="px-8 py-4">
-              <h3 className="text-emerald-700 font-semibold text-center">Member Pass</h3>
+              <h3 className="text-emerald-700 font-semibold text-center">
+                {(booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal') || 
+                 (booking?.totalAmount || 0) === 0
+                  ? 'Free Entry Pass'
+                  : 'Member Pass'}
+              </h3>
             </div>
           </div>
         )}
