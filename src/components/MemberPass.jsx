@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 const EventPass = ({ booking, participantName, purpose, startDate, endDate }) => {
   
   // Extract data from booking or use fallback props - try multiple possible fields
-  const name = booking?.userDetails?.name || 
+  const name = booking?.delegateDetails?.name ||
+               booking?.userDetails?.name || 
                booking?.userDetails?.displayName ||
                booking?.user?.name ||
                booking?.user?.displayName ||
@@ -14,18 +15,22 @@ const EventPass = ({ booking, participantName, purpose, startDate, endDate }) =>
                booking?.name ||
                booking?.displayName ||
                participantName || 
-               "Participant";  
+               "Participant";
 
   const eventPurpose = booking?.showDetails ? "Show Reservation" : 
                        booking?.stallIds ? "Stall Reservation" : 
+                       booking?.delegateDetails ? "Delegate Registration" :
                        booking?.eventDetails ? "Havan Ceremony" : 
                        purpose || "Cultural Event";
   
-  const eventStartDate = booking?.showDetails?.date ? new Date(booking.showDetails.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+  // Hardcode dates for delegate registration
+  const eventStartDate = eventPurpose === "Delegate Registration" ? "Dec 3, 2025" :
+                         booking?.showDetails?.date ? new Date(booking.showDetails.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
                          booking?.eventDetails?.date ? new Date(booking.eventDetails.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
                          startDate || "Dec 3, 2025";
   
-  const eventEndDate = booking?.eventDetails?.endDate ? new Date(booking.eventDetails.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
+  const eventEndDate = eventPurpose === "Delegate Registration" ? "Dec 7, 2025" :
+                       booking?.eventDetails?.endDate ? new Date(booking.eventDetails.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) :
                        endDate || eventStartDate;
 
 const [isFlipped, setIsFlipped] = useState(false);
@@ -204,7 +209,27 @@ const styles = `
                     <div>
                       <h4 className="text-xs sm:text-base md:text-lg lg:text-2xl font-bold text-gray-900">{name}</h4>
                       <p className="text-xs sm:text-sm md:text-base mb-1 lg:text-lg text-gray-700 font-medium">Purpose: {eventPurpose}</p>
-                      <p className="text-xs md:text-sm font-semibold text-gray-700">Valid From: {eventStartDate} - {eventEndDate}</p>
+                      
+                      {/* Delegate-specific information */}
+                      {booking?.delegateDetails && (
+                        <div className="text-xs md:text-sm text-gray-700 space-y-0.5">
+                          <p><span className="font-medium">Package:</span> {(() => {
+                            const type = booking?.eventDetails?.delegateType;
+                            switch(type) {
+                              case 'normal': return 'Normal';
+                              case 'withAssistance': return 'With Assistance';
+                              case 'withoutAssistance': return 'Without Assistance';
+                              default: return type || 'Standard';
+                            }
+                          })()}</p>
+                          <p><span className="font-medium">Duration:</span> {booking?.eventDetails?.duration || '5'} days</p>
+                          {booking?.eventDetails?.numberOfPersons && booking.eventDetails.numberOfPersons !== '1' && (
+                            <p><span className="font-medium">Persons:</span> {booking.eventDetails.numberOfPersons}</p>
+                          )}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs md:text-sm font-semibold text-gray-700 mt-1">Valid From: {eventStartDate} - {eventEndDate}</p>
                     </div>
                   </div>
                 </div>
@@ -214,13 +239,25 @@ const styles = `
               <div className="w-px h-full relative bg-transparent">
                 <div className="absolute inset-0 flex flex-col justify-center items-center space-y-1">
                   {Array.from({length: 30}).map((_, i) => (
-                    <div key={i} className="w-0.5 h-2 bg-orange-600 rounded-full opacity-100"></div>
+                    <div 
+                      key={i} 
+                      className={`w-0.5 h-2 rounded-full opacity-100 ${
+                        (booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal') || 
+                        (booking?.totalAmount || 0) === 0
+                          ? 'bg-emerald-600'
+                          : 'bg-orange-600'
+                      }`}
+                    ></div>
                   ))}
                 </div>
               </div>
 
               {/* Right Section - Member Pass - Responsive width */}
-              <div className="w-1/3 sm:w-24 md:w-32 lg:w-70 bg-gradient-to-br from-red-600 to-orange-600 flex flex-col items-center justify-center text-white relative overflow-hidden py-2 sm:py-4 lg:py-0">
+              <div className={`w-1/3 sm:w-24 md:w-32 lg:w-70 ${
+                booking?.delegateDetails && booking?.eventDetails?.delegateType === 'normal' 
+                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                  : 'bg-gradient-to-br from-red-600 to-orange-600'
+              } flex flex-col items-center justify-center text-white relative overflow-hidden py-2 sm:py-4 lg:py-0`}>
                 
                 {/* Background Decorative Pattern */}
                 <div className="absolute inset-0 opacity-10">
@@ -256,7 +293,31 @@ const styles = `
                 <div className="bg-white p-1 sm:p-1 md:p-2 rounded-lg lg:rounded-lg shadow-lg mb-1 sm:mb-2 md:mb-3 lg:mb-4">
                   <div className="w-12 sm:w-12 md:w-16 lg:w-24 h-12 sm:h-12 md:h-16 lg:h-24 bg-black rounded-sm lg:rounded-lg relative overflow-hidden">
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`SVS PASS | Name: ${name} | Purpose: ${eventPurpose} | Event Date: ${eventStartDate}${eventEndDate !== eventStartDate ? ' - ' + eventEndDate : ''} | Seat Details: ${booking?.eventDetails?.seats || booking?.stallIds?.join(', ') || booking?.showDetails?.selectedSeats || 'General'} | Seat Count: ${booking?.seatCount || booking?.stallIds?.length || booking.showDetails.selectedSeats.length || '1'} | Shift: ${booking?.shift || 'N/A'} | ID: ${booking?.id || booking?.bookingId || 'N/A'}`)}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent((() => {
+                        // Generate QR data based on booking type
+                        let qrData = `SVS PASS | Name: ${name} | Purpose: ${eventPurpose} | Event Date: ${eventStartDate}${eventEndDate !== eventStartDate ? ' - ' + eventEndDate : ''}`;
+                        
+                        if (booking?.delegateDetails) {
+                          // Delegate booking
+                          const regType = booking?.eventDetails?.registrationType || 'Individual';
+                          const packageType = booking?.eventDetails?.delegateType || 'Standard';
+                          const duration = booking?.eventDetails?.duration || '5';
+                          const persons = booking?.eventDetails?.numberOfPersons || '1';
+                          qrData += ` | Registration: ${regType} | Package: ${packageType} | Duration: ${duration} days | Persons: ${persons}`;
+                        } else if (booking?.stallIds) {
+                          // Stall booking
+                          qrData += ` | Stalls: ${booking.stallIds.join(', ')} | Count: ${booking.stallIds.length}`;
+                        } else if (booking?.showDetails?.selectedSeats) {
+                          // Show booking
+                          qrData += ` | Seats: ${booking.showDetails.selectedSeats.join(', ')} | Count: ${booking.showDetails.selectedSeats.length}`;
+                        } else {
+                          // General booking
+                          qrData += ` | Type: General | Count: 1`;
+                        }
+                        
+                        qrData += ` | ID: ${booking?.id || booking?.bookingId || 'N/A'}`;
+                        return qrData;
+                      })())}`}
                       alt="QR Code"
                       className="w-full h-full object-contain rounded-sm lg:rounded-lg"
                     />

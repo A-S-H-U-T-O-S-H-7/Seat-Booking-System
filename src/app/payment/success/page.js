@@ -353,7 +353,23 @@ function PaymentSuccessContent() {
                           <div>
                             <p className="font-medium text-gray-700">Business Type:</p>
                             <p className="text-gray-900 capitalize">
-                              {bookingDetails?.vendorDetails?.businessType || 'N/A'}
+                              {(() => {
+                                // Helper function to get business type display name
+                                const getBusinessTypeDisplay = (businessType) => {
+                                  const businessTypes = {
+                                    food: 'Food & Beverages',
+                                    handicrafts: 'Handicrafts & Arts',
+                                    clothing: 'Clothing & Apparel',
+                                    jewelry: 'Jewelry & Accessories',
+                                    books: 'Books & Literature',
+                                    toys: 'Toys & Games',
+                                    electronics: 'Electronics',
+                                    general: 'General Merchandise'
+                                  };
+                                  return businessTypes[businessType] || businessType || 'General';
+                                };
+                                return getBusinessTypeDisplay(bookingDetails?.vendorDetails?.businessType);
+                              })()} 
                             </p>
                           </div>
                         </div>
@@ -372,8 +388,34 @@ function PaymentSuccessContent() {
                             </p>
                           </div>
                         </div>
+                        
+                        {/* Additional Stall Information */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="font-medium text-gray-700">Email:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.vendorDetails?.email || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-700">Phone:</p>
+                            <p className="text-gray-900">
+                              {bookingDetails?.vendorDetails?.phone || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Location Info */}
+                        {bookingDetails?.vendorDetails?.address && (
+                          <div>
+                            <p className="font-medium text-gray-700 mb-1">Address:</p>
+                            <p className="text-gray-900 text-sm">
+                              {bookingDetails.vendorDetails.address}
+                            </p>
+                          </div>
+                        )}
                       </>
-                  );
+                    );
                   }
                   
                   // Donation details
@@ -501,7 +543,12 @@ function PaymentSuccessContent() {
                             <div className="text-center">
                               <p className="text-teal-600 font-medium text-sm">Package Type</p>
                               <p className="text-teal-800 font-bold">
-                                {delegateType?.replace('withoutAssistance', 'Without Assistance').replace('withAssistance', 'With Assistance') || 'N/A'}
+                                {(() => {
+                                  if (delegateType === 'normal') return 'Normal';
+                                  if (delegateType === 'withoutAssistance') return 'Without Assistance';
+                                  if (delegateType === 'withAssistance') return 'With Assistance';
+                                  return delegateType || 'N/A';
+                                })()}
                               </p>
                             </div>
                             <div className="text-center">
@@ -883,7 +930,7 @@ function PaymentSuccessContent() {
 
         {/* Support Contact */}
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Need assistance? Contact us at <span className="font-semibold text-blue-600">support@svsamiti.com</span></p>
+          <p>Need assistance? Contact us at <span className="font-semibold text-blue-600">info@svsamiti.com</span></p>
         </div>
       </div>
     </div>

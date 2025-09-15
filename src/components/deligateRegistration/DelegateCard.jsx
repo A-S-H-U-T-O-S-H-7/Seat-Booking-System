@@ -1,9 +1,11 @@
 "use client";
 import { useState } from 'react';
 import { Calendar, MapPin, Users, Clock, Building, User, Phone, Mail, ChevronDown, ChevronUp, FileText, Trophy, IndianRupee, CheckCircle, Camera } from 'lucide-react';
+import PassReceiptModal from '../PassReceiptModal';
 
 const DelegateCard = ({ booking }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPassModalOpen, setIsPassModalOpen] = useState(false);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
@@ -30,7 +32,7 @@ const DelegateCard = ({ booking }) => {
       case 'confirmed':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'pending_payment':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'cancelled':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -49,6 +51,7 @@ const DelegateCard = ({ booking }) => {
 
   const getDelegateTypeLabel = (type) => {
     switch (type) {
+      case 'normal': return 'Normal';
       case 'withoutAssistance': return 'Without Assistance';
       case 'withAssistance': return 'With Assistance';
       default: return type;
@@ -64,7 +67,7 @@ const DelegateCard = ({ booking }) => {
       case 'confirmed':
         return <CheckCircle className="w-4 h-4 text-amber-600" />;
       case 'pending_payment':
-        return <Clock className="w-4 h-4 text-amber-400" />;
+        return <Clock className="w-4 h-4 text-red-400" />;
       default:
         return <Clock className="w-4 h-4 text-amber-400" />;
     }
@@ -111,10 +114,16 @@ const DelegateCard = ({ booking }) => {
       <div className="p-4 space-y-3">
         {/* Amount - prominently displayed */}
         <div className="text-center py-2">
-          <div className="flex items-center justify-center gap-1 text-2xl font-bold text-amber-700">
-            <IndianRupee className="w-6 h-6" />
-            <span>{booking.totalAmount?.toLocaleString() || '0'}</span>
-          </div>
+          {(booking.totalAmount || 0) === 0 ? (
+            <div className="text-2xl font-bold text-green-600">
+              <span>Free</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-1 text-2xl font-bold text-amber-700">
+              <IndianRupee className="w-6 h-6" />
+              <span>{booking.totalAmount?.toLocaleString() || '0'}</span>
+            </div>
+          )}
           <p className="text-xs text-amber-600 mt-1">
             {eventDetails.delegateType && (
               <span className="bg-amber-100 px-2 py-0.5 rounded-full">
@@ -211,16 +220,31 @@ const DelegateCard = ({ booking }) => {
 
         
 
-        {/* Expand/Collapse Button */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex text-gray-800  items-center justify-center py-2 text-white-600 hover:text-white-700 transition-colors"
-        >
-          <span className="text-sm font-medium mr-2">
-            {isExpanded ? 'Show Less' : 'Show More Details'}
-          </span>
-          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+        {/* Action Buttons */}
+        <div className="space-y-2">
+          {/* Pass Receipt Button - only show for confirmed bookings */}
+          {booking.status === 'confirmed' && (
+            <div className="text-center">
+              <button
+                onClick={() => setIsPassModalOpen(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-md"
+              >
+                📄 Pass & Receipt
+              </button>
+            </div>
+          )}
+          
+          {/* Expand/Collapse Button */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex text-gray-800  items-center justify-center py-2 text-white-600 hover:text-white-700 transition-colors"
+          >
+            <span className="text-sm font-medium mr-2">
+              {isExpanded ? 'Show Less' : 'Show More Details'}
+            </span>
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
 
         {/* Expanded Details */}
         {isExpanded && (
@@ -281,20 +305,7 @@ const DelegateCard = ({ booking }) => {
                       <span className="font-medium text-gray-900 ml-2">{eventDetails.designation}</span>
                     </div>
                   )}
-                  <div>
-                    <span className="text-gray-600">Photo:</span>
-                    <span className="font-medium text-gray-900 ml-2">
-                      {delegateDetails.fileInfo?.fileUploaded ? 
-                        `✅ Uploaded (${delegateDetails.fileInfo.fileName})` : 
-                        '❌ Not uploaded'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-medium text-gray-900 ml-2">
-                      {booking.payment?.gateway?.toUpperCase() || 'CCAvenue'}
-                    </span>
-                  </div>
+                  
                   {booking.payment?.transactionId && (
                     <div>
                       <span className="text-gray-600">Transaction ID:</span>
@@ -310,6 +321,13 @@ const DelegateCard = ({ booking }) => {
           </div>
         )}
       </div>
+      
+      {/* Pass & Receipt Modal */}
+      <PassReceiptModal
+        isOpen={isPassModalOpen}
+        onClose={() => setIsPassModalOpen(false)}
+        booking={booking}
+      />
     </div>
   );
 };

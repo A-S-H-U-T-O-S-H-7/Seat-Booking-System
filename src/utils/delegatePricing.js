@@ -3,6 +3,13 @@ import { doc, getDoc } from 'firebase/firestore';
 
 // Default fallback configuration constants for pricing
 export const DEFAULT_PRICING_CONFIG = {
+  normal: {
+    pricePerPerson: 0,
+    fixedDays: 5,
+    benefits: [
+      '🎟️ Free entry pass valid for 5 days',
+    ]
+  },
   withoutAssistance: {
     pricePerPerson: 5000,
     fixedDays: 5,
@@ -43,6 +50,10 @@ export const fetchDelegatePricing = async () => {
       
       // Merge with defaults to ensure all fields exist
       return {
+        normal: {
+          ...DEFAULT_PRICING_CONFIG.normal,
+          ...firebaseData.normal
+        },
         withoutAssistance: {
           ...DEFAULT_PRICING_CONFIG.withoutAssistance,
           ...firebaseData.withoutAssistance

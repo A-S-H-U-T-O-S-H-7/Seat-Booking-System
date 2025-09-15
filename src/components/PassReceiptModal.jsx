@@ -15,6 +15,17 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
     return () => setMounted(false);
   }, []);
 
+  // Check if booking is free (no receipt needed)
+  const isFreeBooking = (booking?.totalAmount || 0) === 0 || 
+                       booking?.eventDetails?.delegateType === 'normal';
+
+  // Reset to pass tab if booking becomes free
+  useEffect(() => {
+    if (isFreeBooking && activeTab === 'receipt') {
+      setActiveTab('pass');
+    }
+  }, [isFreeBooking, activeTab]);
+
   // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -54,8 +65,12 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">Pass & Receipt</h2>
-            <p className="text-sm text-gray-600">View and download your documents</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">
+              {isFreeBooking ? 'Member Pass' : 'Pass & Receipt'}
+            </h2>
+            <p className="text-sm text-gray-600">
+              {isFreeBooking ? 'View your member pass' : 'View and download your documents'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -66,53 +81,68 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-gray-50 relative">
-          <button
-            onClick={() => setActiveTab('pass')}
-            className={`flex-1 px-8 py-4 text-base font-semibold transition-all duration-300 relative group ${
-              activeTab === 'pass'
-                ? 'text-emerald-600 bg-white shadow-sm'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-            }`}
-          >
-            <span className="relative z-10">Member Pass</span>
-            {activeTab === 'pass' && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-t-full shadow-lg"></div>
-            )}
-            {activeTab === 'pass' && (
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-50/30 to-transparent rounded-t-lg"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('receipt')}
-            className={`flex-1 px-8 py-4 text-base font-semibold transition-all duration-300 relative group ${
-              activeTab === 'receipt'
-                ? 'text-emerald-600 bg-white shadow-sm'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-            }`}
-          >
-            <span className="relative z-10">Receipt</span>
-            {activeTab === 'receipt' && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-t-full shadow-lg"></div>
-            )}
-            {activeTab === 'receipt' && (
-              <div className="absolute inset-0 bg-gradient-to-t from-emerald-50/30 to-transparent rounded-t-lg"></div>
-            )}
-          </button>
-        </div>
+        {!isFreeBooking ? (
+          <div className="flex bg-gray-50 relative">
+            <button
+              onClick={() => setActiveTab('pass')}
+              className={`flex-1 px-8 py-4 text-base font-semibold transition-all duration-300 relative group ${
+                activeTab === 'pass'
+                  ? 'text-emerald-600 bg-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              <span className="relative z-10">Member Pass</span>
+              {activeTab === 'pass' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-t-full shadow-lg"></div>
+              )}
+              {activeTab === 'pass' && (
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-50/30 to-transparent rounded-t-lg"></div>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('receipt')}
+              className={`flex-1 px-8 py-4 text-base font-semibold transition-all duration-300 relative group ${
+                activeTab === 'receipt'
+                  ? 'text-emerald-600 bg-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+              }`}
+            >
+              <span className="relative z-10">Receipt</span>
+              {activeTab === 'receipt' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-t-full shadow-lg"></div>
+              )}
+              {activeTab === 'receipt' && (
+                <div className="absolute inset-0 bg-gradient-to-t from-emerald-50/30 to-transparent rounded-t-lg"></div>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="bg-emerald-50 border-b border-emerald-100">
+            <div className="px-8 py-4">
+              <h3 className="text-emerald-700 font-semibold text-center">Member Pass</h3>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="overflow-y-auto max-h-[60vh] bg-gray-50/30">
-          {activeTab === 'pass' && booking && (
+          {/* For free bookings, always show member pass */}
+          {isFreeBooking && booking && (
             <div className="py-4 px-1 md:px-4">
               <MemberPass booking={booking} />
             </div>
           )}
           
-          {activeTab === 'receipt' && booking && (
+          {/* For paid bookings, show based on active tab */}
+          {!isFreeBooking && activeTab === 'pass' && booking && (
+            <div className="py-4 px-1 md:px-4">
+              <MemberPass booking={booking} />
+            </div>
+          )}
+          
+          {!isFreeBooking && activeTab === 'receipt' && booking && (
             <div className="py-4 px-1 md:px-4">
               <DonationReceipt booking={booking} />
-              
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import PersonalInfo from './PersonalInfo';
 import LocationInfo from './LocationInfo';
 import ParticipationInfo from './ParticipationInfo';
 import AdditionalDetails from './AdditionalDetails';
+import SuccessModal from './SuccessModal';
 import { validateForm, calculateAmount } from '@/utils/delegateValidation';
 import { PRICING_CONFIG, fetchDelegatePricing, DEFAULT_PRICING_CONFIG } from '@/utils/delegatePricing';
 import { useLocationData } from '@/hooks/useLocationData';
@@ -50,10 +51,53 @@ const DelegateForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dynamicPricing, setDynamicPricing] = useState(DEFAULT_PRICING_CONFIG);
   const [pricingLoading, setPricingLoading] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { user } = useAuth();
 
   // Use custom hook for location data
   const { countries, states, cities, loading } = useLocationData(formData);
+
+  // Success modal handlers
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+  };
+
+  const handleProfileClick = () => {
+    setShowSuccessModal(false);
+    // Navigate to profile page - you can implement this based on your routing
+    window.location.href = '/profile'; // or use router.push('/profile') if using Next.js router
+  };
+
+  // Form reset function
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      companyname: '',
+      email: '',
+      mobile: '',
+      country: 'india',
+      state: '',
+      city: '',
+      address: '',
+      pincode: '',
+      participation: 'Delegate',
+      registrationType: '',
+      templename: '',
+      designation: '',
+      numberOfPersons: '1',
+      delegateType: '',
+      days: '',
+      brief: '',
+      aadharno: '',
+      passportno: '',
+      pan: '',
+      selfie: null
+    });
+    setSelectedFile(null);
+    setImagePreview(null);
+    setUploadedImageUrl(null);
+    setErrors({});
+  };
 
   // Fetch dynamic pricing on component mount
   useEffect(() => {
@@ -100,11 +144,14 @@ const DelegateForm = () => {
       updatedData[name] = cleanValue;
     }
 
-    // Auto-set days for without assistance
+    // Auto-set days for without assistance and normal
     if (name === 'delegateType' && value === 'withoutAssistance') {
       updatedData.days = dynamicPricing.withoutAssistance.fixedDays;
     } else if (name === 'delegateType' && value === 'withAssistance') {
       updatedData.days = dynamicPricing.withAssistance.minDays;
+    } else if (name === 'delegateType' && value === 'normal') {
+      updatedData.days = dynamicPricing.normal.fixedDays;
+      updatedData.numberOfPersons = '1'; // Fixed to 1 for normal option
     }
 
     // Clear dependent fields when country or state changes
@@ -466,34 +513,15 @@ if (!selectedFile) {
           status: 'confirmed'
         }, bookingId);
         
-        toast.success('Registration completed successfully!');
+        // Show success modal for Normal option, toast for others
+        if (formData.delegateType === 'normal') {
+          setShowSuccessModal(true);
+        } else {
+          toast.success('Registration completed successfully!');
+        }
         
         // Reset form
-        setFormData({
-          name: '',
-          companyname: '',
-          email: '',
-          mobile: '',
-          country: '',
-          state: '',
-          city: '',
-          address: '',
-          pincode: '',
-          participation: 'Delegate',
-          registrationType: '',
-          templename: '',
-          delegateType: '',
-          days: '',
-          numberOfPersons: '1',
-          designation: '',
-          brief: '',
-          aadharno: '',
-          passportno: '',
-          pan: '',
-          selfie: null
-        });
-        setSelectedFile(null);
-        setErrors({});
+        resetForm();
         
       } catch (error) {
         console.error('Free registration error:', error);
@@ -620,6 +648,30 @@ if (!selectedFile) {
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Summary</h3>
                 
                 <div className="space-y-4">
+                  {formData.delegateType === 'normal' && (
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <h4 className="font-medium text-gray-900 mb-2">Normal Package</h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>• Price per person: Free</p>
+                        <p>• Fixed duration: {dynamicPricing.normal.fixedDays} days</p>
+                        <p>• Number of persons: {formData.numberOfPersons || 1}</p>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <p className="font-semibold text-emerald-600">
+                          Total Amount: Free
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        <h5 className="font-medium text-gray-800 mb-2">Benefits included:</h5>
+                        <ul className="text-sm text-gray-600 space-y-1">
+                          {dynamicPricing.normal.benefits.map((benefit, index) => (
+                            <li key={index}>• {benefit}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                  
                   {formData.delegateType === 'withoutAssistance' && (
                     <div className="bg-white p-4 rounded-lg shadow-sm">
                       <h4 className="font-medium text-gray-900 mb-2">Without Assistance Package</h4>
@@ -715,6 +767,13 @@ if (!selectedFile) {
             </div>
           </div>
         )}
+        
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={handleSuccessModalClose}
+          onProfileClick={handleProfileClick}
+        />
       </div>
     </div>
   );

@@ -99,6 +99,8 @@ export const validateForm = (formData) => {
     if (formData.delegateType === 'withAssistance' && !formData.days) {
       errors.days = 'Number of days is required';
     }
+    
+    // Normal delegate type doesn't require days field as it's fixed to 5 days
   }
 
   return errors;
@@ -112,7 +114,10 @@ export const calculateAmount = (formData, PRICING_CONFIG) => {
 
   const persons = parseInt(formData.numberOfPersons) || 1;
 
-  if (formData.delegateType === 'withoutAssistance') {
+  if (formData.delegateType === 'normal') {
+    // Normal delegate type is always free
+    return 0;
+  } else if (formData.delegateType === 'withoutAssistance') {
     return persons * PRICING_CONFIG.withoutAssistance.pricePerPerson;
   } else if (formData.delegateType === 'withAssistance') {
     const days = parseInt(formData.days) || PRICING_CONFIG.withAssistance.minDays;

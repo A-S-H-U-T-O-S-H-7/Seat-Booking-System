@@ -7,7 +7,8 @@ const DonationReceipt = ({ booking }) => {
     const orderId = booking?.id || "N/A";
   
   // For name - different booking types store name differently
-  const name = booking?.userDetails?.name || 
+  const name = booking?.delegateDetails?.name ||
+               booking?.userDetails?.name || 
                booking?.customerDetails?.name || 
                booking?.vendorDetails?.ownerName || 
                booking?.name || 
@@ -15,20 +16,23 @@ const DonationReceipt = ({ booking }) => {
                "N/A";
   
   // For PAN
-  const pan = booking?.userDetails?.pan || 
+  const pan = booking?.delegateDetails?.pan ||
+              booking?.userDetails?.pan || 
               booking?.customerDetails?.pan || 
               booking?.pan || 
               "N/A";
   
   // For address
-  const address = booking?.userDetails?.address || 
+  const address = booking?.delegateDetails?.address ||
+                  booking?.userDetails?.address || 
                   booking?.customerDetails?.address || 
                   booking?.vendorDetails?.address || 
                   booking?.address || 
                   "N/A";
   
   // For mobile
-  const mobile = booking?.userDetails?.phone || 
+  const mobile = booking?.delegateDetails?.mobile ||
+                 booking?.userDetails?.phone || 
                  booking?.customerDetails?.phone || 
                  booking?.userDetails?.mobile || 
                  booking?.vendorDetails?.phone || 
