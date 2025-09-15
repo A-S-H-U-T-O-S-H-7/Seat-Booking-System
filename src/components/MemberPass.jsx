@@ -202,7 +202,6 @@ const styles = `
                     <div className="mb-2 sm:mb-3 md:mb-6">
                       <h2 className="text-xs sm:text-sm md:text-lg lg:text-3xl font-bold text-emerald-600 mb-0.5 md:mb-1 lg:mb-2">International</h2>
                       <h3 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold text-orange-700 mb-0.5 md:mb-1">Śrī Jagannātha Pāñcharātra</h3>
-                      <h3 className="text-xs sm:text-sm md:text-base lg:text-2xl font-bold text-red-700">Havan Ceremony</h3>
                     </div>
 
                     {/* Participant Info */}
