@@ -39,7 +39,7 @@ function layout({ children }) {
       <ImageModal
         show={showEventLayoutModal}
         onClose={() => setShowEventLayoutModal(false)}
-        imageSrc="/eventlayout2.jpg"
+        imageSrc="/layout2.png"
         imageAlt="Event Layout"
         title="Event Layout"
       />
