@@ -166,6 +166,9 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
             </div>
           )}
         </div>
+<div className="text-center py-3 font-semibold text-lg md:text-xl lg:text-2xl text-rose-600">
+  Kindly present this complete pass at the time of entry.
+</div>
 
         
 
@@ -178,7 +181,9 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
             </div>
           </div>
         )}
+
       </div>
+      
     </div>
   );
 
