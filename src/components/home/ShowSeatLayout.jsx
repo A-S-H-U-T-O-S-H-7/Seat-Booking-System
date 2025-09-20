@@ -1,7 +1,6 @@
 "use client";
 import { useShowSeatBooking } from '@/context/ShowSeatBookingContext';
 import { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Calendar, Clock, MapPin, Users, Ticket, Gift } from 'lucide-react';
@@ -17,8 +16,8 @@ export default function ShowAuditorium() {
   const [showSettings, setShowSettings] = useState({
     seatLayout: {
       premiumBlocks: [
-        { id: 'A', name: 'Block A', maxRows: 8, maxPairsPerRow: 7, price: 1200, isActive: true },
-        { id: 'B', name: 'Block B', maxRows: 8, maxPairsPerRow: 7, price: 1200, isActive: true }
+        { id: 'A', name: 'Block A', maxRows:11, maxPairsPerRow: 7, price: 1200, isActive: true },
+        { id: 'B', name: 'Block B', maxRows:11, maxPairsPerRow: 7, price: 1200, isActive: true }
       ],
       regularBlocks: [
         { id: 'C', name: 'Block C', maxRows: 25, maxSeatsPerRow: 15, price: 600, isActive: true },
@@ -150,20 +149,25 @@ export default function ShowAuditorium() {
 
   // Seat colors for static display
   const getSeatColor = (seat) => {
-    if (seat.isBooked) return 'bg-red-400';
-    if (seat.isBlocked) return 'bg-gray-600';
-    
-    if (seat.section === 'A' || seat.section === 'B') {
-      return 'bg-gradient-to-br from-purple-400 to-purple-600';
-    }
-    if (seat.section === 'C') {
-      return 'bg-gradient-to-br from-blue-400 to-blue-600';
-    }
-    if (seat.section === 'D') {
-      return 'bg-gradient-to-br from-green-400 to-green-600';
-    }
-    return 'bg-gray-300';
-  };
+  if (seat.isBooked) return 'bg-red-400';
+  if (seat.isBlocked) return 'bg-gray-600';
+  
+  // First 4 rows of A and B blocks in gray
+  if ((seat.section === 'A' || seat.section === 'B') && seat.row <= 4) {
+    return 'bg-gray-500';
+  }
+  
+  if (seat.section === 'A' || seat.section === 'B') {
+    return 'bg-gradient-to-br from-purple-400 to-purple-600';
+  }
+  if (seat.section === 'C') {
+    return 'bg-gradient-to-br from-blue-400 to-blue-600';
+  }
+  if (seat.section === 'D') {
+    return 'bg-gradient-to-br from-green-400 to-green-600';
+  }
+  return 'bg-gray-300';
+};
 
   // Render Reserved section
   const renderReservedSection = () => {

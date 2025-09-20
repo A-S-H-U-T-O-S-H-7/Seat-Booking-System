@@ -105,7 +105,6 @@ export default function EventParticipation() {
             {/* Trust Indicator */}
             <div className="mt-4 pt-4 border-t border-teal-100">
               <p className="text-gray-500 text-xs flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                 <span>Instant confirmation • No hidden fees</span>
               </p>
             </div>
