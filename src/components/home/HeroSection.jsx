@@ -3,6 +3,7 @@ import HeroContent from './HeroContent';
 import HeroActions from './HeroActions';
 import HeroDetails from './HeroDetails';
 import SponsorPerformerSection from '../sponsor-perfomer/Sponsor-performer-section';
+import EventParticipation from './EventParticipation';
 
 function HeroSection({ user }) {
   return (
@@ -15,6 +16,7 @@ function HeroSection({ user }) {
       </section>
 
       <HeroActions user={user} />
+      <EventParticipation />
       <SponsorPerformerSection />
 
       <HeroDetails />

@@ -64,7 +64,7 @@ const HeroContent = () => {
                 <img 
                   src="/havan.jpg" 
                   alt="Sacred Havan Ceremony" 
-                  className="w-24 h-24 md:w-28 md:h-28 rounded-full object-cover shadow-xl border-3 border-white/90 backdrop-blur-sm transform group-hover:scale-110 transition-all duration-500"
+                  className="w-20 h-20 md:w-28 md:h-28 rounded-full object-cover shadow-xl border-3 border-white/90 backdrop-blur-sm transform group-hover:scale-110 transition-all duration-500"
                 />
                 {/* Rotating Border Effect */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-500 via-yellow-500 to-red-500 opacity-60 animate-spin" style={{animationDuration: '8s'}}></div>
@@ -72,7 +72,7 @@ const HeroContent = () => {
                 <img 
                   src="/havan.jpg" 
                   alt="Sacred Havan Ceremony" 
-                  className="absolute inset-2 w-20 h-20 md:w-24 md:h-24 rounded-full object-cover"
+                  className="absolute inset-2 w-16 h-16 md:w-24 md:h-24 rounded-full object-cover"
                 />
               </div>
               

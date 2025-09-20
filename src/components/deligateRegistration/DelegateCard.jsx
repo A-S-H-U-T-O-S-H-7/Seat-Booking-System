@@ -193,7 +193,7 @@ const DelegateCard = ({ booking }) => {
                 <div className="flex-1">
                   <p className="text-xs text-gray-600">Package</p>
                   <p className="text-sm font-medium text-gray-800">
-                    {eventDetails.duration || 'N/A'} days • {eventDetails.numberOfPersons || 1} person{(eventDetails.numberOfPersons || 1) > 1 ? 's' : ''}
+                    {eventDetails.duration || '5'} days • {eventDetails.numberOfPersons || 1} person{(eventDetails.numberOfPersons || 1) > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>

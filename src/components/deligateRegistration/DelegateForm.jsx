@@ -34,7 +34,7 @@ const DelegateForm = () => {
     templename: '',
     designation: '',
     numberOfPersons: '1', 
-    delegateType: '',
+    delegateType: 'normal',
     days: '', 
     brief: '',
     aadharno: '',
@@ -85,7 +85,7 @@ const DelegateForm = () => {
       templename: '',
       designation: '',
       numberOfPersons: '1',
-      delegateType: '',
+      delegateType: 'normal',
       days: '',
       brief: '',
       aadharno: '',
@@ -151,7 +151,7 @@ const DelegateForm = () => {
       updatedData.days = dynamicPricing.withAssistance.minDays;
     } else if (name === 'delegateType' && value === 'normal') {
       updatedData.days = dynamicPricing.normal.fixedDays;
-      updatedData.numberOfPersons = '1'; // Fixed to 1 for normal option
+      // Allow users to set numberOfPersons for normal delegate type
     }
 
     // Clear dependent fields when country or state changes
@@ -482,10 +482,8 @@ const DelegateForm = () => {
     
     const validationErrors = validateForm(formData);
 
-    // Add photo validation
-if (!selectedFile) {
-  validationErrors.selfie = 'Photo upload is mandatory';
-}
+    // Add photo validation (now optional)
+    // Photo upload is no longer mandatory
     
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -576,10 +574,8 @@ if (!selectedFile) {
     if (formData.delegateType === 'withAssistance' && !formData.days) {
       return false;
     }
-    // Check if photo is uploaded
-if (!selectedFile) {
-  return false;
-}
+    // Photo upload is now optional
+    // No need to check for photo
     
     return true;
   };

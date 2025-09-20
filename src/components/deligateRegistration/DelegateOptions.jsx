@@ -109,7 +109,7 @@ const DelegateOptions = ({ formData, errors, handleInputChange, calculateAmount,
         {errors.delegateType && <p className="text-red-500 text-xs mt-2">{errors.delegateType}</p>}
       </div>
 
-      {formData.delegateType && formData.delegateType !== 'normal' && (
+      {formData.delegateType && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {formData.delegateType === 'withAssistance' && (
             <div>
