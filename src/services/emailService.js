@@ -817,7 +817,7 @@ const createDelegateEmailDetails = (delegateData) => {
 • Registration Fee: ₹${delegateData.totalAmount || 0}
 
 📦 Package Details:
-• Package Type: ${getDelegateTypeDisplay(delegateType)}
+• Package Type: ${delegateType === 'normal' ? 'Normal Package (Free)' : delegateType === 'withoutAssistance' ? 'Without Assistance Package' : delegateType === 'withAssistance' ? 'With Assistance Package' : delegateType || 'Standard Package'}
 • Duration: ${eventDetails.duration || 'TBD'} days
 • Number of Persons: ${eventDetails.numberOfPersons || 1}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
