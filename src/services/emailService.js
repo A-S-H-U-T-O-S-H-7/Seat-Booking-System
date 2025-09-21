@@ -56,7 +56,17 @@ export const sendDonationConfirmationEmail = async (donationData) => {
  */
 export const sendDelegateConfirmationEmail = async (delegateData) => {
   try {
-    // First, try the dedicated delegate email API
+    // For normal delegates, just use the working general booking email API directly
+    const isNormalDelegate = delegateData.eventDetails?.delegateType === 'normal';
+    
+    if (isNormalDelegate) {
+      console.log('🎯 Using simple working method for normal delegate email...');
+      // Use the exact same method that works for havan/stall/show bookings
+      const result = await sendBookingConfirmationEmail(delegateData, 'delegate');
+      return result;
+    }
+    
+    // For other delegates, try the dedicated API first, then fallback
     const primaryResult = await tryDelegateSpecificAPI(delegateData);
     
     if (primaryResult.success) {
