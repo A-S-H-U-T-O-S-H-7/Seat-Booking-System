@@ -1,6 +1,8 @@
 // Dedicated Email Service for Normal Delegate Package Registrations
 // This service is specifically designed for handling email notifications for normal delegate registrations
 
+import { sendDelegateConfirmationEmail } from './emailService';
+
 /**
  * Send confirmation email for normal delegate package registration
  * @param {Object} delegateData - Complete delegate registration data
@@ -177,8 +179,7 @@ const sendViaDedicatedAPI = async (emailData) => {
  */
 const sendViaGeneralAPI = async (emailData) => {
   try {
-    // Import the main email service as fallback
-    const { sendDelegateConfirmationEmail } = await import('./emailService');
+    // Use the main email service as fallback (already imported at top)
     
     // Create delegate data structure for the general API
     const generalDelegateData = {
@@ -280,8 +281,7 @@ export const handleNormalDelegateEmail = async (delegateBookingData) => {
     // Ensure this is actually a normal delegate
     if (delegateBookingData.eventDetails?.delegateType !== 'normal') {
       console.warn('⚠️ handleNormalDelegateEmail called for non-normal delegate type');
-      // Fall back to regular delegate email
-      const { sendDelegateConfirmationEmail } = await import('./emailService');
+      // Fall back to regular delegate email (already imported at top)
       return await sendDelegateConfirmationEmail(delegateBookingData);
     }
 
@@ -296,7 +296,6 @@ export const handleNormalDelegateEmail = async (delegateBookingData) => {
       
       // Try fallback to general delegate email service
       console.log('🔄 Trying fallback to general delegate email...');
-      const { sendDelegateConfirmationEmail } = await import('./emailService');
       const fallbackResult = await sendDelegateConfirmationEmail(delegateBookingData);
       
       if (fallbackResult.success) {

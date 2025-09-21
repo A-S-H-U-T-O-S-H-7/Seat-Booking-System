@@ -15,6 +15,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { uploadDelegateImage, validateImageFile } from '@/services/delegateImageService';
+import { handleNormalDelegateEmail } from '@/services/normalDelegateEmailService';
+import { sendDelegateConfirmationEmail } from '@/services/emailService';
 
  
 
@@ -346,11 +348,9 @@ const DelegateForm = () => {
           let emailResult;
           if (isNormalDelegate) {
             console.log('📧 Using dedicated normal delegate email service...');
-            const { handleNormalDelegateEmail } = await import('@/services/normalDelegateEmailService');
             emailResult = await handleNormalDelegateEmail(bookingDataToSave);
           } else {
             console.log('📧 Using general delegate email service...');
-            const { sendDelegateConfirmationEmail } = await import('@/services/emailService');
             const enrichedData = {
               ...bookingDataToSave,
               order_id: bookingId,
