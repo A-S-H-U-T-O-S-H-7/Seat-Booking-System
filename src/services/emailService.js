@@ -767,8 +767,14 @@ const validateEmailData = (emailData) => {
     errors.push('Booking Type is required');
   }
   
-  if (!emailData.amount || parseFloat(emailData.amount) <= 0) {
-    errors.push('Amount is required and must be greater than 0');
+  // Allow 0 amount for normal delegate packages and donations
+  const isNormalDelegate = emailData.booking_type && emailData.booking_type.includes('Normal');
+  const isDonation = emailData.booking_type && emailData.booking_type.includes('Donation');
+  
+  if (!emailData.amount && emailData.amount !== '0') {
+    errors.push('Amount is required');
+  } else if (!isNormalDelegate && !isDonation && parseFloat(emailData.amount) <= 0) {
+    errors.push('Amount must be greater than 0');
   }
   
   return {

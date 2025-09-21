@@ -340,14 +340,26 @@ const DelegateForm = () => {
       // Send confirmation email for successful registrations
       if (paymentData.status === 'confirmed') {
         try {
-          const { sendDelegateConfirmationEmail } = await import('@/services/emailService');
-          const enrichedData = {
-            ...bookingDataToSave,
-            order_id: bookingId,
-            amount: calculateFormAmount(),
-            payment_id: paymentData.paymentId || 'free_registration'
-          };
-          const emailResult = await sendDelegateConfirmationEmail(enrichedData);
+          // Use dedicated normal delegate email service for normal delegate type
+          const isNormalDelegate = bookingDataToSave.eventDetails.delegateType === 'normal';
+          
+          let emailResult;
+          if (isNormalDelegate) {
+            console.log('📧 Using dedicated normal delegate email service...');
+            const { handleNormalDelegateEmail } = await import('@/services/normalDelegateEmailService');
+            emailResult = await handleNormalDelegateEmail(bookingDataToSave);
+          } else {
+            console.log('📧 Using general delegate email service...');
+            const { sendDelegateConfirmationEmail } = await import('@/services/emailService');
+            const enrichedData = {
+              ...bookingDataToSave,
+              order_id: bookingId,
+              amount: calculateFormAmount(),
+              payment_id: paymentData.paymentId || 'paid_registration'
+            };
+            emailResult = await sendDelegateConfirmationEmail(enrichedData);
+          }
+          
           console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } catch (emailError) {
           console.error('❌ Failed to send delegate email:', emailError);
@@ -497,18 +509,21 @@ const DelegateForm = () => {
 
     const amount = calculateFormAmount();
     
-    // If no payment required, submit directly
-    if (amount <= 0) {
+    // Special handling for normal delegate type - always confirmed regardless of amount
+    const isNormalDelegate = formData.delegateType === 'normal';
+    
+    // If no payment required OR normal delegate type, submit directly
+    if (amount <= 0 || isNormalDelegate) {
       setIsSubmitting(true);
       
       try {
-        // Create free registration
+        // Create registration (free for normal delegates, or other free registrations)
         const bookingId = generateDelegateBookingId();
         await processDelegateBooking({
-          paymentId: 'free_registration',
+          paymentId: isNormalDelegate ? 'normal_delegate_free' : 'free_registration',
           orderId: bookingId,
-          amount: 0,
-          status: 'confirmed'
+          amount: amount,
+          status: 'confirmed' // Always confirmed for normal delegates and free registrations
         }, bookingId);
         
         // Show success modal for Normal option, toast for others
