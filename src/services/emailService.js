@@ -95,18 +95,18 @@ const tryDelegateSpecificAPI = async (delegateData) => {
   try {
     // Use the Next.js API route to avoid CORS issues (same as other booking types)
     const emailData = {
-      name: delegateData.delegateDetails?.name || delegateData.name || '',
-      email: delegateData.delegateDetails?.email || delegateData.email || '',
-      order_id: delegateData.bookingId || delegateData.order_id || delegateData.id || '',
-      event_date: '2025-11-15', // Fixed delegate event date
-      booking_type: 'Delegate Registration',
-      amount: (delegateData.totalAmount !== undefined ? delegateData.totalAmount : (delegateData.amount || 0)).toString(),
-      mobile: delegateData.delegateDetails?.mobile || '',
-      address: `${delegateData.delegateDetails?.address || ''}, ${delegateData.delegateDetails?.city || ''}, ${delegateData.delegateDetails?.state || ''}, ${delegateData.delegateDetails?.country || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
-      pan: delegateData.delegateDetails?.pan || '',
+      name: delegateData.delegateDetails?.name || delegateData.name || 'Delegate Member',
+      email: delegateData.delegateDetails?.email || delegateData.email || 'no-email@example.com',
+      order_id: delegateData.bookingId || delegateData.order_id || delegateData.id || 'UNKNOWN',
+      event_date: 'November 15, 2025', // Required: Fixed delegate event date
+      booking_type: 'Delegate Registration', // Required: Booking type
+      amount: Math.max(0, delegateData.totalAmount !== undefined ? delegateData.totalAmount : (delegateData.amount || 0)).toString(), // Required: Ensure non-negative
+      mobile: delegateData.delegateDetails?.mobile || '0000000000',
+      address: `${delegateData.delegateDetails?.address || 'Not provided'}, ${delegateData.delegateDetails?.city || 'Not provided'}, ${delegateData.delegateDetails?.state || 'Not provided'}, ${delegateData.delegateDetails?.country || 'India'}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '') || 'Address not provided',
+      pan: delegateData.delegateDetails?.pan || 'Not provided',
       valid_from: new Date().toISOString().split('T')[0],
       valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year validity
-      details: createDelegateEmailDetails(delegateData)
+      details: createDelegateEmailDetails(delegateData) // Required: Detailed delegate info
     };
     
     // Debug logging
