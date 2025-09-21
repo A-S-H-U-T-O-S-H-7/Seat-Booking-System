@@ -15,7 +15,6 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 import { uploadDelegateImage, validateImageFile } from '@/services/delegateImageService';
-import { handleNormalDelegateEmail } from '@/services/normalDelegateEmailService';
 import { sendDelegateConfirmationEmail } from '@/services/emailService';
 
  
@@ -342,24 +341,14 @@ const DelegateForm = () => {
       // Send confirmation email for successful registrations
       if (paymentData.status === 'confirmed') {
         try {
-          // Use dedicated normal delegate email service for normal delegate type
-          const isNormalDelegate = bookingDataToSave.eventDetails.delegateType === 'normal';
-          
-          let emailResult;
-          if (isNormalDelegate) {
-            console.log('📧 Using dedicated normal delegate email service...');
-            emailResult = await handleNormalDelegateEmail(bookingDataToSave);
-          } else {
-            console.log('📧 Using general delegate email service...');
-            const enrichedData = {
-              ...bookingDataToSave,
-              order_id: bookingId,
-              amount: calculateFormAmount(),
-              payment_id: paymentData.paymentId || 'paid_registration'
-            };
-            emailResult = await sendDelegateConfirmationEmail(enrichedData);
-          }
-          
+          console.log('📧 Sending delegate confirmation email...');
+          const enrichedData = {
+            ...bookingDataToSave,
+            order_id: bookingId,
+            amount: calculateFormAmount(),
+            payment_id: paymentData.paymentId || 'delegate_registration'
+          };
+          const emailResult = await sendDelegateConfirmationEmail(enrichedData);
           console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } catch (emailError) {
           console.error('❌ Failed to send delegate email:', emailError);
