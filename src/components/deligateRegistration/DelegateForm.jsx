@@ -339,9 +339,12 @@ const DelegateForm = () => {
       console.log('✅ Delegate booking created successfully:', bookingId);
       
       // Send confirmation email for successful registrations
-      if (paymentData.status === 'confirmed') {
+      const isNormalDelegate = bookingDataToSave.eventDetails.delegateType === 'normal';
+      
+      // Send email for confirmed registrations OR normal delegates (always send for normal)
+      if (paymentData.status === 'confirmed' || isNormalDelegate) {
         try {
-          console.log('📧 Sending delegate confirmation email...');
+          console.log('📧 Sending delegate confirmation email...', isNormalDelegate ? '(Normal delegate - always send)' : '(Confirmed payment)');
           const enrichedData = {
             ...bookingDataToSave,
             order_id: bookingId,
