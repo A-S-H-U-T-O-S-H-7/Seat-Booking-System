@@ -351,6 +351,21 @@ const DelegateForm = () => {
             amount: calculateFormAmount(),
             payment_id: paymentData.paymentId || 'delegate_registration'
           };
+          
+          // Debug: Log the data being sent to email service
+          console.log('🐛 Data being sent to delegate email service:', {
+            name: enrichedData.delegateDetails?.name,
+            email: enrichedData.delegateDetails?.email,
+            delegateType: enrichedData.eventDetails?.delegateType,
+            duration: enrichedData.eventDetails?.duration,
+            numberOfPersons: enrichedData.eventDetails?.numberOfPersons,
+            registrationType: enrichedData.eventDetails?.registrationType,
+            totalAmount: enrichedData.totalAmount,
+            amount: enrichedData.amount,
+            order_id: enrichedData.order_id,
+            payment_id: enrichedData.payment_id
+          });
+          
           const emailResult = await sendDelegateConfirmationEmail(enrichedData);
           console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } catch (emailError) {
