@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
     try {
         const emailData = await req.json();
-        console.log('📧 Booking email API received data:', emailData);
+        console.log('📧 Delegate email API received data:', emailData);
 
         // Validate required fields
         const requiredFields = ['name', 'email', 'order_id'];
@@ -24,9 +24,9 @@ export async function POST(req) {
         formData.append("name", emailData.name.trim());
         formData.append("email", emailData.email.trim());
         formData.append("order_id", emailData.order_id.trim());
-        formData.append("details", emailData.details || 'Booking confirmation details');
-        formData.append("event_date", emailData.event_date || 'To be announced');
-        formData.append("booking_type", emailData.booking_type || 'General Booking');
+        formData.append("details", emailData.details || 'Delegate Registration Details');
+        formData.append("event_date", emailData.event_date || 'November 15, 2025');
+        formData.append("booking_type", emailData.booking_type || 'Delegate Registration');
         formData.append("amount", (emailData.amount !== undefined && emailData.amount !== null ? emailData.amount.toString() : '0'));
         
         // Add optional fields if they exist
@@ -36,7 +36,7 @@ export async function POST(req) {
         formData.append("valid_from", emailData.valid_from || new Date().toISOString().split('T')[0]);
         formData.append("valid_to", emailData.valid_to || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
-        console.log('📤 Sending booking email to external API...');
+        console.log('📤 Sending delegate email to external API...');
         
         // Call the external email API from server-side (no CORS issues)
         const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
@@ -68,10 +68,10 @@ export async function POST(req) {
         }
 
         if (result.status) {
-            console.log('✅ Booking email sent successfully');
+            console.log('✅ Delegate email sent successfully');
             return NextResponse.json({
                 status: true,
-                message: result.message || 'Booking confirmation email sent successfully'
+                message: result.message || 'Delegate confirmation email sent successfully'
             });
         } else {
             console.log('❌ External API returned error:', result);
@@ -83,11 +83,11 @@ export async function POST(req) {
         }
 
     } catch (error) {
-        console.error('❌ Booking email API error:', error);
+        console.error('❌ Delegate email API error:', error);
         return NextResponse.json({
             status: false,
             errors: [error.message || 'Internal server error'],
-            message: 'Failed to send booking email'
+            message: 'Failed to send delegate email'
         });
     }
 }

@@ -56,27 +56,23 @@ export const sendDonationConfirmationEmail = async (donationData) => {
  */
 export const sendDelegateConfirmationEmail = async (delegateData) => {
   try {
-    // For normal delegates, just use the working general booking email API directly
-    const isNormalDelegate = delegateData.eventDetails?.delegateType === 'normal';
+    console.log('📧 Sending delegate confirmation email for type:', delegateData.eventDetails?.delegateType);
     
-    if (isNormalDelegate) {
-      console.log('🎯 Using simple working method for normal delegate email...');
-      // Use the exact same method that works for havan/stall/show bookings
-      const result = await sendBookingConfirmationEmail(delegateData, 'delegate');
-      return result;
-    }
-    
-    // For other delegates, try the dedicated API first, then fallback
+    // Try the dedicated delegate API first for all delegate types (including normal)
     const primaryResult = await tryDelegateSpecificAPI(delegateData);
     
     if (primaryResult.success) {
+      console.log('✅ Delegate email sent successfully via dedicated API');
       return primaryResult;
     }
+    
+    console.log('⚠️ Primary delegate API failed, trying fallback...', primaryResult.error);
     
     // Fallback to general email API with proper delegate formatting
     const fallbackResult = await sendDelegateViaGeneralAPI(delegateData);
     
     if (fallbackResult.success) {
+      console.log('✅ Delegate email sent successfully via fallback API');
       return { 
         success: true, 
         message: 'Delegate confirmation email sent via fallback system', 
@@ -84,6 +80,7 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
         method: 'fallback'
       };
     } else {
+      console.log('❌ Both delegate email methods failed');
       return { 
         success: false, 
         error: `Both email methods failed. Primary: ${primaryResult.error}. Fallback: ${fallbackResult.error}`,
@@ -92,6 +89,7 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
       };
     }
   } catch (error) {
+    console.error('❌ Error in sendDelegateConfirmationEmail:', error);
     return { success: false, error: 'Failed to send delegate email: ' + error.message };
   }
 };
@@ -103,7 +101,7 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
  */
 const tryDelegateSpecificAPI = async (delegateData) => {
   try {
-    // Use the Next.js API route to avoid CORS issues (same as other booking types)
+    // Use the new dedicated delegate API route to avoid CORS issues
     const emailData = {
       name: delegateData.delegateDetails?.name || delegateData.name || 'Delegate Member',
       email: delegateData.delegateDetails?.email || delegateData.email || 'no-email@example.com',
@@ -120,9 +118,9 @@ const tryDelegateSpecificAPI = async (delegateData) => {
     };
     
     // Debug logging
-    console.log('🐛 Delegate email data being sent to Next.js API route:', emailData);
+    console.log('🐛 Delegate email data being sent to dedicated API route:', emailData);
     
-    const response = await fetch('/api/emails/booking', {
+    const response = await fetch('/api/emails/delegate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -136,16 +134,16 @@ const tryDelegateSpecificAPI = async (delegateData) => {
     try {
       result = JSON.parse(responseText);
     } catch (parseError) {
-      return { success: false, error: 'Invalid response from primary delegate email service', rawResponse: responseText };
+      return { success: false, error: 'Invalid response from delegate email API', rawResponse: responseText };
     }
     
     if (result.status) {
-      return { success: true, message: 'Delegate confirmation email sent', data: result };
+      return { success: true, message: 'Delegate confirmation email sent via dedicated API', data: result };
     } else {
-      return { success: false, error: 'Primary delegate API error: ' + (result.errors ? result.errors.join(', ') : 'Unknown error'), data: result };
+      return { success: false, error: 'Delegate API error: ' + (result.errors ? result.errors.join(', ') : result.message || 'Unknown error'), data: result };
     }
   } catch (error) {
-    return { success: false, error: 'Primary delegate API network error: ' + error.message };
+    return { success: false, error: 'Delegate API network error: ' + error.message };
   }
 };
 
@@ -259,21 +257,16 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       };
     }
 
-    // Create FormData for the API request
-    const formData = new FormData();
-    Object.keys(emailData).forEach(key => {
-      if (emailData[key] !== null && emailData[key] !== undefined) {
-        formData.append(key, emailData[key]);
-      }
-    });
+    // Prepare email data for JSON API request
+    // No need for FormData since we're using JSON API
 
-    // Send request to the email API
-    const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
+    // Send request to our server-side email API to avoid CORS issues
+    const response = await fetch('/api/emails/booking', {
       method: 'POST',
-      body: formData,
       headers: {
-        'User-Agent': 'Havan-Booking-System/1.0'
-      }
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailData)
     });
 
     const responseText = await response.text();
@@ -816,6 +809,28 @@ const createDelegateEmailDetails = (delegateData) => {
     organizationName = eventDetails.templeName || 'Temple Registration';
   }
   
+  // Format package type display
+  let packageTypeDisplay;
+  let registrationFee;
+  
+  switch(delegateType) {
+    case 'normal':
+      packageTypeDisplay = 'Normal Package (Free Registration)';
+      registrationFee = 'Free';
+      break;
+    case 'withoutAssistance':
+      packageTypeDisplay = 'Without Assistance Package';
+      registrationFee = `₹${delegateData.totalAmount || 0}`;
+      break;
+    case 'withAssistance':
+      packageTypeDisplay = 'With Assistance Package';
+      registrationFee = `₹${delegateData.totalAmount || 0}`;
+      break;
+    default:
+      packageTypeDisplay = delegateType || 'Standard Package';
+      registrationFee = `₹${delegateData.totalAmount || 0}`;
+  }
+  
   return `
 👤 DELEGATE REGISTRATION DETAILS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -824,11 +839,11 @@ const createDelegateEmailDetails = (delegateData) => {
 • Organization: ${organizationName}
 • Email: ${delegateDetails.email || 'Not provided'}
 • Mobile: ${delegateDetails.mobile || 'Not provided'}
-• Registration Fee: ₹${delegateData.totalAmount || 0}
+• Registration Fee: ${registrationFee}
 
 📦 Package Details:
-• Package Type: ${delegateType === 'normal' ? 'Normal Package (Free)' : delegateType === 'withoutAssistance' ? 'Without Assistance Package' : delegateType === 'withAssistance' ? 'With Assistance Package' : delegateType || 'Standard Package'}
-• Duration: ${eventDetails.duration || 'TBD'} days
+• Package Type: ${packageTypeDisplay}
+• Duration: ${eventDetails.duration || eventDetails.days || 'TBD'} days
 • Number of Persons: ${eventDetails.numberOfPersons || 1}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
@@ -849,6 +864,8 @@ ${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : '
 🏛️ Event: International Śrī Jagannātha Pāñcharātra Havan Ceremony
 📅 Event Date: November 15-20, 2025
 📍 Venue: To be announced
+
+🙏 Thank you for registering! We look forward to your participation in this sacred ceremony.
   `.trim();
 };
 
