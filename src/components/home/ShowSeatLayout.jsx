@@ -503,8 +503,10 @@ export default function ShowAuditorium() {
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• Reserved seats require BookMyShow booking</li>
               <li>• Free sitting requires entry pass and is first-come, first-served</li>
-              <li>• Shows run daily from 6 PM to 10 PM</li>
-              <li>• Please arrive 30 minutes before show time</li>
+              <li>• Jagannath Katha and show time 5.30 pm to 10.30 pm </li>
+              <li>• Please arrive 30 minutes before show time due to security reasons</li>
+              <li>• No arms and ammunitions allowed inside the venue</li>
+
             </ul>
           </div>
         </div>
