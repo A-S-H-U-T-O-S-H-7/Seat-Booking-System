@@ -93,30 +93,31 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
  */
 const tryDelegateSpecificAPI = async (delegateData) => {
   try {
-    const formData = new FormData();
-    formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
-    formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');
-    formData.append('participation_type', delegateData.eventDetails?.participationType || delegateData.participation_type || 'Delegate');
-    formData.append('registration_type', delegateData.eventDetails?.registrationType || delegateData.registration_type || 'Individual');
-    formData.append('duration', delegateData.eventDetails?.duration || delegateData.duration || '5');
-    formData.append('number_of_person', delegateData.eventDetails?.numberOfPersons || delegateData.number_of_persons || '1');
-    formData.append('amount', (delegateData.totalAmount !== undefined ? delegateData.totalAmount : (delegateData.amount || 0)).toString());
-    formData.append('payment_id', delegateData.payment?.transactionId || delegateData.payment_id || 'delegate_registration_' + Date.now());
-    formData.append('order_id', delegateData.bookingId || delegateData.order_id || delegateData.id || '');
-    formData.append('transaction_date', new Date().toISOString().split('T')[0]);
+    // Use the Next.js API route to avoid CORS issues (same as other booking types)
+    const emailData = {
+      name: delegateData.delegateDetails?.name || delegateData.name || '',
+      email: delegateData.delegateDetails?.email || delegateData.email || '',
+      order_id: delegateData.bookingId || delegateData.order_id || delegateData.id || '',
+      event_date: '2025-11-15', // Fixed delegate event date
+      booking_type: 'Delegate Registration',
+      amount: (delegateData.totalAmount !== undefined ? delegateData.totalAmount : (delegateData.amount || 0)).toString(),
+      mobile: delegateData.delegateDetails?.mobile || '',
+      address: `${delegateData.delegateDetails?.address || ''}, ${delegateData.delegateDetails?.city || ''}, ${delegateData.delegateDetails?.state || ''}, ${delegateData.delegateDetails?.country || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
+      pan: delegateData.delegateDetails?.pan || '',
+      valid_from: new Date().toISOString().split('T')[0],
+      valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1 year validity
+      details: createDelegateEmailDetails(delegateData)
+    };
     
     // Debug logging
-    console.log('🐛 Delegate email API data being sent:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`   ${key}: ${value}`);
-    }
+    console.log('🐛 Delegate email data being sent to Next.js API route:', emailData);
     
-    const response = await fetch('https://svsamiti.com/havan-booking/delegate-email.php', {
+    const response = await fetch('/api/emails/booking', {
       method: 'POST',
-      body: formData,
       headers: {
-        'User-Agent': 'Havan-Booking-System/1.0'
-      }
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailData)
     });
     
     const responseText = await response.text();
@@ -786,6 +787,59 @@ const validateEmailData = (emailData) => {
     isValid: errors.length === 0,
     errors
   };
+};
+
+/**
+ * Helper function to create detailed email content for delegate registrations
+ */
+const createDelegateEmailDetails = (delegateData) => {
+  const delegateDetails = delegateData.delegateDetails || {};
+  const eventDetails = delegateData.eventDetails || {};
+  const registrationType = eventDetails.registrationType || 'Individual';
+  const delegateType = eventDetails.delegateType || 'Standard';
+  
+  // Determine organization name
+  let organizationName = 'Individual Registration';
+  if (registrationType === 'Company') {
+    organizationName = eventDetails.companyName || delegateDetails.companyname || 'Company Registration';
+  } else if (registrationType === 'Temple') {
+    organizationName = eventDetails.templeName || 'Temple Registration';
+  }
+  
+  return `
+👤 DELEGATE REGISTRATION DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Delegate Name: ${delegateDetails.name || 'Not specified'}
+• Registration Type: ${registrationType}
+• Organization: ${organizationName}
+• Email: ${delegateDetails.email || 'Not provided'}
+• Mobile: ${delegateDetails.mobile || 'Not provided'}
+• Registration Fee: ₹${delegateData.totalAmount || 0}
+
+📦 Package Details:
+• Package Type: ${getDelegateTypeDisplay(delegateType)}
+• Duration: ${eventDetails.duration || 'TBD'} days
+• Number of Persons: ${eventDetails.numberOfPersons || 1}
+${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
+
+📍 Location Details:
+• Address: ${delegateDetails.address || 'Not provided'}
+• City: ${delegateDetails.city || 'Not provided'}
+• State: ${delegateDetails.state || 'Not provided'}
+• Country: ${delegateDetails.country || 'Not provided'}
+• PIN Code: ${delegateDetails.pincode || 'Not provided'}
+
+🆔 Identity Documents:
+${delegateDetails.aadharno ? `• Aadhar: ${maskAadhar(delegateDetails.aadharno)}` : ''}
+${delegateDetails.pan ? `• PAN: ${delegateDetails.pan}` : ''}
+${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : ''}
+
+📋 Registration ID: ${delegateData.bookingId || delegateData.order_id || delegateData.id}
+
+🏛️ Event: International Śrī Jagannātha Pāñcharātra Havan Ceremony
+📅 Event Date: November 15-20, 2025
+📍 Venue: To be announced
+  `.trim();
 };
 
 export default {
