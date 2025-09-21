@@ -20,14 +20,18 @@ export async function POST(req) {
         // Prepare form data for the external email API
         const formData = new FormData();
         
-        // Add required fields
-        formData.append("name", emailData.name.trim());
-        formData.append("email", emailData.email.trim());
-        formData.append("order_id", emailData.order_id.trim());
-        formData.append("details", emailData.details || 'Delegate Registration Details');
-        formData.append("event_date", emailData.event_date || 'November 15, 2025');
-        formData.append("booking_type", emailData.booking_type || 'Delegate Registration');
-        formData.append("amount", (emailData.amount !== undefined && emailData.amount !== null ? emailData.amount.toString() : '0'));
+        // Add required fields - ensure none are empty strings
+        formData.append("name", (emailData.name && emailData.name.trim()) || 'Delegate Member');
+        formData.append("email", (emailData.email && emailData.email.trim()) || 'no-email@example.com');
+        formData.append("order_id", (emailData.order_id && emailData.order_id.trim()) || 'UNKNOWN');
+        formData.append("details", (emailData.details && emailData.details.trim()) || 'Delegate Registration Details');
+        formData.append("event_date", (emailData.event_date && emailData.event_date.trim()) || 'November 15, 2025');
+        formData.append("booking_type", (emailData.booking_type && emailData.booking_type.trim()) || 'Delegate Registration');
+        // Ensure amount is always a valid string (never empty, null, or undefined)
+        const amount = emailData.amount !== undefined && emailData.amount !== null && emailData.amount !== '' 
+            ? emailData.amount.toString() 
+            : '0';
+        formData.append("amount", amount);
         
         // Add optional fields if they exist
         if (emailData.mobile) formData.append("mobile", emailData.mobile.toString().trim());
@@ -36,6 +40,12 @@ export async function POST(req) {
         formData.append("valid_from", emailData.valid_from || new Date().toISOString().split('T')[0]);
         formData.append("valid_to", emailData.valid_to || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
+        // Debug: Log what we're sending to external API
+        console.log('📦 FormData being sent to external API:');
+        for (const [key, value] of formData.entries()) {
+            console.log(`  ${key}: "${value}"`);
+        }
+        
         console.log('📤 Sending delegate email to external API...');
         
         // Call the external email API from server-side (no CORS issues)

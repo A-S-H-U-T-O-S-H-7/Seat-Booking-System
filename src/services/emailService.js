@@ -108,7 +108,10 @@ const tryDelegateSpecificAPI = async (delegateData) => {
       order_id: delegateData.bookingId || delegateData.order_id || delegateData.id || 'UNKNOWN',
       event_date: 'November 15, 2025', // Required: Fixed delegate event date
       booking_type: 'Delegate Registration', // Required: Booking type
-      amount: Math.max(0, delegateData.totalAmount !== undefined ? delegateData.totalAmount : (delegateData.amount || 0)).toString(), // Required: Ensure non-negative
+      amount: (delegateData.totalAmount !== undefined && delegateData.totalAmount !== null 
+        ? Math.max(0, delegateData.totalAmount) 
+        : (delegateData.amount !== undefined && delegateData.amount !== null ? Math.max(0, delegateData.amount) : 0)
+      ).toString(), // Required: Ensure non-negative and always string
       mobile: delegateData.delegateDetails?.mobile || '0000000000',
       address: `${delegateData.delegateDetails?.address || 'Not provided'}, ${delegateData.delegateDetails?.city || 'Not provided'}, ${delegateData.delegateDetails?.state || 'Not provided'}, ${delegateData.delegateDetails?.country || 'India'}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '') || 'Address not provided',
       pan: delegateData.delegateDetails?.pan || 'Not provided',
@@ -777,11 +780,23 @@ const validateEmailData = (emailData) => {
     errors.push('Booking Type is required');
   }
   
-  // Allow 0 amount for delegate registrations (including normal/free packages)
+  // Handle amount validation - allow 0 for delegate registrations
   const isDelegate = emailData.booking_type && emailData.booking_type.includes('Delegate');
   
-  if (!emailData.amount && emailData.amount !== '0') {
-    errors.push('Amount is required');
+  // Ensure amount is always present as a string
+  if (emailData.amount === undefined || emailData.amount === null || emailData.amount === '') {
+    // Set default amount based on booking type
+    emailData.amount = isDelegate ? '0' : '0';
+  }
+  
+  // Convert to string if it's a number
+  if (typeof emailData.amount === 'number') {
+    emailData.amount = emailData.amount.toString();
+  }
+  
+  // Validate amount format
+  if (isNaN(parseFloat(emailData.amount))) {
+    errors.push('Amount must be a valid number');
   } else if (!isDelegate && parseFloat(emailData.amount) <= 0) {
     errors.push('Amount must be greater than 0');
   }

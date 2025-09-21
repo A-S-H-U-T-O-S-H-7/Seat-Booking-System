@@ -27,7 +27,11 @@ export async function POST(req) {
         formData.append("details", emailData.details || 'Booking confirmation details');
         formData.append("event_date", emailData.event_date || 'To be announced');
         formData.append("booking_type", emailData.booking_type || 'General Booking');
-        formData.append("amount", (emailData.amount !== undefined && emailData.amount !== null ? emailData.amount.toString() : '0'));
+        // Ensure amount is always a valid string (never empty, null, or undefined)
+        const amount = emailData.amount !== undefined && emailData.amount !== null && emailData.amount !== '' 
+            ? emailData.amount.toString() 
+            : '0';
+        formData.append("amount", amount);
         
         // Add optional fields if they exist
         if (emailData.mobile) formData.append("mobile", emailData.mobile.toString().trim());
