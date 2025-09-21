@@ -295,19 +295,19 @@ export async function POST(req) {
         const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
         const formData = new FormData();
         
-        // Add all required fields to FormData with validation
-        if (name && name.trim()) formData.append("name", name.trim());
-        if (email && email.trim()) formData.append("email", email.trim());
-        if (order_id && order_id.trim()) formData.append("order_id", order_id.trim());
-        if (details && details.trim()) formData.append("details", details.trim());
-        if (event_date && event_date.trim()) formData.append("event_date", event_date.trim());
-        if (booking_type && booking_type.trim()) formData.append("booking_type", booking_type.trim());
-        if (amount && amount.toString().trim()) formData.append("amount", amount.toString().trim());
+        // Add all required fields to FormData with validation - ensure no empty values
+        formData.append("name", (name && name.trim()) || 'Member');
+        formData.append("email", (email && email.trim()) || 'no-email@example.com');
+        formData.append("order_id", (order_id && order_id.trim()) || 'UNKNOWN');
+        formData.append("details", (details && details.trim()) || 'Registration details not available');
+        formData.append("event_date", (event_date && event_date.trim()) || 'Event date TBD');
+        formData.append("booking_type", (booking_type && booking_type.trim()) || 'General Registration');
+        formData.append("amount", (amount !== undefined && amount !== null ? amount.toString() : '0'));
         if (mobile && mobile.toString().trim()) formData.append("mobile", mobile.toString().trim());
         if (address && address.trim()) formData.append("address", address.trim());
         if (pan && pan.trim()) formData.append("pan", pan.trim());
-        if (valid_from && valid_from.trim()) formData.append("valid_from", valid_from.trim());
-        if (valid_to && valid_to.trim()) formData.append("valid_to", valid_to.trim());
+        formData.append("valid_from", (valid_from && valid_from.trim()) || new Date().toISOString().split('T')[0]);
+        formData.append("valid_to", (valid_to && valid_to.trim()) || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
         formData.append("member_pass", pdfBlob, `member_pass_${order_id}.pdf`);
         
         // Debug: Log FormData contents (for debugging)
