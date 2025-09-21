@@ -120,8 +120,16 @@ const tryDelegateSpecificAPI = async (delegateData) => {
       details: createDelegateEmailDetails(delegateData) // Required: Detailed delegate info
     };
     
-    // Debug logging
-    console.log('🐛 Delegate email data being sent to dedicated API route:', emailData);
+    // Debug logging - show every field being sent
+    console.log('🐛 Delegate email data being sent to dedicated API route:');
+    console.log('  name:', emailData.name);
+    console.log('  email:', emailData.email);
+    console.log('  order_id:', emailData.order_id);
+    console.log('  event_date:', emailData.event_date);
+    console.log('  booking_type:', emailData.booking_type);
+    console.log('  amount:', emailData.amount, '(type:', typeof emailData.amount, ')');
+    console.log('  details:', emailData.details);
+    console.log('  Full emailData:', emailData);
     
     const response = await fetch('/api/emails/delegate', {
       method: 'POST',

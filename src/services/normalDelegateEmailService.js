@@ -89,18 +89,29 @@ const prepareNormalDelegateEmailData = (delegateData) => {
     organizationName = eventDetails.templeName || 'Temple Registration';
   }
 
+  // Format address properly
+  const formattedAddress = [
+    delegateDetails.address,
+    delegateDetails.city,
+    delegateDetails.state,
+    delegateDetails.country,
+    delegateDetails.pincode
+  ].filter(Boolean).join(', ');
+
   return {
     // Basic information
     name: delegateDetails.name || 'Valued Delegate',
     email: delegateDetails.email || '',
     mobile: delegateDetails.mobile || '',
+    address: formattedAddress || 'Not provided',
+    pan: delegateDetails.pan || 'Not provided',
     
     // Registration details
     order_id: delegateData.bookingId || delegateData.id || '',
     participation_type: 'Delegate',
     registration_type: registrationType,
     delegate_type: 'normal',
-    duration: eventDetails.duration || '5',
+    duration: eventDetails.duration || eventDetails.days || '5',
     number_of_person: eventDetails.numberOfPersons || '1',
     
     // Amount - can be 0 or any value for normal delegates
@@ -128,21 +139,58 @@ const prepareNormalDelegateEmailData = (delegateData) => {
  */
 const sendViaDedicatedAPI = async (emailData) => {
   try {
-    const formData = new FormData();
-    
-    // Add all email data to form
-    Object.keys(emailData).forEach(key => {
-      if (emailData[key] !== null && emailData[key] !== undefined && emailData[key] !== '') {
-        formData.append(key, emailData[key]);
-      }
-    });
+    console.log('📧 Sending normal delegate email via dedicated API route...');
+    console.log('🐛 Email data for normal delegate:', emailData);
 
-    const response = await fetch('https://svsamiti.com/havan-booking/delegate-email.php', {
+    const response = await fetch('/api/emails/delegate', {
       method: 'POST',
-      body: formData,
       headers: {
-        'User-Agent': 'Havan-Booking-System/1.0',
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: emailData.name,
+        email: emailData.email,
+        order_id: emailData.order_id,
+        event_date: 'November 15, 2025',
+        booking_type: 'Delegate Registration',
+        amount: emailData.amount,
+        mobile: emailData.mobile,
+        address: `${emailData.address || 'Not provided'}`,
+        pan: emailData.pan || 'Not provided',
+        valid_from: new Date().toISOString().split('T')[0],
+        valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        details: `
+👤 NORMAL DELEGATE REGISTRATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Delegate Name: ${emailData.name}
+• Registration Type: ${emailData.registration_type}
+• Organization: ${emailData.organization_name}
+• Email: ${emailData.email}
+• Mobile: ${emailData.mobile}
+• Registration Fee: FREE (₹${emailData.amount})
+
+📦 Package Details:
+• Package Type: Normal Delegate Package (FREE)
+• Duration: ${emailData.duration} days
+• Number of Persons: ${emailData.number_of_person}
+${emailData.designation ? `• Designation: ${emailData.designation}` : ''}
+
+🏤 Event Information:
+• Event Date: November 15-20, 2025
+• Venue: To be announced
+• Registration ID: ${emailData.order_id}
+• Registration Date: ${emailData.transaction_date}
+
+🎁 FREE PACKAGE INCLUDES:
+• Event Entry Pass
+• Basic Information Kit
+• Networking Opportunities
+• Cultural Program Access
+• General Seating Arrangement
+
+📞 Contact: delegates@svsamiti.com
+        `.trim()
+      })
     });
 
     const responseText = await response.text();

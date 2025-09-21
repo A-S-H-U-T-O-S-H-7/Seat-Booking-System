@@ -16,6 +16,7 @@ import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/fires
 import { toast } from 'react-hot-toast';
 import { uploadDelegateImage, validateImageFile } from '@/services/delegateImageService';
 import { sendDelegateConfirmationEmail } from '@/services/emailService';
+import { handleNormalDelegateEmail } from '@/services/normalDelegateEmailService';
 
  
 
@@ -366,7 +367,16 @@ const DelegateForm = () => {
             payment_id: enrichedData.payment_id
           });
           
-          const emailResult = await sendDelegateConfirmationEmail(enrichedData);
+          let emailResult;
+          // Use specialized service for normal delegates
+          if (isNormalDelegate) {
+            console.log('🎯 Using specialized normal delegate email service');
+            emailResult = await handleNormalDelegateEmail(enrichedData);
+          } else {
+            // Use regular delegate email service for other delegate types
+            emailResult = await sendDelegateConfirmationEmail(enrichedData);
+          }
+          
           console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } catch (emailError) {
           console.error('❌ Failed to send delegate email:', emailError);

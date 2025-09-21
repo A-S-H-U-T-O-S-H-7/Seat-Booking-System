@@ -21,17 +21,34 @@ export async function POST(req) {
         const formData = new FormData();
         
         // Add required fields - ensure none are empty strings
-        formData.append("name", (emailData.name && emailData.name.trim()) || 'Delegate Member');
-        formData.append("email", (emailData.email && emailData.email.trim()) || 'no-email@example.com');
-        formData.append("order_id", (emailData.order_id && emailData.order_id.trim()) || 'UNKNOWN');
-        formData.append("details", (emailData.details && emailData.details.trim()) || 'Delegate Registration Details');
-        formData.append("event_date", (emailData.event_date && emailData.event_date.trim()) || 'November 15, 2025');
-        formData.append("booking_type", (emailData.booking_type && emailData.booking_type.trim()) || 'Delegate Registration');
+        const name = (emailData.name && emailData.name.trim()) || 'Delegate Member';
+        const email = (emailData.email && emailData.email.trim()) || 'no-email@example.com';
+        const order_id = (emailData.order_id && emailData.order_id.trim()) || 'UNKNOWN';
+        const details = (emailData.details && emailData.details.trim()) || 'Delegate Registration Details';
+        const event_date = (emailData.event_date && emailData.event_date.trim()) || 'November 15, 2025';
+        const booking_type = (emailData.booking_type && emailData.booking_type.trim()) || 'Delegate Registration';
+        
         // Ensure amount is always a valid string (never empty, null, or undefined)
         const amount = emailData.amount !== undefined && emailData.amount !== null && emailData.amount !== '' 
             ? emailData.amount.toString() 
             : '0';
+        
+        formData.append("name", name);
+        formData.append("email", email);
+        formData.append("order_id", order_id);
+        formData.append("details", details);
+        formData.append("event_date", event_date);
+        formData.append("booking_type", booking_type);
         formData.append("amount", amount);
+        
+        // Validation check - make sure email is valid
+        if (email === 'no-email@example.com' && emailData.email) {
+            console.warn('⚠️ Invalid email provided:', emailData.email);
+        }
+        
+        if (!email.includes('@') || email === 'no-email@example.com') {
+            throw new Error('Valid email address is required for sending delegate confirmation');
+        }
         
         // Add optional fields if they exist
         if (emailData.mobile) formData.append("mobile", emailData.mobile.toString().trim());
