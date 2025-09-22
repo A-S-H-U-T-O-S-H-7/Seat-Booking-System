@@ -1,4 +1,17 @@
+// Email Service for sending booking confirmation emails
+// Integrates with https://svsamiti.com/havan-booking/email.php
 
+/**
+ * Sends booking confirmation email using the external API
+ * @param {Object} bookingData - The booking information
+ * @param {string} bookingType - Type of booking (havan, show, stall, delegate, donation)
+ * @returns {Promise<Object>} - API response
+ */
+/**
+ * Send donation confirmation email
+ * @param {Object} donationData - Donation information
+ * @returns {Promise<Object>} - API response
+ */
 export const sendDonationConfirmationEmail = async (donationData) => {
   try {
     const formData = new FormData();
@@ -43,8 +56,7 @@ export const sendDonationConfirmationEmail = async (donationData) => {
  */
 export const sendDelegateConfirmationEmail = async (delegateData) => {
   try {
-    
-    // Try the dedicated delegate API first for all delegate types (including normal)
+    // First, try the dedicated delegate email API
     const primaryResult = await tryDelegateSpecificAPI(delegateData);
     
     if (primaryResult.success) {
@@ -70,7 +82,6 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
       };
     }
   } catch (error) {
-    console.error('❌ Error in sendDelegateConfirmationEmail:', error);
     return { success: false, error: 'Failed to send delegate email: ' + error.message };
   }
 };
@@ -82,7 +93,6 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
  */
 const tryDelegateSpecificAPI = async (delegateData) => {
   try {
-    // RESTORED WORKING VERSION - Direct external API call
     const formData = new FormData();
     formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
     formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');
@@ -90,14 +100,6 @@ const tryDelegateSpecificAPI = async (delegateData) => {
     formData.append('registration_type', delegateData.eventDetails?.registrationType || delegateData.registration_type || '');
     formData.append('duration', delegateData.eventDetails?.duration || delegateData.duration || '');
     formData.append('number_of_person', delegateData.eventDetails?.numberOfPersons || delegateData.number_of_persons || '1');
-    
-    // Handle normal delegates (free) vs paid delegates
-    const isNormalDelegate = delegateData.eventDetails?.delegateType === 'normal';
-    if (isNormalDelegate) {
-      // For normal delegates, keep the custom email handling that's working
-      return { success: false, error: 'Use normal delegate service for normal delegates' };
-    }
-    
     formData.append('amount', delegateData.totalAmount?.toString() || delegateData.amount?.toString() || '');
     formData.append('payment_id', delegateData.payment?.transactionId || delegateData.payment_id || '');
     formData.append('order_id', delegateData.bookingId || delegateData.order_id || delegateData.id || '');
@@ -240,7 +242,7 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       };
     }
 
-    // Create FormData for the API request (RESTORED WORKING VERSION)
+    // Create FormData for the API request
     const formData = new FormData();
     Object.keys(emailData).forEach(key => {
       if (emailData[key] !== null && emailData[key] !== undefined) {
@@ -248,7 +250,7 @@ export const sendBookingConfirmationEmail = async (bookingData, bookingType) => 
       }
     });
 
-    // Send request to the email API (RESTORED WORKING VERSION)
+    // Send request to the email API
     const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
       method: 'POST',
       body: formData,
@@ -478,13 +480,13 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
     mobile: delegateDetails.mobile || '',
     address: `${delegateDetails.address || ''}, ${delegateDetails.city || ''}, ${delegateDetails.state || ''}, ${delegateDetails.country || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
     pan: delegateDetails.pan || '',
-    event_date: '2025-11-15', // Delegate event start date (RESTORED WORKING VERSION)
+    event_date: '2025-11-15', // Delegate event start date
     booking_type: 'Delegate Registration',
     details: `
 
 👤 Delegate Name: ${delegateDetails.name || 'Not specified'}
 🏢 Registration Type: ${registrationType}
-🏤 Organization: ${organizationName}
+🏛️ Organization: ${organizationName}
 📧 Email: ${delegateDetails.email || 'Not provided'}
 📱 Mobile: ${delegateDetails.mobile || 'Not provided'}
 💰 Registration Fee: ₹${baseData.amount}
@@ -495,7 +497,7 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
 • Number of Persons: ${eventDetails.numberOfPersons || 1}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
-📏 Location Details:
+📍 Location Details:
 • Address: ${delegateDetails.address || 'Not provided'}
 • City: ${delegateDetails.city || 'Not provided'}
 • State: ${delegateDetails.state || 'Not provided'}
@@ -765,99 +767,14 @@ const validateEmailData = (emailData) => {
     errors.push('Booking Type is required');
   }
   
-  // RESTORED WORKING VALIDATION - Allow zero amounts
-  if (emailData.amount === undefined || emailData.amount === null || parseFloat(emailData.amount) < 0) {
-    errors.push('Amount is required and must be 0 or greater');
+  if (!emailData.amount || parseFloat(emailData.amount) <= 0) {
+    errors.push('Amount is required and must be greater than 0');
   }
   
   return {
     isValid: errors.length === 0,
     errors
   };
-};
-
-/**
- * Helper function to create detailed email content for delegate registrations
- */
-const createDelegateEmailDetails = (delegateData) => {
-  const delegateDetails = delegateData.delegateDetails || {};
-  const eventDetails = delegateData.eventDetails || {};
-  const registrationType = eventDetails.registrationType || 'Individual';
-  const delegateType = eventDetails.delegateType || 'Standard';
-  
-  // Determine organization name
-  let organizationName = 'Individual Registration';
-  if (registrationType === 'Company') {
-    organizationName = eventDetails.companyName || delegateDetails.companyname || 'Company Registration';
-  } else if (registrationType === 'Temple') {
-    organizationName = eventDetails.templeName || 'Temple Registration';
-  }
-  
-  // Format package type display
-  let packageTypeDisplay;
-  let registrationFee;
-  
-  switch(delegateType) {
-    case 'normal':
-      packageTypeDisplay = 'Normal Package (Free Registration)';
-      registrationFee = 'FREE (₹0)';
-      break;
-    case 'withoutAssistance':
-      packageTypeDisplay = 'Without Assistance Package';
-      registrationFee = `₹${delegateData.totalAmount || 0}`;
-      break;
-    case 'withAssistance':
-      packageTypeDisplay = 'With Assistance Package';
-      registrationFee = `₹${delegateData.totalAmount || 0}`;
-      break;
-    default:
-      packageTypeDisplay = delegateType || 'Standard Package';
-      registrationFee = `₹${delegateData.totalAmount || 0}`;
-  }
-  
-  // For normal delegates, use simplified content
-  if (delegateType === 'normal') {
-    return `Registration Successful
-Number of Persons: ${eventDetails.numberOfPersons || 1}`;
-  }
-  
-  // For other delegate types, use detailed content
-  return `
-👤 DELEGATE REGISTRATION DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Delegate Name: ${delegateDetails.name || 'Not specified'}
-• Registration Type: ${registrationType}
-• Organization: ${organizationName}
-• Email: ${delegateDetails.email || 'Not provided'}
-• Mobile: ${delegateDetails.mobile || 'Not provided'}
-• Registration Fee: ${registrationFee}
-
-📦 Package Details:
-• Package Type: ${packageTypeDisplay}
-• Duration: ${eventDetails.duration || eventDetails.days || 'TBD'} days
-• Number of Persons: ${eventDetails.numberOfPersons || 1}
-${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
-
-📏 Location Details:
-• Address: ${delegateDetails.address || 'Not provided'}
-• City: ${delegateDetails.city || 'Not provided'}
-• State: ${delegateDetails.state || 'Not provided'}
-• Country: ${delegateDetails.country || 'Not provided'}
-• PIN Code: ${delegateDetails.pincode || 'Not provided'}
-
-🆔 Identity Documents:
-${delegateDetails.aadharno ? `• Aadhar: ${maskAadhar(delegateDetails.aadharno)}` : ''}
-${delegateDetails.pan ? `• PAN: ${delegateDetails.pan}` : ''}
-${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : ''}
-
-📋 Registration ID: ${delegateData.bookingId || delegateData.order_id || delegateData.id}
-
-🏤 Event: International Śrī Jagannātha Pāñcharātra Havan Ceremony
-📅 Event Date: December 3-7, 2025
-📏 Venue: To be announced
-
-🙏 Thank you for registering! We look forward to your participation in this sacred ceremony.
-  `.trim();
 };
 
 export default {

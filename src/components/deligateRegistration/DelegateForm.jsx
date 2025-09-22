@@ -352,11 +352,12 @@ const DelegateForm = () => {
           };
           
           let emailResult;
-          // Use specialized service for normal delegates
+          // Use specialized service for normal delegates, regular service for others
           if (isNormalDelegate) {
+            // Use the working normal delegate email service
             emailResult = await handleNormalDelegateEmail(enrichedData);
           } else {
-            // Use regular delegate email service for other delegate types
+            // Use the restored working delegate email service for with/without assistance
             emailResult = await sendDelegateConfirmationEmail(enrichedData);
           }
         } catch (emailError) {
