@@ -34,12 +34,12 @@ export async function POST(req) {
             ? emailData.amount.toString() 
             : '0';
         
-        // For free registrations (amount = '0'), use '1' to satisfy external API validation
+        // For free registrations (amount = '0'), use 'Free' string
         // but keep the actual amount for display purposes
         const displayAmount = amount;
         if (amount === '0') {
-            amount = '1'; // External API requirement
-            console.log('🆓 Free registration detected - using amount=1 for API, display=0 for user');
+            amount = 'Free'; // Use 'Free' for normal delegates
+            console.log('🆓 Free registration detected - using amount=Free for API, display=Free for user');
         }
         
         formData.append("name", name);
@@ -48,7 +48,7 @@ export async function POST(req) {
         formData.append("details", details);
         formData.append("event_date", event_date);
         formData.append("booking_type", booking_type);
-        formData.append("amount", amount); // Uses '1' for free registrations to satisfy API
+        formData.append("amount", amount); // Uses 'Free' for free registrations
         
         // Validation check - make sure email is valid
         if (email === 'no-email@example.com' && emailData.email) {

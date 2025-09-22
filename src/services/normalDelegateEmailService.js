@@ -151,45 +151,16 @@ const sendViaDedicatedAPI = async (emailData) => {
         name: emailData.name,
         email: emailData.email,
         order_id: emailData.order_id,
-        event_date: 'November 15, 2025',
+        event_date: 'December 3, 2025',
         booking_type: 'Delegate Registration',
-        amount: emailData.amount === '0' ? '1' : emailData.amount, // External API requires non-zero amount
+        amount: emailData.amount === '0' ? 'Free' : emailData.amount, // Use 'Free' for normal delegates
         mobile: emailData.mobile,
         address: `${emailData.address || 'Not provided'}`,
         pan: emailData.pan || 'Not provided',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        details: `
-👤 NORMAL DELEGATE REGISTRATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Delegate Name: ${emailData.name}
-• Registration Type: ${emailData.registration_type}
-• Organization: ${emailData.organization_name}
-• Email: ${emailData.email}
-• Mobile: ${emailData.mobile}
-• Registration Fee: FREE (₹0)
-
-📦 Package Details:
-• Package Type: Normal Delegate Package (FREE)
-• Duration: ${emailData.duration} days
-• Number of Persons: ${emailData.number_of_person}
-${emailData.designation ? `• Designation: ${emailData.designation}` : ''}
-
-🏤 Event Information:
-• Event Date: November 15-20, 2025
-• Venue: To be announced
-• Registration ID: ${emailData.order_id}
-• Registration Date: ${emailData.transaction_date}
-
-🎁 FREE PACKAGE INCLUDES:
-• Event Entry Pass
-• Basic Information Kit
-• Networking Opportunities
-• Cultural Program Access
-• General Seating Arrangement
-
-📞 Contact: delegates@svsamiti.com
-        `.trim()
+        details: `Registration Successful
+Number of Persons: ${emailData.number_of_person}`
       })
     });
 

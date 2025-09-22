@@ -263,8 +263,8 @@ const DelegateForm = () => {
   };
 
   // Process delegate booking and create Firebase record
-  const processDelegateBooking = async (paymentData, bookingId) => {
-    console.log('Processing delegate booking...', bookingId);
+  const processDelegateBooking = async (paymentData, bookingId, shouldSendEmail = true) => {
+    console.log('Processing delegate booking...', bookingId, 'Send Email:', shouldSendEmail);
     
     try {
       // Prepare delegate details without the file object
@@ -342,8 +342,8 @@ const DelegateForm = () => {
       // Send confirmation email for successful registrations
       const isNormalDelegate = bookingDataToSave.eventDetails.delegateType === 'normal';
       
-      // Send email for confirmed registrations OR normal delegates (always send for normal)
-      if (paymentData.status === 'confirmed' || isNormalDelegate) {
+      // Only send email if shouldSendEmail is true AND (status is confirmed OR it's a normal delegate)
+      if (shouldSendEmail && (paymentData.status === 'confirmed' || isNormalDelegate)) {
         try {
           console.log('📧 Sending delegate confirmation email...', isNormalDelegate ? '(Normal delegate - always send)' : '(Confirmed payment)');
           const enrichedData = {
@@ -421,13 +421,13 @@ const DelegateForm = () => {
       // Create pending booking first
       const generatedBookingId = generateDelegateBookingId();
       
-      // Create pending booking in Firebase
+      // Create pending booking in Firebase (no email for pending)
       await processDelegateBooking({
         paymentId: 'pending_' + Date.now(),
         orderId: generatedBookingId,
         amount: totalAmount,
         status: 'pending_payment'
-      }, generatedBookingId);
+      }, generatedBookingId, false); // false = don't send email for pending bookings
       
       console.log('✅ Delegate booking created with ID:', generatedBookingId);
       

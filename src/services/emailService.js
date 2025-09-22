@@ -93,14 +93,14 @@ const tryDelegateSpecificAPI = async (delegateData) => {
       name: delegateData.delegateDetails?.name || delegateData.name || 'Delegate Member',
       email: delegateData.delegateDetails?.email || delegateData.email || 'no-email@example.com',
       order_id: delegateData.bookingId || delegateData.order_id || delegateData.id || 'UNKNOWN',
-      event_date: 'November 15, 2025', // Required: Fixed delegate event date
+      event_date: 'December 3, 2025', // Required: Fixed delegate event date
       booking_type: 'Delegate Registration', // Required: Booking type
       amount: (() => {
         const rawAmount = delegateData.totalAmount !== undefined && delegateData.totalAmount !== null 
           ? Math.max(0, delegateData.totalAmount) 
           : (delegateData.amount !== undefined && delegateData.amount !== null ? Math.max(0, delegateData.amount) : 0);
-        // For free delegate registrations (0), use '1' to satisfy external API validation
-        return rawAmount === 0 ? '1' : rawAmount.toString();
+        // For free delegate registrations (0), use 'Free' string
+        return rawAmount === 0 ? 'Free' : rawAmount.toString();
       })(), // Required: Ensure non-negative and always string
       mobile: delegateData.delegateDetails?.mobile || '0000000000',
       address: `${delegateData.delegateDetails?.address || 'Not provided'}, ${delegateData.delegateDetails?.city || 'Not provided'}, ${delegateData.delegateDetails?.state || 'Not provided'}, ${delegateData.delegateDetails?.country || 'India'}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '') || 'Address not provided',
@@ -491,13 +491,15 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
     mobile: delegateDetails.mobile || '',
     address: `${delegateDetails.address || ''}, ${delegateDetails.city || ''}, ${delegateDetails.state || ''}, ${delegateDetails.country || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
     pan: delegateDetails.pan || '',
-    event_date: '2025-11-15', // Delegate event start date
+    event_date: '2025-12-03', // Delegate event start date
     booking_type: 'Delegate Registration',
-    details: `
+    details: delegateType === 'normal' 
+      ? `Registration Successful\nNumber of Persons: ${eventDetails.numberOfPersons || 1}`
+      : `
 
 👤 Delegate Name: ${delegateDetails.name || 'Not specified'}
 🏢 Registration Type: ${registrationType}
-🏛️ Organization: ${organizationName}
+🏤 Organization: ${organizationName}
 📧 Email: ${delegateDetails.email || 'Not provided'}
 📱 Mobile: ${delegateDetails.mobile || 'Not provided'}
 💰 Registration Fee: ₹${baseData.amount}
@@ -508,7 +510,7 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
 • Number of Persons: ${eventDetails.numberOfPersons || 1}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
-📍 Location Details:
+📏 Location Details:
 • Address: ${delegateDetails.address || 'Not provided'}
 • City: ${delegateDetails.city || 'Not provided'}
 • State: ${delegateDetails.state || 'Not provided'}
@@ -792,12 +794,12 @@ const validateEmailData = (emailData) => {
         emailData.amount = emailData.amount.toString();
       }
       
-      // For delegates with free registration (amount = '0'), use '1' for external API
-      // but keep the display amount as '0' for email content
+      // For delegates with free registration (amount = '0'), use 'Free' string
+      // for both API and display purposes
       let apiAmount = emailData.amount;
       if (isDelegate && emailData.amount === '0') {
-        apiAmount = '1'; // External API requires non-zero amount
-        console.log('🆓 Free delegate registration - using amount=1 for API validation');
+        apiAmount = 'Free'; // Use 'Free' string for normal delegates
+        console.log('🆓 Free delegate registration - using amount=Free for API and display');
       }
       
       // Validate amount format
@@ -855,6 +857,13 @@ const createDelegateEmailDetails = (delegateData) => {
       registrationFee = `₹${delegateData.totalAmount || 0}`;
   }
   
+  // For normal delegates, use simplified content
+  if (delegateType === 'normal') {
+    return `Registration Successful
+Number of Persons: ${eventDetails.numberOfPersons || 1}`;
+  }
+  
+  // For other delegate types, use detailed content
   return `
 👤 DELEGATE REGISTRATION DETAILS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -871,7 +880,7 @@ const createDelegateEmailDetails = (delegateData) => {
 • Number of Persons: ${eventDetails.numberOfPersons || 1}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
-📍 Location Details:
+📏 Location Details:
 • Address: ${delegateDetails.address || 'Not provided'}
 • City: ${delegateDetails.city || 'Not provided'}
 • State: ${delegateDetails.state || 'Not provided'}
@@ -885,9 +894,9 @@ ${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : '
 
 📋 Registration ID: ${delegateData.bookingId || delegateData.order_id || delegateData.id}
 
-🏛️ Event: International Śrī Jagannātha Pāñcharātra Havan Ceremony
-📅 Event Date: November 15-20, 2025
-📍 Venue: To be announced
+🏤 Event: International Śrī Jagannātha Pāñcharātra Havan Ceremony
+📅 Event Date: December 3-7, 2025
+📏 Venue: To be announced
 
 🙏 Thank you for registering! We look forward to your participation in this sacred ceremony.
   `.trim();
