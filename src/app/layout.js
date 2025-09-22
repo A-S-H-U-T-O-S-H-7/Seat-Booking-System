@@ -1,6 +1,4 @@
 import "./globals.css";
-// Import compatibility CSS for older browsers
-import "@/styles/compatibility.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { AdminProvider } from "@/context/AdminContext";
 import { BookingProvider } from "@/context/BookingContext";

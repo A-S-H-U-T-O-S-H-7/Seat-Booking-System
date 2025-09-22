@@ -37,6 +37,47 @@ body {
   color: #ededed !important;
 }
 
+/* Basic Windows 7 compatibility styles */
+/* Flexbox fallbacks for IE10+ */
+.flex {
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.flex-col {
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.items-center {
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.justify-center {
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+.justify-between {
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+}
+
+/* Transform with vendor prefixes */
+.transform {
+  -webkit-transform: translateZ(0);
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Transitions for IE10+ */
+.transition-all {
+  -webkit-transition: all 0.3s ease;
+  -ms-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+
 /* Custom animations */
 @keyframes fade-in {
   0% {
