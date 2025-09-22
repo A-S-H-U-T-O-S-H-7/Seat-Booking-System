@@ -153,7 +153,7 @@ const sendViaDedicatedAPI = async (emailData) => {
         order_id: emailData.order_id,
         event_date: 'November 15, 2025',
         booking_type: 'Delegate Registration',
-        amount: emailData.amount,
+        amount: emailData.amount === '0' ? '1' : emailData.amount, // External API requires non-zero amount
         mobile: emailData.mobile,
         address: `${emailData.address || 'Not provided'}`,
         pan: emailData.pan || 'Not provided',
@@ -167,7 +167,7 @@ const sendViaDedicatedAPI = async (emailData) => {
 • Organization: ${emailData.organization_name}
 • Email: ${emailData.email}
 • Mobile: ${emailData.mobile}
-• Registration Fee: FREE (₹${emailData.amount})
+• Registration Fee: FREE (₹0)
 
 📦 Package Details:
 • Package Type: Normal Delegate Package (FREE)

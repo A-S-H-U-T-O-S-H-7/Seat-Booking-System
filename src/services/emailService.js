@@ -1,17 +1,4 @@
-// Email Service for sending booking confirmation emails
-// Integrates with https://svsamiti.com/havan-booking/email.php
 
-/**
- * Sends booking confirmation email using the external API
- * @param {Object} bookingData - The booking information
- * @param {string} bookingType - Type of booking (havan, show, stall, delegate, donation)
- * @returns {Promise<Object>} - API response
- */
-/**
- * Send donation confirmation email
- * @param {Object} donationData - Donation information
- * @returns {Promise<Object>} - API response
- */
 export const sendDonationConfirmationEmail = async (donationData) => {
   try {
     const formData = new FormData();
@@ -108,10 +95,13 @@ const tryDelegateSpecificAPI = async (delegateData) => {
       order_id: delegateData.bookingId || delegateData.order_id || delegateData.id || 'UNKNOWN',
       event_date: 'November 15, 2025', // Required: Fixed delegate event date
       booking_type: 'Delegate Registration', // Required: Booking type
-      amount: (delegateData.totalAmount !== undefined && delegateData.totalAmount !== null 
-        ? Math.max(0, delegateData.totalAmount) 
-        : (delegateData.amount !== undefined && delegateData.amount !== null ? Math.max(0, delegateData.amount) : 0)
-      ).toString(), // Required: Ensure non-negative and always string
+      amount: (() => {
+        const rawAmount = delegateData.totalAmount !== undefined && delegateData.totalAmount !== null 
+          ? Math.max(0, delegateData.totalAmount) 
+          : (delegateData.amount !== undefined && delegateData.amount !== null ? Math.max(0, delegateData.amount) : 0);
+        // For free delegate registrations (0), use '1' to satisfy external API validation
+        return rawAmount === 0 ? '1' : rawAmount.toString();
+      })(), // Required: Ensure non-negative and always string
       mobile: delegateData.delegateDetails?.mobile || '0000000000',
       address: `${delegateData.delegateDetails?.address || 'Not provided'}, ${delegateData.delegateDetails?.city || 'Not provided'}, ${delegateData.delegateDetails?.state || 'Not provided'}, ${delegateData.delegateDetails?.country || 'India'}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '') || 'Address not provided',
       pan: delegateData.delegateDetails?.pan || 'Not provided',
@@ -788,26 +778,37 @@ const validateEmailData = (emailData) => {
     errors.push('Booking Type is required');
   }
   
-  // Handle amount validation - allow 0 for delegate registrations
-  const isDelegate = emailData.booking_type && emailData.booking_type.includes('Delegate');
-  
-  // Ensure amount is always present as a string
-  if (emailData.amount === undefined || emailData.amount === null || emailData.amount === '') {
-    // Set default amount based on booking type
-    emailData.amount = isDelegate ? '0' : '0';
-  }
-  
-  // Convert to string if it's a number
-  if (typeof emailData.amount === 'number') {
-    emailData.amount = emailData.amount.toString();
-  }
-  
-  // Validate amount format
-  if (isNaN(parseFloat(emailData.amount))) {
-    errors.push('Amount must be a valid number');
-  } else if (!isDelegate && parseFloat(emailData.amount) <= 0) {
-    errors.push('Amount must be greater than 0');
-  }
+      // Handle amount validation - allow 0 for delegate registrations
+      const isDelegate = emailData.booking_type && emailData.booking_type.includes('Delegate');
+      
+      // Ensure amount is always present as a string
+      if (emailData.amount === undefined || emailData.amount === null || emailData.amount === '') {
+        // Set default amount based on booking type
+        emailData.amount = isDelegate ? '0' : '0';
+      }
+      
+      // Convert to string if it's a number
+      if (typeof emailData.amount === 'number') {
+        emailData.amount = emailData.amount.toString();
+      }
+      
+      // For delegates with free registration (amount = '0'), use '1' for external API
+      // but keep the display amount as '0' for email content
+      let apiAmount = emailData.amount;
+      if (isDelegate && emailData.amount === '0') {
+        apiAmount = '1'; // External API requires non-zero amount
+        console.log('🆓 Free delegate registration - using amount=1 for API validation');
+      }
+      
+      // Validate amount format
+      if (isNaN(parseFloat(emailData.amount))) {
+        errors.push('Amount must be a valid number');
+      } else if (!isDelegate && parseFloat(emailData.amount) <= 0) {
+        errors.push('Amount must be greater than 0');
+      }
+      
+      // Store the API amount for use in the request
+      emailData._apiAmount = apiAmount;
   
   return {
     isValid: errors.length === 0,
@@ -839,7 +840,7 @@ const createDelegateEmailDetails = (delegateData) => {
   switch(delegateType) {
     case 'normal':
       packageTypeDisplay = 'Normal Package (Free Registration)';
-      registrationFee = 'Free';
+      registrationFee = 'FREE (₹0)';
       break;
     case 'withoutAssistance':
       packageTypeDisplay = 'Without Assistance Package';
