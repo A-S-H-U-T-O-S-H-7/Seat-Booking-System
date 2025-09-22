@@ -1,0 +1,398 @@
+/* CSS Compatibility Fixes for Windows 7 and Older Browsers */
+
+/* Fallbacks for CSS Custom Properties - Applied first */
+:root {
+  /* Define fallback colors for older browsers */
+  background-color: #ffffff;
+  color: #171717;
+}
+
+/* Dark mode fallback for older browsers that don't support CSS custom properties */
+@media (prefers-color-scheme: dark) {
+  :root {
+    background-color: #0a0a0a;
+    color: #ededed;
+  }
+}
+
+body {
+  /* Fallback for browsers that don't support CSS variables */
+  background: #ffffff;
+  color: #171717;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Dark mode body fallback */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0a0a0a;
+    color: #ededed;
+  }
+}
+
+/* Flexbox fallbacks for older browsers */
+.flex {
+  display: -webkit-box;      /* OLD - iOS 6-, Safari 3.1-6, BB7 */
+  display: -ms-flexbox;      /* TWEENER - IE 10 */
+  display: -webkit-flex;     /* NEW - Safari 6.1+ */
+  display: flex;             /* NEW, Spec - Firefox, Chrome, Opera */
+}
+
+.flex-col {
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+
+.flex-row {
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+}
+
+.items-center {
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.justify-center {
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.justify-between {
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+}
+
+.flex-1 {
+  -webkit-box-flex: 1;
+  -ms-flex: 1 1 0%;
+  -webkit-flex: 1 1 0%;
+  flex: 1 1 0%;
+}
+
+/* Transform fallbacks */
+.transform {
+  -webkit-transform: translateZ(0); /* Force hardware acceleration */
+  -ms-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Transition fallbacks */
+.transition-all {
+  -webkit-transition: all 0.3s ease;
+  -moz-transition: all 0.3s ease;
+  -ms-transition: all 0.3s ease;
+  -o-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+/* Animation fallbacks */
+@-webkit-keyframes fade-in {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateY(10px);
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateY(10px);
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  -webkit-animation: fade-in 0.6s ease-out;
+  animation: fade-in 0.6s ease-out;
+}
+
+@-webkit-keyframes spin {
+  from {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+}
+
+/* Border radius fallbacks for IE8 */
+.rounded {
+  border-radius: 4px;
+  /* IE8 fallback */
+  behavior: url(border-radius.htc);
+}
+
+.rounded-lg {
+  border-radius: 8px;
+  behavior: url(border-radius.htc);
+}
+
+.rounded-xl {
+  border-radius: 12px;
+  behavior: url(border-radius.htc);
+}
+
+.rounded-full {
+  border-radius: 50%;
+  behavior: url(border-radius.htc);
+}
+
+/* Box shadow fallbacks */
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  /* IE8 fallback */
+  filter: progid:DXImageTransform.Microsoft.Shadow(color='#cccccc', Direction=135, Strength=2);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  /* IE8 fallback */
+  filter: progid:DXImageTransform.Microsoft.Shadow(color='#cccccc', Direction=135, Strength=3);
+}
+
+/* Gradient fallbacks for older browsers */
+.bg-gradient-to-r {
+  /* Fallback for browsers that don't support gradients */
+  background-color: #f97316;
+  /* Modern browsers */
+  background: -webkit-linear-gradient(left, #f97316, #eab308);
+  background: -moz-linear-gradient(left, #f97316, #eab308);
+  background: -ms-linear-gradient(left, #f97316, #eab308);
+  background: -o-linear-gradient(left, #f97316, #eab308);
+  background: linear-gradient(to right, #f97316, #eab308);
+  /* IE6-9 */
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f97316', endColorstr='#eab308', GradientType=1);
+}
+
+.bg-gradient-to-br {
+  /* Fallback */
+  background-color: #f97316;
+  /* Modern browsers */
+  background: -webkit-linear-gradient(-45deg, #f97316, #eab308);
+  background: -moz-linear-gradient(-45deg, #f97316, #eab308);
+  background: -ms-linear-gradient(-45deg, #f97316, #eab308);
+  background: -o-linear-gradient(-45deg, #f97316, #eab308);
+  background: linear-gradient(135deg, #f97316, #eab308);
+  /* IE6-9 */
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f97316', endColorstr='#eab308', GradientType=1);
+}
+
+/* Text gradient fallback */
+.gradient-text {
+  /* Fallback for browsers that don't support background-clip: text */
+  color: #f97316;
+  /* Modern browsers */
+  background: -webkit-linear-gradient(45deg, #f97316, #eab308);
+  background: -moz-linear-gradient(45deg, #f97316, #eab308);
+  background: linear-gradient(45deg, #f97316, #eab308);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Grid fallbacks for older browsers */
+.grid {
+  display: -ms-grid;
+  display: grid;
+}
+
+/* For browsers that don't support CSS Grid, use flexbox fallback */
+@supports not (display: grid) {
+  .grid {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+  
+  .grid > * {
+    -webkit-box-flex: 1;
+    -ms-flex: 1;
+    -webkit-flex: 1;
+    flex: 1;
+    min-width: 200px; /* Adjust based on your needs */
+  }
+}
+
+/* IE-specific fixes */
+.ie-fix {
+  /* Clear floats for IE */
+  zoom: 1;
+}
+
+/* IE8 and below fixes */
+.ie8-fix {
+  /* Use table-cell for vertical centering in IE8 */
+  display: table-cell;
+  vertical-align: middle;
+}
+
+/* Opacity fallbacks for IE8 */
+.opacity-50 {
+  opacity: 0.5;
+  /* IE8 fallback */
+  filter: alpha(opacity=50);
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+}
+
+.opacity-75 {
+  opacity: 0.75;
+  /* IE8 fallback */
+  filter: alpha(opacity=75);
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=75)";
+}
+
+/* Scrollbar styling fallbacks */
+.custom-scrollbar {
+  /* For browsers that don't support webkit scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #f97316 #f1f1f1;
+}
+
+/* Button hover effects with fallbacks */
+.button-hover {
+  cursor: pointer;
+  -webkit-transition: all 0.3s ease;
+  -moz-transition: all 0.3s ease;
+  -ms-transition: all 0.3s ease;
+  -o-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.button-hover:hover {
+  -webkit-transform: scale(1.05);
+  -ms-transform: scale(1.05);
+  transform: scale(1.05);
+  /* IE8 fallback - just change background color */
+  background-color: #ea580c;
+}
+
+/* Min-height fallbacks for IE */
+.min-h-screen {
+  min-height: 100vh;
+  /* IE fallback */
+  min-height: 100%;
+  height: auto !important;
+  height: 100%;
+}
+
+/* Position sticky fallback */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* For browsers that don't support sticky */
+@supports not (position: sticky) {
+  .sticky {
+    position: fixed;
+  }
+}
+
+/* Object-fit fallbacks for IE */
+.object-cover {
+  object-fit: cover;
+}
+
+/* IE fallback for object-fit */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .object-cover {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* Calc() fallbacks */
+.calc-width {
+  width: -webkit-calc(100% - 20px);
+  width: -moz-calc(100% - 20px);
+  width: calc(100% - 20px);
+  /* IE8 fallback */
+  width: 95%;
+}
+
+/* Media query fallbacks for IE8 */
+@media \0screen {
+  /* IE8 specific styles */
+  .ie8-only {
+    display: block;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* High contrast mode support */
+@media (-ms-high-contrast: active) {
+  .button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    -webkit-animation-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    -webkit-animation-iteration-count: 1 !important;
+    animation-iteration-count: 1 !important;
+    -webkit-transition-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
