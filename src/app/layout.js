@@ -4,7 +4,7 @@ import "@/styles/compatibility.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { AdminProvider } from "@/context/AdminContext";
 import { BookingProvider } from "@/context/BookingContext";
-import { ThemeProvider } from "@/context/ThemeProvider";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from 'react-hot-toast';
 import AuthDebugger from '@/components/AuthDebugger';
 import BrowserCompatibilityWrapper from '@/components/BrowserCompatibilityWrapper';
