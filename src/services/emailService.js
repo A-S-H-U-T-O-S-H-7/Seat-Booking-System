@@ -43,23 +43,18 @@ export const sendDonationConfirmationEmail = async (donationData) => {
  */
 export const sendDelegateConfirmationEmail = async (delegateData) => {
   try {
-    console.log('📧 Sending delegate confirmation email for type:', delegateData.eventDetails?.delegateType);
     
     // Try the dedicated delegate API first for all delegate types (including normal)
     const primaryResult = await tryDelegateSpecificAPI(delegateData);
     
     if (primaryResult.success) {
-      console.log('✅ Delegate email sent successfully via dedicated API');
       return primaryResult;
     }
-    
-    console.log('⚠️ Primary delegate API failed, trying fallback...', primaryResult.error);
     
     // Fallback to general email API with proper delegate formatting
     const fallbackResult = await sendDelegateViaGeneralAPI(delegateData);
     
     if (fallbackResult.success) {
-      console.log('✅ Delegate email sent successfully via fallback API');
       return { 
         success: true, 
         message: 'Delegate confirmation email sent via fallback system', 
@@ -67,7 +62,6 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
         method: 'fallback'
       };
     } else {
-      console.log('❌ Both delegate email methods failed');
       return { 
         success: false, 
         error: `Both email methods failed. Primary: ${primaryResult.error}. Fallback: ${fallbackResult.error}`,
@@ -110,16 +104,7 @@ const tryDelegateSpecificAPI = async (delegateData) => {
       details: createDelegateEmailDetails(delegateData) // Required: Detailed delegate info
     };
     
-    // Debug logging - show every field being sent
-    console.log('🐛 Delegate email data being sent to dedicated API route:');
-    console.log('  name:', emailData.name);
-    console.log('  email:', emailData.email);
-    console.log('  order_id:', emailData.order_id);
-    console.log('  event_date:', emailData.event_date);
-    console.log('  booking_type:', emailData.booking_type);
-    console.log('  amount:', emailData.amount, '(type:', typeof emailData.amount, ')');
-    console.log('  details:', emailData.details);
-    console.log('  Full emailData:', emailData);
+    // Send to dedicated delegate API
     
     const response = await fetch('/api/emails/delegate', {
       method: 'POST',
@@ -799,7 +784,6 @@ const validateEmailData = (emailData) => {
       let apiAmount = emailData.amount;
       if (isDelegate && emailData.amount === '0') {
         apiAmount = 'Free'; // Use 'Free' string for normal delegates
-        console.log('🆓 Free delegate registration - using amount=Free for API and display');
       }
       
       // Validate amount format

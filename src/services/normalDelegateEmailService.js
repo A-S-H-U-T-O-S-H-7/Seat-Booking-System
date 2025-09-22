@@ -10,12 +10,6 @@ import { sendDelegateConfirmationEmail } from './emailService';
  */
 export const sendNormalDelegateConfirmationEmail = async (delegateData) => {
   try {
-    console.log('📧 Sending normal delegate confirmation email...', {
-      email: delegateData.delegateDetails?.email,
-      name: delegateData.delegateDetails?.name,
-      bookingId: delegateData.bookingId,
-      delegateType: delegateData.eventDetails?.delegateType
-    });
 
     // Prepare email data specifically for normal delegate package
     const emailData = prepareNormalDelegateEmailData(delegateData);
@@ -30,37 +24,38 @@ export const sendNormalDelegateConfirmationEmail = async (delegateData) => {
       };
     }
 
-    // Try the dedicated delegate email API first, then fallback
-    const results = await Promise.allSettled([
-      sendViaDedicatedAPI(emailData),
-      sendViaGeneralAPI(emailData)
-    ]);
-
-    // Check if any method succeeded
-    const successfulResult = results.find(result => 
-      result.status === 'fulfilled' && result.value.success
-    );
-
-    if (successfulResult) {
-      return {
-        success: true,
-        message: 'Normal delegate confirmation email sent successfully',
-        data: successfulResult.value.data,
-        method: successfulResult.value.method || 'primary'
-      };
+    // Try the dedicated delegate email API first
+    try {
+      const result = await sendViaDedicatedAPI(emailData);
+      if (result.success) {
+        return {
+          success: true,
+          message: 'Normal delegate confirmation email sent successfully',
+          data: result.data,
+          method: result.method || 'dedicated'
+        };
+      }
+      throw new Error(result.error || 'Dedicated API failed');
+    } catch (dedicatedError) {
+      // Only try fallback if dedicated fails
+      try {
+        const fallbackResult = await sendViaGeneralAPI(emailData);
+        if (fallbackResult.success) {
+          return {
+            success: true,
+            message: 'Normal delegate email sent via fallback method',
+            data: fallbackResult.data,
+            method: 'fallback'
+          };
+        }
+        throw new Error(fallbackResult.error || 'Fallback API failed');
+      } catch (fallbackError) {
+        return {
+          success: false,
+          error: `Both email methods failed. Dedicated: ${dedicatedError.message}. Fallback: ${fallbackError.message}`
+        };
+      }
     }
-
-    // If all failed, return detailed error information
-    const errors = results.map((result, index) => ({
-      method: ['dedicated', 'general'][index],
-      error: result.status === 'rejected' ? result.reason.message : result.value.error
-    }));
-
-    return {
-      success: false,
-      error: 'All email sending methods failed for normal delegate',
-      details: errors
-    };
 
   } catch (error) {
     console.error('❌ Error in sendNormalDelegateConfirmationEmail:', error);
@@ -139,8 +134,6 @@ const prepareNormalDelegateEmailData = (delegateData) => {
  */
 const sendViaDedicatedAPI = async (emailData) => {
   try {
-    console.log('📧 Sending normal delegate email via dedicated API route...');
-    console.log('🐛 Email data for normal delegate:', emailData);
 
     const response = await fetch('/api/emails/delegate', {
       method: 'POST',
@@ -170,7 +163,6 @@ Number of Persons: ${emailData.number_of_person}`
     try {
       result = JSON.parse(responseText);
     } catch (parseError) {
-      console.warn('Failed to parse dedicated API response as JSON:', responseText.substring(0, 200));
       throw new Error('Invalid JSON response from dedicated delegate API');
     }
 
@@ -186,7 +178,6 @@ Number of Persons: ${emailData.number_of_person}`
     }
 
   } catch (error) {
-    console.warn('Dedicated delegate API failed for normal package:', error.message);
     throw error;
   }
 };
@@ -235,7 +226,6 @@ const sendViaGeneralAPI = async (emailData) => {
     }
 
   } catch (error) {
-    console.warn('General API failed for normal delegate:', error.message);
     throw error;
   }
 };
@@ -291,46 +281,20 @@ const validateNormalDelegateEmail = (emailData) => {
  */
 export const handleNormalDelegateEmail = async (delegateBookingData) => {
   try {
-    console.log('🎯 Handling normal delegate email specifically...', {
-      delegateType: delegateBookingData.eventDetails?.delegateType,
-      amount: delegateBookingData.totalAmount,
-      email: delegateBookingData.delegateDetails?.email
-    });
 
     // Ensure this is actually a normal delegate
     if (delegateBookingData.eventDetails?.delegateType !== 'normal') {
-      console.warn('⚠️ handleNormalDelegateEmail called for non-normal delegate type');
       // Fall back to regular delegate email (already imported at top)
       return await sendDelegateConfirmationEmail(delegateBookingData);
     }
 
-    // Send normal delegate email
+    // Send normal delegate email (with built-in fallback)
     const result = await sendNormalDelegateConfirmationEmail(delegateBookingData);
     
     if (result.success) {
-      console.log('✅ Normal delegate email sent successfully');
       return result;
     } else {
-      console.error('❌ Normal delegate email failed:', result.error);
-      
-      // Try fallback to general delegate email service
-      console.log('🔄 Trying fallback to general delegate email...');
-      const fallbackResult = await sendDelegateConfirmationEmail(delegateBookingData);
-      
-      if (fallbackResult.success) {
-        return {
-          success: true,
-          message: 'Normal delegate email sent via fallback method',
-          data: fallbackResult.data,
-          method: 'fallback'
-        };
-      } else {
-        return {
-          success: false,
-          error: `Both normal and fallback email methods failed. Normal: ${result.error}. Fallback: ${fallbackResult.error}`,
-          details: { normal: result, fallback: fallbackResult }
-        };
-      }
+      return result;
     }
 
   } catch (error) {

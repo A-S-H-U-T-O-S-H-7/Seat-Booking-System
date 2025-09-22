@@ -264,7 +264,6 @@ const DelegateForm = () => {
 
   // Process delegate booking and create Firebase record
   const processDelegateBooking = async (paymentData, bookingId, shouldSendEmail = true) => {
-    console.log('Processing delegate booking...', bookingId, 'Send Email:', shouldSendEmail);
     
     try {
       // Prepare delegate details without the file object
@@ -345,7 +344,6 @@ const DelegateForm = () => {
       // Only send email if shouldSendEmail is true AND (status is confirmed OR it's a normal delegate)
       if (shouldSendEmail && (paymentData.status === 'confirmed' || isNormalDelegate)) {
         try {
-          console.log('📧 Sending delegate confirmation email...', isNormalDelegate ? '(Normal delegate - always send)' : '(Confirmed payment)');
           const enrichedData = {
             ...bookingDataToSave,
             order_id: bookingId,
@@ -353,31 +351,14 @@ const DelegateForm = () => {
             payment_id: paymentData.paymentId || 'delegate_registration'
           };
           
-          // Debug: Log the data being sent to email service
-          console.log('🐛 Data being sent to delegate email service:', {
-            name: enrichedData.delegateDetails?.name,
-            email: enrichedData.delegateDetails?.email,
-            delegateType: enrichedData.eventDetails?.delegateType,
-            duration: enrichedData.eventDetails?.duration,
-            numberOfPersons: enrichedData.eventDetails?.numberOfPersons,
-            registrationType: enrichedData.eventDetails?.registrationType,
-            totalAmount: enrichedData.totalAmount,
-            amount: enrichedData.amount,
-            order_id: enrichedData.order_id,
-            payment_id: enrichedData.payment_id
-          });
-          
           let emailResult;
           // Use specialized service for normal delegates
           if (isNormalDelegate) {
-            console.log('🎯 Using specialized normal delegate email service');
             emailResult = await handleNormalDelegateEmail(enrichedData);
           } else {
             // Use regular delegate email service for other delegate types
             emailResult = await sendDelegateConfirmationEmail(enrichedData);
           }
-          
-          console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
         } catch (emailError) {
           console.error('❌ Failed to send delegate email:', emailError);
         }

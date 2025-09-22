@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
     try {
         const emailData = await req.json();
-        console.log('📧 Delegate email API received data:', emailData);
 
         // Validate required fields
         const requiredFields = ['name', 'email', 'order_id'];
@@ -39,7 +38,6 @@ export async function POST(req) {
         const displayAmount = amount;
         if (amount === '0') {
             amount = 'Free'; // Use 'Free' for normal delegates
-            console.log('🆓 Free registration detected - using amount=Free for API, display=Free for user');
         }
         
         formData.append("name", name);
@@ -51,9 +49,6 @@ export async function POST(req) {
         formData.append("amount", amount); // Uses 'Free' for free registrations
         
         // Validation check - make sure email is valid
-        if (email === 'no-email@example.com' && emailData.email) {
-            console.warn('⚠️ Invalid email provided:', emailData.email);
-        }
         
         if (!email.includes('@') || email === 'no-email@example.com') {
             throw new Error('Valid email address is required for sending delegate confirmation');
@@ -66,13 +61,7 @@ export async function POST(req) {
         formData.append("valid_from", emailData.valid_from || new Date().toISOString().split('T')[0]);
         formData.append("valid_to", emailData.valid_to || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
-        // Debug: Log what we're sending to external API
-        console.log('📦 FormData being sent to external API:');
-        for (const [key, value] of formData.entries()) {
-            console.log(`  ${key}: "${value}"`);
-        }
-        
-        console.log('📤 Sending delegate email to external API...');
+        // Send to external API
         
         // Call the external email API from server-side (no CORS issues)
         const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
@@ -88,13 +77,11 @@ export async function POST(req) {
         }
 
         const responseText = await response.text();
-        console.log('📥 External API response:', responseText);
 
         let result;
         try {
             result = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('❌ Failed to parse external API response:', parseError);
             return NextResponse.json({
                 status: false,
                 errors: ['Invalid response from email service'],
@@ -104,13 +91,11 @@ export async function POST(req) {
         }
 
         if (result.status) {
-            console.log('✅ Delegate email sent successfully');
             return NextResponse.json({
                 status: true,
                 message: result.message || 'Delegate confirmation email sent successfully'
             });
         } else {
-            console.log('❌ External API returned error:', result);
             return NextResponse.json({
                 status: false,
                 errors: result.errors || [result.message || 'Email service error'],
@@ -119,7 +104,6 @@ export async function POST(req) {
         }
 
     } catch (error) {
-        console.error('❌ Delegate email API error:', error);
         return NextResponse.json({
             status: false,
             errors: [error.message || 'Internal server error'],
