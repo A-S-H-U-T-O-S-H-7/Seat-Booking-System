@@ -786,10 +786,10 @@ const validateEmailData = (emailData) => {
         apiAmount = 'Free'; // Use 'Free' string for normal delegates
       }
       
-      // Validate amount format
-      if (isNaN(parseFloat(emailData.amount))) {
+      // Validate amount format - Skip validation for 'Free' amounts
+      if (emailData.amount !== 'Free' && isNaN(parseFloat(emailData.amount))) {
         errors.push('Amount must be a valid number');
-      } else if (!isDelegate && parseFloat(emailData.amount) <= 0) {
+      } else if (!isDelegate && emailData.amount !== 'Free' && parseFloat(emailData.amount) <= 0) {
         errors.push('Amount must be greater than 0');
       }
       

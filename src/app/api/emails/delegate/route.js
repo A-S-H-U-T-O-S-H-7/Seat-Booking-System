@@ -36,8 +36,11 @@ export async function POST(req) {
         // For free registrations (amount = '0'), use 'Free' string
         // but keep the actual amount for display purposes
         const displayAmount = amount;
-        if (amount === '0') {
-            amount = 'Free'; // Use 'Free' for normal delegates
+        // Handle different delegate types
+        if (amount === '0' && emailData.booking_type && emailData.booking_type.includes('Delegate')) {
+            amount = 'Free'; // Use 'Free' for free delegate registrations
+        } else if (amount === '0') {
+            amount = '1'; // For other booking types that require non-zero amount
         }
         
         formData.append("name", name);
