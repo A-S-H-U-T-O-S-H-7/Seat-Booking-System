@@ -108,7 +108,7 @@ console.log('News array:', newsData.data);
           {/* Latest News Card */}
           <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50/80 border border-blue-200/40 shadow-xl hover:shadow-2xl  transition-all duration-500">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg  group-hover:rotate-6 transition-all duration-500">
-              <span className="text-2xl text-white">📰</span>
+              <span className="text-2xl text-white">📰jkbejehj</span>
             </div>
             <h4 className="text-lg lg:text-xl font-black mb-3 text-gray-900">Latest News</h4>
             <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full mb-3"></div>
