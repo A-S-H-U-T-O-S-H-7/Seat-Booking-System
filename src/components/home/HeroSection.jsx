@@ -1,0 +1,27 @@
+import HeroBackground from './HeroBackground';
+import HeroContent from './HeroContent';
+import HeroActions from './HeroActions';
+import HeroDetails from './HeroDetails';
+import SponsorPerformerSection from '../sponsor-perfomer/Sponsor-performer-section';
+import EventParticipation from './EventParticipation';
+
+function HeroSection({ user }) {
+  return (
+    <>
+      {/* Hero Section */}
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden">
+        <HeroBackground />
+        <HeroContent />
+        
+      </section>
+
+      <HeroActions user={user} />
+      <EventParticipation />
+      <SponsorPerformerSection />
+
+      <HeroDetails />
+    </>
+  );
+}
+
+export default HeroSection;
