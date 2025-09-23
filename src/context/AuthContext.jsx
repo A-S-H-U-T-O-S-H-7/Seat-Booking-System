@@ -8,6 +8,8 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  confirmPasswordReset,
 } from "firebase/auth";
 
 const AuthContext = createContext();
@@ -92,13 +94,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Send password reset email
+  const sendPasswordReset = async (email) => {
+    try {
+      console.log('🔥 Attempting to send password reset email for:', email);
+      await sendPasswordResetEmail(auth, email);
+      console.log('✅ Password reset email sent successfully for:', email);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Password reset email failed:', {
+        code: error.code,
+        message: error.message,
+        email: email
+      });
+      throw error;
+    }
+  };
+
+  // Reset password with code
+  const resetPassword = async (oobCode, newPassword) => {
+    try {
+      console.log('🔥 Attempting to reset password with code');
+      await confirmPasswordReset(auth, oobCode, newPassword);
+      console.log('✅ Password reset successful');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Password reset failed:', {
+        code: error.code,
+        message: error.message
+      });
+      throw error;
+    }
+  };
+
   // Logout
   const logout = () => {
     return signOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, signup, login, signInWithGoogle, logout, loading }}>
+    <AuthContext.Provider value={{ user, signup, login, signInWithGoogle, sendPasswordReset, resetPassword, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

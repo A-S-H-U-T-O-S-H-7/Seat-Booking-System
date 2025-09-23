@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-yellow-50 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-xl p-8 transform hover:scale-105 transition-all duration-300">
+        <div className="bg-white rounded-2xl shadow-xl p-8 transform  transition-all duration-300">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4 animate-bounce">🕉️</div>
@@ -84,7 +84,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-200"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transform  transition-all duration-200"
             >
               {loading ? (
                 <div className="flex items-center">
@@ -96,6 +96,13 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+          
+          {/* Forgot Password Link */}
+          <div className="mt-4 text-center">
+            <Link href="/forgot-password" className="text-sm text-orange-600 hover:text-orange-500 transition-colors">
+              Forgot your password?
+            </Link>
+          </div>
           
           {/* Divider */}
           <div className="mt-6">
