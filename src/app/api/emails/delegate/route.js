@@ -64,12 +64,20 @@ export async function POST(req) {
         formData.append("valid_from", emailData.valid_from || new Date().toISOString().split('T')[0]);
         formData.append("valid_to", emailData.valid_to || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
 
-        // Send to external API
+        // Send to external API using the new general-email.php endpoint
         
-        // Call the external email API from server-side (no CORS issues)
-        const response = await fetch('https://svsamiti.com/havan-booking/email.php', {
+        // Prepare form data for the new API format
+        const newFormData = new FormData();
+        newFormData.append("name", name);
+        newFormData.append("email", email);
+        newFormData.append("registrationId", order_id);
+        newFormData.append("eventDate", "3-7 Dec, 2025");
+        newFormData.append("purpose", "Delegate Registration");
+        
+        // Call the new external email API from server-side (no CORS issues)
+        const response = await fetch('https://svsamiti.com/havan-booking/general-email.php', {
             method: 'POST',
-            body: formData,
+            body: newFormData,
             headers: {
                 'User-Agent': 'Havan-Booking-System/1.0'
             }

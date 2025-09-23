@@ -663,7 +663,7 @@ const DelegateForm = () => {
                       <h4 className="font-medium text-gray-900 mb-2">Normal Package</h4>
                       <div className="text-sm text-gray-600 space-y-1">
                         <p>• Price per person: Free</p>
-                        <p>• Fixed duration: {dynamicPricing.normal.fixedDays} days</p>
+                        <p>• Event duration: 3-7 Dec, 2025 ({dynamicPricing.normal.fixedDays} days)</p>
                         <p>• Number of persons: {formData.numberOfPersons || 1}</p>
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-200">
@@ -687,7 +687,7 @@ const DelegateForm = () => {
                       <h4 className="font-medium text-gray-900 mb-2">Without Assistance Package</h4>
                       <div className="text-sm text-gray-600 space-y-1">
                         <p>• Price per person: ₹{dynamicPricing.withoutAssistance.pricePerPerson.toLocaleString()}</p>
-                        <p>• Fixed duration: {dynamicPricing.withoutAssistance.fixedDays} days</p>
+                        <p>• Event duration: 3-7 Dec, 2025 ({dynamicPricing.withoutAssistance.fixedDays} days)</p>
                         <p>• Number of persons: {formData.numberOfPersons || 1}</p>
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-200">
@@ -711,7 +711,7 @@ const DelegateForm = () => {
                       <h4 className="font-medium text-gray-900 mb-2">With Assistance Package</h4>
                       <div className="text-sm text-gray-600 space-y-1">
                         <p>• Price per person per day: ₹{dynamicPricing.withAssistance.pricePerPersonPerDay.toLocaleString()}</p>
-                        <p>• Duration: {formData.days || dynamicPricing.withAssistance.minDays} days</p>
+                        <p>• Event duration: 3-7 Dec, 2025 ({formData.days || dynamicPricing.withAssistance.minDays} days)</p>
                         <p>• Number of persons: {formData.numberOfPersons || 1}</p>
                       </div>
                       <div className="mt-3 pt-3 border-t border-gray-200">

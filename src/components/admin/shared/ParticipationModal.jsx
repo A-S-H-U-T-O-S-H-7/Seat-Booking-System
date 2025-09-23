@@ -500,10 +500,15 @@ const ParticipationModal = ({
           };
         
         case 'delegate':
+          const packageTypes = {
+          withAssistance: 'With Assistance',
+          normal: 'Normal',
+          withoutAssistance: 'Without Assistance'
+          };
           return {
             name: booking.delegateDetails?.name || 'N/A',
             email: booking.delegateDetails?.email || 'N/A',
-            extra: booking.eventDetails?.delegateType === 'withAssistance' ? 'With Assistance' : 'Without Assistance',
+            extra: packageTypes[booking.eventDetails?.delegateType] || 'Normal',
             extraLabel: 'Package Type',
             extraClass: 'bg-green-50 text-green-700',
             profileImage: booking.delegateDetails?.profileImage

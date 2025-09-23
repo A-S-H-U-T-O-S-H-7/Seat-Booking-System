@@ -82,7 +82,7 @@ const BenefitsDropdown = ({ isOpen, onClose, triggerRef }) => {
     },
     {
       id: 7,
-      title: "Dhoti (Traditional Attire for Purity)",
+      title: "Kurta (Traditional Attire for Purity)",
       icon: <Shirt className="w-4 h-4 text-blue-500" />
     },
     {

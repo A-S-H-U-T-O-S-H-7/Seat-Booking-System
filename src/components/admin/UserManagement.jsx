@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, doc, updateDoc, where, limit, startAfter } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
@@ -47,116 +47,150 @@ export default function UserManagement() {
   setError(null);
   
   try {
-    // Fetch from bookings collection instead of users collection
-    const bookingsRef = collection(db, 'bookings');
-    let bookingsQuery;
+    // Extract unique users from multiple collections
+    const usersMap = new Map();
     
+    // Helper function to add user to map
+    const addUserToMap = (email, name, phone, address, aadhar, createdAt, source) => {
+      if (!email) return;
+      
+      const existingUser = usersMap.get(email);
+      if (!existingUser) {
+        usersMap.set(email, {
+          id: email,
+          name: name || 'Unknown User',
+          email: email,
+          phone: phone || '',
+          address: address || '',
+          aadhar: aadhar || '',
+          createdAt: createdAt || null,
+          bookingCount: 1,
+          lastBookingDate: createdAt || null,
+          bookingSources: [source]
+        });
+      } else {
+        existingUser.bookingCount += 1;
+        if (!existingUser.bookingSources.includes(source)) {
+          existingUser.bookingSources.push(source);
+        }
+        if (createdAt && (!existingUser.lastBookingDate || createdAt.toMillis() > existingUser.lastBookingDate.toMillis())) {
+          existingUser.lastBookingDate = createdAt;
+          existingUser.name = name || existingUser.name;
+          existingUser.phone = phone || existingUser.phone;
+          existingUser.address = address || existingUser.address;
+          existingUser.aadhar = aadhar || existingUser.aadhar;
+        }
+      }
+    };
+    
+    // Fetch from bookings collection (Havan bookings)
     try {
-      // First try with orderBy (requires index)
-      bookingsQuery = query(bookingsRef, orderBy('createdAt', 'desc'), limit(200));
-      const snapshot = await getDocs(bookingsQuery);
+      const bookingsRef = collection(db, 'bookings');
+      const bookingsSnapshot = await getDocs(bookingsRef);
       
-      // Extract unique users from bookings
-      const usersMap = new Map();
-      
-      snapshot.forEach(doc => {
+      bookingsSnapshot.forEach(doc => {
         const data = doc.data();
-        const customerDetails = data.customerDetails;
-        
-        if (customerDetails && customerDetails.email) {
-          const userId = customerDetails.email; // Use email as unique identifier
-          const existingUser = usersMap.get(userId);
-          
-          if (!existingUser) {
-            // New user - create user object from customerDetails
-            usersMap.set(userId, {
-              id: userId, // Use email as ID for unique identification
-              bookingId: data.bookingId || doc.id, // Store one booking ID as reference
-              name: customerDetails.name || 'Unknown User',
-              email: customerDetails.email || '',
-              phone: customerDetails.phone || '',
-              address: customerDetails.address || '',
-              aadhar: customerDetails.aadhar || customerDetails.aadharNumber || '',
-              createdAt: data.createdAt || null,
-              bookingCount: 1,
-              lastBookingDate: data.createdAt || null,
-              // Store original customer details for reference
-              originalCustomerDetails: customerDetails
-            });
-          } else {
-            // Existing user - update booking count and last booking date
-            existingUser.bookingCount += 1;
-            if (data.createdAt && (!existingUser.lastBookingDate || data.createdAt.toMillis() > existingUser.lastBookingDate.toMillis())) {
-              existingUser.lastBookingDate = data.createdAt;
-              // Update with more recent booking info if needed
-              existingUser.name = customerDetails.name || existingUser.name;
-              existingUser.phone = customerDetails.phone || existingUser.phone;
-              existingUser.address = customerDetails.address || existingUser.address;
-              existingUser.aadhar = customerDetails.aadhar || customerDetails.aadharNumber || existingUser.aadhar;
-            }
-          }
+        const customer = data.customerDetails;
+        if (customer && customer.email) {
+          addUserToMap(
+            customer.email,
+            customer.name,
+            customer.phone,
+            customer.address,
+            customer.aadhar || customer.aadharNumber,
+            data.createdAt,
+            'Havan'
+          );
         }
       });
-
-      const usersData = Array.from(usersMap.values());
-      console.log(`Extracted ${usersData.length} unique users from ${snapshot.size} bookings`);
-      setUsers(usersData);
-      
-    } catch (indexError) {
-      console.log('Index not available, trying simple query:', indexError.message);
-      
-      // Fallback to simple query without orderBy
-      const simpleSnapshot = await getDocs(bookingsRef);
-      const usersMap = new Map();
-      
-      simpleSnapshot.forEach(doc => {
-        const data = doc.data();
-        const customerDetails = data.customerDetails;
-        
-        if (customerDetails && customerDetails.email) {
-          const userId = customerDetails.email;
-          const existingUser = usersMap.get(userId);
-          
-          if (!existingUser) {
-            usersMap.set(userId, {
-              id: userId,
-              bookingId: data.bookingId || doc.id,
-              name: customerDetails.name || 'Unknown User',
-              email: customerDetails.email || '',
-              phone: customerDetails.phone || '',
-              address: customerDetails.address || '',
-              aadhar: customerDetails.aadhar || customerDetails.aadharNumber || '',
-              createdAt: data.createdAt || null,
-              bookingCount: 1,
-              lastBookingDate: data.createdAt || null,
-              originalCustomerDetails: customerDetails
-            });
-          } else {
-            existingUser.bookingCount += 1;
-            if (data.createdAt && (!existingUser.lastBookingDate || data.createdAt.toMillis() > existingUser.lastBookingDate.toMillis())) {
-              existingUser.lastBookingDate = data.createdAt;
-              existingUser.name = customerDetails.name || existingUser.name;
-              existingUser.phone = customerDetails.phone || existingUser.phone;
-              existingUser.address = customerDetails.address || existingUser.address;
-              existingUser.aadhar = customerDetails.aadhar || customerDetails.aadharNumber || existingUser.aadhar;
-            }
-          }
-        }
-      });
-
-      const usersData = Array.from(usersMap.values());
-      
-      // Sort on client side by last booking date
-      usersData.sort((a, b) => {
-        if (!a.lastBookingDate && !b.lastBookingDate) return 0;
-        if (!a.lastBookingDate) return 1;
-        if (!b.lastBookingDate) return -1;
-        return b.lastBookingDate.toMillis() - a.lastBookingDate.toMillis();
-      });
-
-      console.log(`Extracted ${usersData.length} unique users from bookings (fallback method)`);
-      setUsers(usersData);
+    } catch (error) {
+      console.log('Could not fetch from bookings:', error.message);
     }
+    
+    // Fetch from delegateBookings collection
+    try {
+      const delegateRef = collection(db, 'delegateBookings');
+      const delegateSnapshot = await getDocs(delegateRef);
+      
+      delegateSnapshot.forEach(doc => {
+        const data = doc.data();
+        const delegate = data.delegateDetails;
+        if (delegate && delegate.email) {
+          addUserToMap(
+            delegate.email,
+            delegate.name,
+            delegate.mobile,
+            null, // No address in delegate bookings
+            delegate.aadharno,
+            data.createdAt,
+            'Delegate'
+          );
+        }
+      });
+    } catch (error) {
+      console.log('Could not fetch from delegateBookings:', error.message);
+    }
+    
+    // Fetch from donations collection
+    try {
+      const donationsRef = collection(db, 'donations');
+      const donationsSnapshot = await getDocs(donationsRef);
+      
+      donationsSnapshot.forEach(doc => {
+        const data = doc.data();
+        const donor = data.donorDetails;
+        if (donor && donor.email) {
+          addUserToMap(
+            donor.email,
+            donor.name,
+            donor.mobile,
+            null, // No address in donations
+            null, // No aadhar in donations
+            data.createdAt,
+            'Donation'
+          );
+        }
+      });
+    } catch (error) {
+      console.log('Could not fetch from donations:', error.message);
+    }
+    
+    // Fetch from stallBookings collection
+    try {
+      const stallRef = collection(db, 'stallBookings');
+      const stallSnapshot = await getDocs(stallRef);
+      
+      stallSnapshot.forEach(doc => {
+        const data = doc.data();
+        const customer = data.customerDetails;
+        if (customer && customer.email) {
+          addUserToMap(
+            customer.email,
+            customer.name,
+            customer.phone,
+            customer.address,
+            customer.aadhar || customer.aadharNumber,
+            data.createdAt,
+            'Stall'
+          );
+        }
+      });
+    } catch (error) {
+      console.log('Could not fetch from stallBookings:', error.message);
+    }
+
+    const usersData = Array.from(usersMap.values());
+    
+    // Sort by last booking date (newest first)
+    usersData.sort((a, b) => {
+      if (!a.lastBookingDate && !b.lastBookingDate) return 0;
+      if (!a.lastBookingDate) return 1;
+      if (!b.lastBookingDate) return -1;
+      return b.lastBookingDate.toMillis() - a.lastBookingDate.toMillis();
+    });
+
+    console.log(`Found ${usersData.length} unique users from all collections`);
+    setUsers(usersData);
   } catch (error) {
     console.error('Error fetching users from bookings:', error);
     setError(`Failed to load users: ${error.message}`);
@@ -281,6 +315,9 @@ export default function UserManagement() {
             <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <tr>
                 <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                  S.No.
+                </th>
+                <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   User
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
@@ -293,7 +330,7 @@ export default function UserManagement() {
                   Aadhar Number
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
-                  Last Booking Date
+                  Booking Activity
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Total Bookings
@@ -304,8 +341,13 @@ export default function UserManagement() {
               </tr>
             </thead>
             <tbody className={`${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'} divide-y`}>
-              {currentUsers.map((user) => (
+              {currentUsers.map((user, index) => (
                 <tr key={user.id} className={`${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'} transition-colors duration-150`}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {startIndex + index + 1}
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className={`w-10 h-10 ${isDarkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-600'} rounded-full flex items-center justify-center font-bold text-sm`}>
@@ -313,7 +355,6 @@ export default function UserManagement() {
                       </div>
                       <div className="ml-4">
                         <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{user.name}</div>
-                        <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>ID: {user.id}</div>
                       </div>
                     </div>
                   </td>
@@ -335,8 +376,25 @@ export default function UserManagement() {
                   <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     {user.aadhar ? user.aadhar : 'Not provided'}
                   </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                    {user.lastBookingDate ? format(user.lastBookingDate.toDate(), 'MMM dd, yyyy') : 'N/A'}
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        Last: {user.lastBookingDate ? format(user.lastBookingDate.toDate(), 'MMM dd, yyyy') : 'N/A'}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {user.bookingSources && user.bookingSources.map(source => (
+                          <span key={source} className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                            source === 'Havan' ? (isDarkMode ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-700') :
+                            source === 'Stall' ? (isDarkMode ? 'bg-orange-900/30 text-orange-300' : 'bg-orange-100 text-orange-700') :
+                            source === 'Delegate' ? (isDarkMode ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-700') :
+                            source === 'Donation' ? (isDarkMode ? 'bg-pink-900/30 text-pink-300' : 'bg-pink-100 text-pink-700') :
+                            (isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600')
+                          }`}>
+                            {source}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </td>
                   <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     {user.bookingCount || 0}
@@ -363,7 +421,7 @@ export default function UserManagement() {
               ))}
               {currentUsers.length === 0 && (
                 <tr>
-                  <td colSpan="7" className={`px-6 py-12 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan="8" className={`px-6 py-12 text-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     {searchTerm ? 'No users found matching your search.' : 'No users found.'}
                   </td>
                 </tr>

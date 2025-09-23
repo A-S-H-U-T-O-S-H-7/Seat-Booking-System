@@ -503,6 +503,9 @@ export default function StallBookingManagement() {
             <thead className={isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}>
               <tr>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                  S.No.
+                </th>
+                <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                   Booking Details
                 </th>
                 <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
@@ -522,15 +525,20 @@ export default function StallBookingManagement() {
             <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className={`px-6 py-12 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan={6} className={`px-6 py-12 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     <ExclamationTriangleIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p className="text-lg font-medium">No bookings found</p>
                     <p className="text-sm">Try adjusting your filters</p>
                   </td>
                 </tr>
               ) : (
-                filteredBookings.map((booking) => (
+                filteredBookings.map((booking, index) => (
                   <tr key={booking.id} className={`hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {index + 1}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>

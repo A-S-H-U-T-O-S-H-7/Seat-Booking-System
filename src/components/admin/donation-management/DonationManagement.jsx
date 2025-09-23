@@ -389,6 +389,9 @@ export default function DonationManagement() {
                 <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                   <tr>
                     <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                      S.No.
+                    </th>
+                    <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                       Donation Details
                     </th>
                     <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
@@ -409,8 +412,13 @@ export default function DonationManagement() {
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {currentItems.map((donation) => (
+                  {currentItems.map((donation, index) => (
                     <tr key={donation.id} className={`hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </div>
+                      </td>
                       <td className="px-4 py-4">
                         <div className="space-y-1">
                           <div className="flex items-center">

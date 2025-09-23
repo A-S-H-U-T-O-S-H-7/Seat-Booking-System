@@ -144,9 +144,9 @@ const sendViaDedicatedAPI = async (emailData) => {
         name: emailData.name,
         email: emailData.email,
         order_id: emailData.order_id,
-        event_date: 'December 3, 2025',
+        event_date: '3-7 Dec, 2025',
         booking_type: 'Delegate Registration',
-        amount: emailData.amount === '0' ? 'Free' : emailData.amount, // Use 'Free' for normal delegates
+        amount: emailData.amount === '0' ? 'Free' : emailData.amount,
         mobile: emailData.mobile,
         address: `${emailData.address || 'Not provided'}`,
         pan: emailData.pan || 'Not provided',

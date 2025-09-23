@@ -274,6 +274,9 @@ export default function DelegateTable({
           <thead className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
             <tr>
               <th className={`px-4 py-4 text-left text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
+                S.No.
+              </th>
+              <th className={`px-4 py-4 text-left text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
                 Delegate Information
               </th>
               <th className={`px-4 py-4 text-left text-xs font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} uppercase tracking-wider`}>
@@ -306,6 +309,12 @@ export default function DelegateTable({
                     ? (isDarkMode ? 'bg-green-900/20 hover:bg-green-800/30 border-l-4 border-green-500' : 'bg-green-50 hover:bg-green-100/70 border-l-4 border-green-400')
                     : (isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50')
                 } transition-colors duration-150`}>
+                  {/* Serial Number */}
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {(currentPage - 1) * bookingsPerPage + index + 1}
+                    </div>
+                  </td>
                   {/* Delegate Information */}
                   <td className="px-4 py-4">
                     <div className="flex items-center">
@@ -383,7 +392,7 @@ export default function DelegateTable({
                       </div>
                       {event.numberOfPersons && (
                         <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {event.numberOfPersons} person{event.numberOfPersons > 1 ? 's' : ''} • {event.duration || 'N/A'} days
+                          {event.numberOfPersons} person{event.numberOfPersons > 1 ? 's' : ''} • {event.duration || '5'} days
                         </div>
                       )}
                     </div>

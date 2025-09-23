@@ -82,7 +82,7 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
  */
 const tryDelegateSpecificAPI = async (delegateData) => {
   try {
-    // RESTORED WORKING VERSION - Direct external API call
+    // RESTORED WORKING VERSION - Use original delegate-email.php for paid delegates
     const formData = new FormData();
     formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
     formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');

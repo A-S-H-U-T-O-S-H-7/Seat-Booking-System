@@ -327,6 +327,9 @@ export default function SponsorPerformerManagement() {
             <thead className={isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}>
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide">
+                  S.No.
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide">
                   Type & Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide">
@@ -346,7 +349,7 @@ export default function SponsorPerformerManagement() {
             <tbody className={`divide-y ${isDarkMode ? 'divide-gray-600 bg-gray-800' : 'divide-gray-200 bg-white'}`}>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4 text-center">
+                  <td colSpan="6" className="px-6 py-4 text-center">
                     <div className="flex justify-center items-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
                       <span className="ml-2">Loading applications...</span>
@@ -355,13 +358,18 @@ export default function SponsorPerformerManagement() {
                 </tr>
               ) : currentApplications.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className={`px-6 py-4 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan="6" className={`px-6 py-4 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     No applications found
                   </td>
                 </tr>
               ) : (
-                currentApplications.map((application) => (
+                currentApplications.map((application, index) => (
                   <tr key={application.id} className={`hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {startIndex + index + 1}
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {getTypeIcon(application.type)}
