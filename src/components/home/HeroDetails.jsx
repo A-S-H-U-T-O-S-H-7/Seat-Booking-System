@@ -59,7 +59,7 @@ console.log('News array:', newsData.data);
         </div>
         
         {/* Enhanced Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Duration Card */}
           <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-orange-50 via-white to-yellow-50/80 border border-orange-200/40 shadow-xl hover:shadow-2xl  transition-all duration-500">
             <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg  group-hover:rotate-6 transition-all duration-500">
@@ -70,10 +70,17 @@ console.log('News array:', newsData.data);
             <p className="text-sm text-gray-700 leading-relaxed font-medium">
               Sacred Havan ceremony spanning 5 consecutive days with dedicated morning and afternoon sessions for complete spiritual immersion
             </p>
+            <div className="space-y-2 mt-3 text-sm text-gray-700 font-medium">
+
+            <div className="bg-gradient-to-r from-red-100 to-orange-100 rounded-lg p-3 border border-red-200/30">
+                <strong className="text-red-700">Afternoon Session:</strong>
+                <div className="text-red-600 font-bold">2:00 PM - 5:00 PM</div>
+              </div>
+              </div>
           </div>
 
           {/* Timing Card */}
-          <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-yellow-50 via-white to-red-50/80 border border-yellow-200/40 shadow-xl hover:shadow-2xl  transition-all duration-500">
+          {/* <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-yellow-50 via-white to-red-50/80 border border-yellow-200/40 shadow-xl hover:shadow-2xl  transition-all duration-500">
             <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg  group-hover:rotate-6 transition-all duration-500">
               <span className="text-2xl text-white">⏰</span>
             </div>
@@ -85,7 +92,7 @@ console.log('News array:', newsData.data);
                 <div className="text-red-600 font-bold">2:00 PM - 5:00 PM</div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Capacity Card */}
           <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-red-50 via-white to-orange-50/80 border border-red-200/40 shadow-xl hover:shadow-2xl  transition-all duration-500">
@@ -106,60 +113,64 @@ console.log('News array:', newsData.data);
           </div>
 
           {/* Latest News Card */}
-          <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50/80 border border-blue-200/40 shadow-xl hover:shadow-2xl  transition-all duration-500">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg  group-hover:rotate-6 transition-all duration-500">
-              <span className="text-2xl text-white">📰jkbejehj</span>
+          <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50/80 border-2 border-blue-200/60 shadow-xl hover:shadow-2xl transition-all duration-500">
+  {/* Header with Icon and Title in Same Line */}
+  <div className='flex items-center justify-center gap-3 mb-4'>
+    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500">
+      <span className="text-lg text-white">📰</span>
+    </div>
+    <h4 className="text-lg lg:text-xl font-black text-gray-900">Latest News</h4>
+  </div>
+  
+  <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full mb-4"></div>
+  
+  {/* News Scrolling Container - Increased Height */}
+  <div className="relative h-48 overflow-hidden bg-gradient-to-b from-blue-50/50 to-indigo-50/50 rounded-xl border-2 border-blue-200/40 shadow-inner">
+    {isLoading ? (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+      </div>
+    ) : (
+      <div className="absolute inset-0 flex flex-col">
+        <div className="animate-marquee-vertical space-y-4 p-4">
+          {news.map((item, index) => (
+            <div key={item.id} className="text-sm text-gray-700 leading-relaxed font-medium border-b border-blue-200/30 pb-3 last:border-b-0">
+              <a 
+                href={item.url.trim()} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-blue-600 transition-colors duration-200 block"
+                title={item.title}
+              >
+                {item.title}
+              </a>
+              <div className="text-xs text-gray-500 mt-1">
+                {new Date(item.created_at).toLocaleDateString('hi-IN')}
+              </div>
             </div>
-            <h4 className="text-lg lg:text-xl font-black mb-3 text-gray-900">Latest News</h4>
-            <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full mb-3"></div>
-            
-            {/* News Scrolling Container */}
-            <div className="relative h-32 overflow-hidden bg-gradient-to-b from-blue-50/50 to-indigo-50/50 rounded-lg border border-blue-200/30">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                <div className="absolute inset-0 flex flex-col">
-                  <div className="animate-marquee-vertical space-y-4 p-3">
-                    {news.map((item, index) => (
-                      <div key={item.id} className="text-xs text-gray-700 leading-relaxed font-medium border-b border-blue-200/30 pb-2 last:border-b-0">
-                        <a 
-                          href={item.url.trim()} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="hover:text-blue-600 transition-colors duration-200 block"
-                          title={item.title}
-                        >
-                          {item.title}
-                        </a>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(item.created_at).toLocaleDateString('hi-IN')}
-                        </div>
-                      </div>
-                    ))}
-                    {/* Duplicate for continuous scroll */}
-                    {news.map((item, index) => (
-                      <div key={`${item.id}-duplicate`} className="text-xs text-gray-700 leading-relaxed font-medium border-b border-blue-200/30 pb-2 last:border-b-0">
-                        <a 
-                          href={item.url.trim()} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="hover:text-blue-600 transition-colors duration-200 block"
-                          title={item.title}
-                        >
-                          {item.title}
-                        </a>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(item.created_at).toLocaleDateString('hi-IN')}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          ))}
+          {/* Duplicate for continuous scroll */}
+          {news.map((item, index) => (
+            <div key={`${item.id}-duplicate`} className="text-sm text-gray-700 leading-relaxed font-medium border-b border-blue-200/30 pb-3 last:border-b-0">
+              <a 
+                href={item.url.trim()} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-blue-600 transition-colors duration-200 block"
+                title={item.title}
+              >
+                {item.title}
+              </a>
+              <div className="text-xs text-gray-500 mt-1">
+                {new Date(item.created_at).toLocaleDateString('hi-IN')}
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
         </div>
       </div>
 
