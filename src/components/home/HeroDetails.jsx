@@ -113,7 +113,7 @@ console.log('News array:', newsData.data);
           </div>
 
           {/* Latest News Card */}
-          <div className="group text-center p-6 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50/80 border-2 border-blue-200/60 shadow-xl hover:shadow-2xl transition-all duration-500">
+          <div className="group text-center p-2 md:p-4 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50/80 border-2 border-blue-200/60 shadow-xl hover:shadow-2xl transition-all duration-500">
   {/* Header with Icon and Title in Same Line */}
   <div className='flex items-center justify-center gap-3 mb-4'>
     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all duration-500">
