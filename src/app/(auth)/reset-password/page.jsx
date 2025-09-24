@@ -1,11 +1,33 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 
+// Loading component for Suspense fallback
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-yellow-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading reset form...</p>
+      </div>
+    </div>
+  );
+}
+
+// Export the main page component wrapped in Suspense
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+// Main reset password component
+function ResetPasswordForm() {
   const { resetPassword } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
