@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Download } from 'lucide-react';
 import MemberPass from './MemberPass';
 import DonationReceipt from './Receipt';
+import DonationPart from './DonatePart';
 
 const PassReceiptModal = ({ isOpen, onClose, booking }) => {
   const [activeTab, setActiveTab] = useState('pass');
@@ -166,6 +167,7 @@ const PassReceiptModal = ({ isOpen, onClose, booking }) => {
             </div>
           )}
         </div>
+        <DonationPart />
 <div className="text-center py-3 font-semibold text-lg md:text-xl lg:text-2xl text-rose-600">
   Kindly present this complete pass at the time of entry.
 </div>

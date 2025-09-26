@@ -3,7 +3,7 @@ import Link from 'next/link';
 const QuickActions = ({ onRefresh }) => {
   const actions = [
     {
-      href: '/booking',
+      href: '/havan',
       label: '🎫 Reserve Havan Spot',
       color: 'from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700'
     },
@@ -13,12 +13,12 @@ const QuickActions = ({ onRefresh }) => {
     //   color: 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700'
     // },
     {
-      href: '/booking/stall',
+      href: '/stall',
       label: '🏪 Reserve Your Stall',
       color: 'from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700'
     },
     {
-      href: '/booking/delegate',
+      href: '/delegate',
       label: '🎓 Register as Delegate',
       color: 'from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700'
     },

@@ -64,7 +64,7 @@ export default function EventParticipation() {
                 onMouseLeave={() => setHoveredButton(null)}
                 className="group cursor-pointer relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25"
               >
-               <Link href="/booking/delegate">
+               <Link href="/delegate">
   <div className="relative flex items-center justify-center gap-2 text-white font-semibold text-sm">
     <Ticket className={`w-4 h-4 transition-transform duration-300 ${hoveredButton === 'entry' ? 'rotate-12 scale-110' : ''}`} />
     <span>
@@ -88,7 +88,7 @@ export default function EventParticipation() {
               </button>
 
               {/* Secondary Button */}
-            <Link href="/booking/showlayout">
+            <Link href="/showlayout">
               <button
                 onMouseEnter={() => setHoveredButton('seating')}
                 onMouseLeave={() => setHoveredButton(null)}

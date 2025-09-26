@@ -18,7 +18,7 @@ function HeroActions({ user }) {
             {/* Mobile Version - Simple Round Button */}
             <div className="block md:hidden relative">
               <Link
-                href="/booking/havan"
+                href="/havan"
                 className="relative group flex items-center justify-center
                            w-16 h-16 sm:w-18 sm:h-18
                            bg-gradient-to-br from-orange-400 via-red-500 to-yellow-500
@@ -62,7 +62,7 @@ function HeroActions({ user }) {
               {/* Expandable button */}
               <div className="relative w-16 h-16 group-hover:w-72 group-hover:h-14 transition-all duration-700 ease-out flex items-center justify-center">
                 <Link
-                  href="/booking/havan"
+                  href="/havan"
                   className="absolute inset-0 rounded-full group-hover:rounded-2xl
                              bg-gradient-to-br from-orange-400 via-red-500 to-yellow-500
                              hover:shadow-2xl hover:shadow-orange-500/30 cursor-pointer
@@ -103,7 +103,7 @@ function HeroActions({ user }) {
             {/* Mobile Version - Simple Round Button */}
             <div className="block md:hidden relative">
               <Link
-                href="/booking/stall"
+                href="/stall"
                 className="relative group flex items-center justify-center
                            w-16 h-16 sm:w-18 sm:h-18
                            bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500
@@ -144,7 +144,7 @@ function HeroActions({ user }) {
               
               <div className="relative w-16 h-16 group-hover:w-64 group-hover:h-14 transition-all duration-700 ease-out flex items-center justify-center">
                 <Link
-                  href="/booking/stall"
+                  href="/stall"
                   className="absolute inset-0 rounded-full group-hover:rounded-2xl
                              bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500
                              hover:shadow-2xl hover:shadow-purple-500/30 cursor-pointer
@@ -254,7 +254,7 @@ function HeroActions({ user }) {
             {/* Mobile Version - Simple Round Button */}
             <div className="block md:hidden relative">
               <Link
-                href="/booking/delegate"
+                href="/delegate"
                 className="relative group flex items-center justify-center
                            w-16 h-16 sm:w-18 sm:h-18
                            bg-gradient-to-br from-emerald-500 via-green-500 to-lime-500
@@ -295,7 +295,7 @@ function HeroActions({ user }) {
               
               <div className="relative w-16 h-16 group-hover:w-80 group-hover:h-14 transition-all duration-700 ease-out flex items-center justify-center">
                 <Link
-                  href="/booking/delegate"
+                  href="/delegate"
                   className="absolute inset-0 rounded-full group-hover:rounded-2xl
                              bg-gradient-to-br from-emerald-500 via-green-500 to-lime-500
                              hover:shadow-2xl hover:shadow-emerald-500/30 cursor-pointer

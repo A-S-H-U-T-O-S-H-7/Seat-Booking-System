@@ -1,12 +1,13 @@
 import React from 'react';
 import { CheckCircle, X } from 'lucide-react';
+import DonationPart from '../DonatePart';
 
 const SuccessModal = ({ isOpen, onClose, onProfileClick }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative">
+      <div className="bg-white rounded-2xl p-2 max-w-md w-full mx-4 shadow-2xl relative">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -26,7 +27,7 @@ const SuccessModal = ({ isOpen, onClose, onProfileClick }) => {
             Successfully Submitted!
           </h2>
           <p className="text-gray-600 text-sm">
-            Your delegate registration has been completed successfully. You can now access your member pass and receipt.
+            Your delegate registration has been completed successfully. You can now access your Free Entry Pass.
           </p>
         </div>
 
@@ -36,8 +37,11 @@ const SuccessModal = ({ isOpen, onClose, onProfileClick }) => {
             onClick={onProfileClick}
             className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 cursor-pointer text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
           >
-            Check your memberpass and Receipt
+            Check your Free Entry Pass
           </button>
+        </div>
+<div className='mt-7'>
+        <DonationPart />
         </div>
       </div>
     </div>

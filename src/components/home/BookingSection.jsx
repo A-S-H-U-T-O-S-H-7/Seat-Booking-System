@@ -14,7 +14,7 @@ function BookingSection({ user }) {
             <div className="grid grid-cols-3 gap-2  md:gap-4">
               {/* Havan Seat Booking */}
               <Link
-                href="/booking/havan"
+                href="/havan"
                 className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
                 <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
@@ -39,7 +39,7 @@ function BookingSection({ user }) {
 
               {/* Stall Booking */}
               <Link
-                href="/booking/stall"
+                href="/stall"
                 className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
                 <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
@@ -64,7 +64,7 @@ function BookingSection({ user }) {
  
               {/* Show Seat Booking */}
               {/* <Link
-                href="/booking/show"
+                href="/show"
                 className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
                 <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">
@@ -89,7 +89,7 @@ function BookingSection({ user }) {
 
               {/* Delegates Booking */}
               <Link
-                href="/booking/delegate"
+                href="/delegate"
                 className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-2 sm:p-4 md:p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 active:scale-95 group touch-manipulation cursor-pointer"
               >
                 <div className="flex flex-col items-center text-center gap-2 sm:gap-3 md:gap-4">

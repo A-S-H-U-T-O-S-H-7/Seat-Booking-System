@@ -16,9 +16,7 @@ const newsData = await response.json();
         if (newsData.status === 'success' && newsData.data && newsData.data.length > 0) {
   setNews(newsData.data);
 } else {
-  console.log('No news data available');
-console.log('Parsed data:', newsData);
-console.log('News array:', newsData.data);
+  
   setNews([]);
 }
       } catch (error) {

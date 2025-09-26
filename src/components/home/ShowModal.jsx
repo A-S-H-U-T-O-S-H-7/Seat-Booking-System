@@ -41,14 +41,14 @@ function ShowModal({ isOpen, onClose }) {
                 />
               </div>
               
-              <Link href="/booking/showlayout">
+              <Link href="/showlayout">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent mb-3">
                 ✨ Cultural Show ✨
               </h2>
               </Link>
               
               {/* Free Entry Badge */}
-               <Link href="/booking/delegate">
+               <Link href="/delegate">
               <div className="inline-block ">
                 <div className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 text-white font-black text-base md:text-lg px-2 md:px-6 py-2 rounded-full shadow-2xl border-4 border-white transform hover:scale-105 transition-transform duration-200 relative overflow-hidden ">
                   <span className="relative z-10 tracking-wider">🎉 FREE ENTRY 🎉</span>
@@ -79,7 +79,7 @@ function ShowModal({ isOpen, onClose }) {
               </div>
               
               {/* Timing */}
-              <Link href="/booking/showlayout">
+              <Link href="/showlayout">
               <div className="flex items-center justify-center p-2 pb-8 md:pb-0 md:p-4 bg-gradient-to-r from-cyan-100 to-teal-100 rounded-2xl shadow-sm">
                 <div className="text-center">
                   <div className="text-xl mb-2">🕐</div>
@@ -99,7 +99,7 @@ function ShowModal({ isOpen, onClose }) {
                 </p>
               </div>
               
-            <Link href="/booking/showlayout">
+            <Link href="/showlayout">
               <div className="group cursor-pointer relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-teal-500/25">
               <div className="flex cursor-pointer items-center justify-center gap-2 text-white font-medium text-sm">
                   <MapPin className={`w-4 h-4 transition-transform duration-300 `} />
