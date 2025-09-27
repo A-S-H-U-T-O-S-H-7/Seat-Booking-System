@@ -23,6 +23,8 @@ export const validateForm = (formData) => {
   }
   
   if (!formData.country) errors.country = 'Country is required';
+  if (!formData.state || !formData.state.trim()) errors.state = 'State is required';
+  if (!formData.city || !formData.city.trim()) errors.city = 'City is required';
   if (!formData.participation) errors.participation = 'Participation type is required';
   if (!formData.registrationType) errors.registrationType = 'Registration type is required';
   

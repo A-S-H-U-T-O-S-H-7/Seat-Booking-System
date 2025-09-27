@@ -18,8 +18,6 @@ import { uploadDelegateImage, validateImageFile } from '@/services/delegateImage
 import { sendDelegateConfirmationEmail } from '@/services/emailService';
 import { handleNormalDelegateEmail } from '@/services/normalDelegateEmailService';
 
- 
-
 const DelegateForm = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -99,6 +97,49 @@ const DelegateForm = () => {
     setImagePreview(null);
     setUploadedImageUrl(null);
     setErrors({});
+  };
+
+  // Scroll to first error field with smooth animation
+  const scrollToFirstError = (validationErrors) => {
+    const firstErrorField = Object.keys(validationErrors)[0];
+    if (firstErrorField) {
+      // Try to find the field by name attribute first
+      let errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+      
+      // If not found by name, try to find by error class
+      if (!errorElement) {
+        errorElement = document.querySelector('.border-red-500');
+      }
+      
+      // If still not found, try to find by data-field attribute
+      if (!errorElement) {
+        errorElement = document.querySelector(`[data-field="${firstErrorField}"]`);
+      }
+      
+      if (errorElement) {
+        // Add a highlight animation
+        errorElement.classList.add('animate-pulse');
+        setTimeout(() => {
+          errorElement.classList.remove('animate-pulse');
+        }, 2000);
+        
+        // Scroll to the element with some offset for better visibility
+        const elementTop = errorElement.getBoundingClientRect().top + window.pageYOffset;
+        const offset = 100; // pixels from top
+        
+        window.scrollTo({
+          top: elementTop - offset,
+          behavior: 'smooth'
+        });
+        
+        // Focus the element if it's focusable
+        if (errorElement.focus) {
+          setTimeout(() => {
+            errorElement.focus();
+          }, 500);
+        }
+      }
+    }
   };
 
   // Fetch dynamic pricing on component mount
@@ -491,18 +532,19 @@ const DelegateForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Always validate form on submit
     const validationErrors = validateForm(formData);
 
-    // Add photo validation (now optional)
-    // Photo upload is no longer mandatory
-    
+    // If there are validation errors, show them and scroll to first error
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      
+      // Show error toast with count of errors
+      const errorCount = Object.keys(validationErrors).length;
+      toast.error(`Please fix ${errorCount} error${errorCount > 1 ? 's' : ''} in the form`);
+      
       // Scroll to first error
-      const firstErrorField = document.querySelector('.border-red-500');
-      if (firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      scrollToFirstError(validationErrors);
       return;
     }
 
@@ -555,55 +597,13 @@ const DelegateForm = () => {
     }
   };
 
-  // Check if form is valid for enabling submit button
-  const isFormValid = () => {
-    const requiredFields = ['name', 'email', 'mobile', 'country', 'participation', 'registrationType', 'address', 'pincode', 'delegateType'];
-    
-    // Check basic required fields
-    for (const field of requiredFields) {
-      if (!formData[field] || !formData[field].toString().trim()) {
-        return false;
-      }
-    }
-    
-    // Check registration type specific fields
-    if (formData.registrationType === 'Company' && (!formData.companyname || !formData.companyname.trim())) {
-      return false;
-    }
-    
-    if (formData.registrationType === 'Temple') {
-      if (!formData.templename || !formData.templename.trim()) return false;
-      if (!formData.brief || !formData.brief.trim()) return false;
-    }
-    
-    // Check document requirements based on country
-    const isIndianResident = formData.country && formData.country.toLowerCase().includes('india');
-    if (isIndianResident) {
-      if (!formData.aadharno || !formData.aadharno.trim()) return false;
-    } else {
-      if (!formData.passportno || !formData.passportno.trim()) return false;
-    }
-    
-    // Check delegate specific fields
-    if (formData.delegateType === 'withAssistance' && !formData.days) {
-      return false;
-    }
-    // Photo upload is now optional
-    // No need to check for photo
-    
-    return true;
-  };
-
   const totalAmount = calculateFormAmount();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-8 px-4">
-              <DelegateBanner />
+      <DelegateBanner />
 
       <div className="max-w-6xl mx-auto ">
-        
-
-
         {/* Form Container */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
           <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6">
@@ -733,14 +733,14 @@ const DelegateForm = () => {
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* Submit Button - Always enabled */}
             <div className="pt-6 text-center">
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isSubmitting || loading.countries || !isFormValid()}
+                disabled={isSubmitting || loading.countries}
                 className={`px-8 py-3 rounded-lg font-semibold shadow-lg transition-all duration-200 ${
-                  isSubmitting || loading.countries || !isFormValid()
+                  isSubmitting || loading.countries
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 hover:shadow-xl transform hover:scale-105'
                 } text-white`}
@@ -759,6 +759,20 @@ const DelegateForm = () => {
                     : 'Submit Registration'
                 )}
               </button>
+              
+              {/* Form validation status hint */}
+              {Object.keys(errors).length > 0 && (
+                <div className="mt-3 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                  <div className="flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">
+                      Please fix {Object.keys(errors).length} error{Object.keys(errors).length > 1 ? 's' : ''} above to continue
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

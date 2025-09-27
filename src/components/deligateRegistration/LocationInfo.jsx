@@ -29,12 +29,15 @@ const LocationInfo = ({ formData, errors, handleInputChange, handleBlur, countri
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
         <select
           name="state"
           value={formData.state}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-800"
+          onBlur={handleBlur}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-800 ${
+            errors.state ? 'border-red-500' : 'border-gray-300'
+          }`}
           disabled={!states.length}
         >
           <option value="">Select State</option>
@@ -42,15 +45,19 @@ const LocationInfo = ({ formData, errors, handleInputChange, handleBlur, countri
             <option key={state.iso2} value={state.name}>{state.name}</option>
           ))}
         </select>
+        {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
         <select
           name="city"
           value={formData.city}
           onChange={handleInputChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-800"
+          onBlur={handleBlur}
+          className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-800 ${
+            errors.city ? 'border-red-500' : 'border-gray-300'
+          }`}
           disabled={!cities.length}
         >
           <option value="">Select City</option>
@@ -58,6 +65,7 @@ const LocationInfo = ({ formData, errors, handleInputChange, handleBlur, countri
             <option key={city.id} value={city.name}>{city.name}</option>
           ))}
         </select>
+        {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Pincode *</label>

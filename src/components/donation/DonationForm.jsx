@@ -5,8 +5,11 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useLocationData } from '@/hooks/useLocationData';
 
-export default function DonationForm() {
-  const [donorType, setDonorType] = useState('indian');
+export default function DonationForm({ donorType = 'indian', setDonorType }) {
+  // Use props if provided, otherwise fallback to local state
+  const [localDonorType, setLocalDonorType] = useState('indian');
+  const currentDonorType = donorType || localDonorType;
+  const currentSetDonorType = setDonorType || setLocalDonorType;
   const [processing, setProcessing] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -19,6 +22,7 @@ export default function DonationForm() {
     city: '',
     pincode: ''
   });
+  const [errors, setErrors] = useState({});
 
   const router = useRouter();
   const { user } = useAuth();
@@ -41,56 +45,57 @@ export default function DonationForm() {
   };
 
   const validateForm = () => {
-    const errors = [];
+    const fieldErrors = {};
     
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      errors.push('Please enter a valid donation amount');
+      fieldErrors.amount = 'Please enter a valid donation amount';
     }
     
     if (!formData.fullName || formData.fullName.trim().length < 2) {
-      errors.push('Please enter your full name');
+      fieldErrors.fullName = 'Please enter your full name';
     }
     
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.push('Please enter a valid email address');
+      fieldErrors.email = 'Please enter a valid email address';
     }
     
     if (!formData.mobile || !/^[0-9]{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
-      errors.push('Please enter a valid 10-digit mobile number');
+      fieldErrors.mobile = 'Please enter a valid 10-digit mobile number';
     }
     
     if (!formData.address || formData.address.trim().length < 10) {
-      errors.push('Please enter a complete address');
+      fieldErrors.address = 'Please enter a complete address';
     }
     
     if (!formData.country || formData.country.trim().length < 2) {
-      errors.push('Please select your country');
+      fieldErrors.country = 'Please select your country';
     }
     
     if (!formData.state || formData.state.trim().length < 2) {
-      errors.push('Please select your state');
+      fieldErrors.state = 'Please select your state';
     }
     
     if (!formData.city || formData.city.trim().length < 2) {
-      errors.push('Please select your city');
+      fieldErrors.city = 'Please select your city';
     }
     
     if (!formData.pincode || !/^[0-9]{6}$/.test(formData.pincode)) {
-      errors.push('Please enter a valid 6-digit pincode');
+      fieldErrors.pincode = 'Please enter a valid 6-digit pincode';
     }
     
-    return errors;
+    return fieldErrors;
   };
 
   const handleSubmit = async () => {
     if (processing) return;
     
     const validationErrors = validateForm();
-    if (validationErrors.length > 0) {
-      toast.error(validationErrors[0]);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
     
+    setErrors({});
     setProcessing(true);
     
     try {
@@ -129,14 +134,14 @@ export default function DonationForm() {
           state: formData.state,
           country: formData.country,
           pincode: formData.pincode,
-          donorType: donorType
+        donorType: currentDonorType
         },
         amount: parseFloat(formData.amount),
         currency: 'INR',
         status: 'pending_payment',
         paymentGateway: 'ccavenue',
         purpose: 'donation',
-        donorType: donorType,
+        donorType: currentDonorType,
         taxExemption: {
           eligible: true,
           section: '80G',
@@ -166,7 +171,7 @@ export default function DonationForm() {
         email: formData.email,
         phone: formData.mobile.replace(/\D/g, ''),
         address: `${formData.address}, ${formData.city}, ${formData.state}, ${formData.pincode}`,
-        donor_type: donorType,
+        donor_type: currentDonorType,
         country: formData.country || 'india'
       };
       
@@ -257,8 +262,8 @@ export default function DonationForm() {
               Donor Type*
             </label>
             <select
-              value={donorType}
-              onChange={(e) => setDonorType(e.target.value)}
+              value={currentDonorType}
+              onChange={(e) => currentSetDonorType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 text-sm"
             >
               <option value="indian">Indian Donors</option>
@@ -278,6 +283,7 @@ export default function DonationForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm"
               required
             />
+            {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount}</p>}
           </div>
         </div>
 
@@ -295,6 +301,7 @@ export default function DonationForm() {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm"
             required
           />
+          {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
         </div>
 
         {/* Email and Mobile in same row */}
@@ -312,6 +319,7 @@ export default function DonationForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm"
               required
             />
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -326,6 +334,7 @@ export default function DonationForm() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm"
               required
             />
+            {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile}</p>}
           </div>
         </div>
 
@@ -343,6 +352,7 @@ export default function DonationForm() {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 resize-none text-sm"
             required
           />
+          {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
         </div>
 
         {/* Country, State, City, Pincode in grid */}
@@ -363,6 +373,7 @@ export default function DonationForm() {
                 <option key={country.iso2} value={country.name}>{country.name}</option>
               ))}
             </select>
+            {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -380,6 +391,7 @@ export default function DonationForm() {
                 <option key={state.iso2} value={state.name}>{state.name}</option>
               ))}
             </select>
+            {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -397,6 +409,7 @@ export default function DonationForm() {
                 <option key={city.id} value={city.name}>{city.name}</option>
               ))}
             </select>
+            {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">
@@ -412,6 +425,7 @@ export default function DonationForm() {
               className="w-full px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-400 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400 text-xs"
               required
             />
+            {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}
           </div>
         </div>
 

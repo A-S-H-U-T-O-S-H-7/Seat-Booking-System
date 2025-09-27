@@ -1,8 +1,13 @@
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function BankDetails() {
+export default function BankDetails({ donorType = 'indian' }) {
   const [activeTab, setActiveTab] = useState('indian');
+  
+  // Update active tab when donor type changes
+  useEffect(() => {
+    setActiveTab(donorType === 'foreign' ? 'international' : 'indian');
+  }, [donorType]);
 
   const indianBankDetails = {
     accountName: "Samudayik Vikas Samiti",
