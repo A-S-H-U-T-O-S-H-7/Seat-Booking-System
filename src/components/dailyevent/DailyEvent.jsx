@@ -10,6 +10,7 @@ import EventBanner from './EventBanner';
 
 export default function JagannathSchedule() {
   const [activeDay, setActiveDay] = useState('day1');
+  const [language, setLanguage] = useState('english');
 
   const dayTabs = [
     { id: 'day1', label: 'Day 1', number: '१' },
@@ -19,14 +20,20 @@ export default function JagannathSchedule() {
     { id: 'day5', label: 'Day 5', number: '५' }
   ];
 
+  const languages = [
+    { id: 'odia', label: 'ଓଡିଆ' },
+    { id: 'hindi', label: 'हिन्दी' },
+    { id: 'english', label: 'English' }
+  ];
+
   const renderDayComponent = () => {
     switch(activeDay) {
-      case 'day1': return <Day1Schedule />;
-      case 'day2': return <Day2Schedule />;
-      case 'day3': return <Day3Schedule />;
-      case 'day4': return <Day4Schedule />;
-      case 'day5': return <Day5Schedule />;
-      default: return <Day1Schedule />;
+      case 'day1': return <Day1Schedule language={language} />;
+      case 'day2': return <Day2Schedule language={language} />;
+      case 'day3': return <Day3Schedule language={language} />;
+      case 'day4': return <Day4Schedule language={language} />;
+      case 'day5': return <Day5Schedule language={language} />;
+      default: return <Day1Schedule language={language} />;
     }
   };
 
@@ -34,12 +41,12 @@ export default function JagannathSchedule() {
     <div className="min-h-screen bg-gradient-to-br pt-4 from-orange-50 via-yellow-50 to-red-50">
       <EventBanner />
 
-      
+     
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 md:px-6 py-6 md:py-12">
         {/* Day Tabs */}
-        <div className="flex justify-center mb-8">
+        {/* <div className="flex justify-center mb-8">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 shadow-xl border border-orange-200">
             <div className="flex flex-wrap justify-center gap-2">
               {dayTabs.map((day) => (
@@ -58,26 +65,35 @@ export default function JagannathSchedule() {
               ))}
             </div>
           </div>
+        </div> */}
+       <div className="flex justify-center  mb-8">
+      <div className="relative overflow-hidden rounded-3xl shadow-2xl">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br  from-orange-100 via-pink-50 to-purple-100"></div>
+        
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
+        
+        {/* Content */}
+        <div className="relative px-8 py-6 sm:px-6 sm:py-4 border border-pink-200 ">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
+              Schedule Overview
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg text-gray-700 font-medium">
+              November 3 - November 7, 2025
+            </p>
+          </div>
         </div>
+      </div>
+    </div>
 
         {/* Day Content */}
         <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl border border-orange-200 overflow-hidden">
           <div className="p-4 md:p-12">
             {renderDayComponent()}
             
-            {/* Devotional Quote */}
-            <div className="text-center pt-8 border-t border-orange-200 mt-10">
-              <div className="inline-flex items-center space-x-3 text-orange-600 mb-4">
-                <span className="text-2xl">🙏</span>
-                <span className="font-sanskrit text-lg">
-                  जगन्नाथस्वामी नयनपथगामी भवतु मे
-                </span>
-                <span className="text-2xl">🙏</span>
-              </div>
-              <p className="text-sm text-gray-500">
-                May Lord Jagannātha be the object of my vision
-              </p>
-            </div>
+           
           </div>
         </div>
       </div>
