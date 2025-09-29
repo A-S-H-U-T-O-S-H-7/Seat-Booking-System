@@ -4,35 +4,35 @@ export default function EventBanner() {
       
       {/* Corner Border Designs */}
       {/* Left Bottom Corner */}
-      <div className="absolute  -left-1 -bottom-3 md:-left-2 md:-bottom-5 z-10">
+      <div className="absolute  -left-1 -bottom-1 md:-left-1 md:-bottom-1 z-10">
         <img 
-          src="/flowerevent1.png" 
+          src="/newpinkborder.png" 
           alt="Decorative Flower" 
           className="w-24 h-24 md:w-36 md:h-36 object-contain -rotate-90 opacity-80"
         />
       </div>
       {/* Right Bottom Corner */}
-      <div className="absolute -right-2 -bottom-2 md:-right-3 md:-bottom-3 z-10">
+      <div className="absolute -right-1 -bottom-1 md:-right-1 md:-bottom-1 z-10">
         <img 
-          src="/flowerevent1.png" 
+          src="/newpinkborder.png" 
           alt="Decorative Flower" 
           className="w-24 h-24 md:w-36 md:h-36 object-contain opacity-80 rotate-180 "
         />
       </div>
 
       {/* Left Top Corner */}
-      <div className="absolute -left-3 -top-1 md:-left-3 md:-top-3 z-10">
+      <div className="absolute -left-1  md:-left-1  z-10">
         <img 
-          src="/flowerevent1.png" 
+          src="/newpinkborder.png" 
           alt="Decorative Flower" 
           className="w-24 h-24 md:w-36 md:h-36 opacity-80 object-contain  "
         />
       </div>
       
       {/* Right Top Corner */}
-      <div className="absolute -right-1 -top-3 md:-right-2 md:-top-5 z-10">
+      <div className="absolute -right-1 -top-1 md:-right-1 md:-top-1 z-10">
         <img 
-          src="/flowerevent1.png" 
+          src="/newpinkborder.png" 
           alt="Decorative Border" 
           className="w-24 h-24 md:w-36 md:h-36 opacity-80 object-contain rotate-90"
         />
