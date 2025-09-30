@@ -182,7 +182,7 @@ export default function JagannathSchedule() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-2 md:px-6 py-6 md:py-12">
         <div className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-2xl border border-orange-200 overflow-hidden">
-          <div className="p-4 md:p-12">
+          <div className="p-2 md:p-12">
             
             {/* Page Title */}
             <div className="text-center mb-10">
@@ -198,7 +198,7 @@ export default function JagannathSchedule() {
             </div>
 
             {/* Opening Ceremony Section */}
-            <div className="mb-12 bg-gradient-to-r from-orange-100 to-red-100 rounded-2xl p-6 md:p-8 border border-orange-200">
+            <div className="mb-12 bg-gradient-to-r from-orange-100 to-red-100 rounded-2xl py-4 px-2 md:p-8 border border-orange-200">
               <h3 className="text-2xl md:text-3xl font-bold text-orange-700 mb-4 text-center">
                 {opening.title}
               </h3>
@@ -240,7 +240,7 @@ export default function JagannathSchedule() {
 
               <div className="space-y-6">
                 {daily.schedule.map((item, index) => (
-                  <div key={index} className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-6 shadow-lg border border-orange-100 hover:shadow-xl transition-all duration-300">
+                  <div key={index} className="bg-gradient-to-r from-orange-50 to-red-50 rounded-2xl p-4 shadow-lg border border-orange-100 hover:shadow-xl transition-all duration-300">
                     <div className="flex flex-col md:flex-row md:items-start md:space-x-6">
                       <div className="flex items-center space-x-4 mb-4 md:mb-0 md:w-72">
                         <div className="text-3xl">{item.icon}</div>
@@ -268,7 +268,7 @@ export default function JagannathSchedule() {
             </div>
 
             {/* Special Day Section */}
-            <div className="mb-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 md:p-8 border border-blue-200">
+            <div className="mb-10 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 md:p-6 border border-blue-200">
               <h4 className="text-lg md:text-xl font-bold text-blue-700 mb-4">
                 {daily.specialDay.title}
               </h4>
@@ -290,7 +290,7 @@ export default function JagannathSchedule() {
             </div>
 
             {/* Cultural Program Section */}
-            <div className="mb-10 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 md:p-8 border border-purple-200">
+            <div className="mb-10 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 md:p-6 border border-purple-200">
               <div className="flex items-center space-x-3 mb-4">
                 <span className="text-3xl">{daily.cultural.icon}</span>
                 <h4 className="text-xl md:text-2xl font-bold text-purple-700">
