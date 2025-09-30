@@ -81,7 +81,7 @@ export default function JagannathSchedule() {
               Schedule Overview
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-700 font-medium">
-              November 3 - November 7, 2025
+              December 3 - December 7, 2025
             </p>
           </div>
         </div>
