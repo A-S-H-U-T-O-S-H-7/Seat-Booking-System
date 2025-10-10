@@ -1,245 +1,325 @@
-// GuestsDay1.jsx
-import React from 'react';
+"use client"
+import React, { useState, useEffect } from 'react';
+import { getGuests } from '@/lib/distinguishedGuestsService';
+import { GUEST_CATEGORIES } from '@/lib/guestConstants';
+import GuestBanner from './GuestBanner';
 
-const GuestsDay1 = () => {
-  const guestData = {
-    title: "Day 1 - Foundation Ceremony Honor Roll",
-    subtitle: "Revered Spiritual Luminaries & Sacred Knowledge Keepers",
-    theme: "Wisdom Bearers & Divine Form Contemplators",
-    
-    chiefGuests: [
-      {
-        name: "His Holiness Jagadguru Śrī Bharatī Tīrtha Mahāsvāmījī",
-        title: "Śaṅkarācārya of Śṛṅgerī Śārada Pīṭha",
-        role: "Chief Patron & Spiritual Guide",
-        significance: "Supreme spiritual authority blessing the commencement of sacred Pañcharātra",
-        time: "9:00 AM - 11:00 AM",
-        ceremony: "Mahā-Archanā Blessing",
-        icon: "🕉️"
-      },
-      {
-        name: "Śrī Śrī 108 Śrī Viṣṇu Pad Mahānt Dayānanda Giri",
-        title: "Pīṭhādhīśvara of Govardhana Pīṭha",
-        role: "Divine Invocation Leader",
-        significance: "Leading the sacred invocation and establishing divine presence",
-        time: "7:00 AM - 9:00 AM",
-        ceremony: "Morning Saṅkīrtana Leadership",
-        icon: "🎵"
-      }
-    ],
+const GuestCard = ({ guest }) => {
+  const category = GUEST_CATEGORIES[guest.category] || GUEST_CATEGORIES.spiritual;
 
-    honoredScholars: [
-      {
-        name: "Dr. Paṇḍit Rāma Śaṅkara Tripāṭhī",
-        title: "Vedic Scholar & Sanskrit Authority",
-        expertise: "Puruṣottama Māhātmya & Ancient Scriptures",
-        contribution: "Sacred Text Recitation & Commentary",
-        time: "11:00 AM - 12:00 PM",
-        icon: "📚"
-      },
-      {
-        name: "Ācārya Keśava Prasāda Miśra",
-        title: "Paurāṇika & Spiritual Exponent",
-        expertise: "Jagannātha Tradition & Temple Protocols",
-        contribution: "Divine Form Discourse & Teaching",
-        time: "7:30 PM - 9:00 PM",
-        icon: "💫"
-      },
-      {
-        name: "Dr. Śrīmatī Sundarī Devī Śāstrī",
-        title: "Dharmaśāstra Expert & Women's Spiritual Leader",
-        expertise: "Vedic Rituals & Sacred Ceremonies",
-        contribution: "Ritual Guidance & Spiritual Counseling",
-        time: "Throughout Day",
-        icon: "🔥"
-      }
-    ],
-
-    culturalDignitaries: [
-      {
-        name: "Paṇḍit Rāghunātha Panigrāhī",
-        title: "Odissi Dance Maestro",
-        contribution: "Sacred Dance Offerings & Cultural Program Direction",
-        significance: "Preserving and presenting classical devotional arts",
-        icon: "💃"
-      },
-      {
-        name: "Ustad Ramahari Das",
-        title: "Classical Vocalist & Bhajan Samrat",
-        contribution: "Leading Devotional Music & Kirtan Sessions",
-        significance: "Creating divine atmosphere through sacred sound",
-        icon: "🎼"
-      }
-    ],
-
-    administrativeGuests: [
-      {
-        name: "Śrī Arabinda Padhī",
-        title: "Chief Administrator, Jagannātha Temple",
-        role: "Temple Protocol & Ceremonial Coordination",
-        significance: "Ensuring authentic traditional procedures",
-        icon: "🏛️"
-      },
-      {
-        name: "Dr. Priyambada Hejmadi",
-        title: "Director, Odia Language & Culture",
-        role: "Cultural Program Coordination",
-        significance: "Preserving linguistic and cultural authenticity",
-        icon: "🌸"
-      }
-    ]
-  };
-
-  const renderGuestCard = (guest, index, type) => {
-    const colorSchemes = {
-      chief: "from-purple-50 to-indigo-50 border-purple-200",
-      scholar: "from-blue-50 to-cyan-50 border-blue-200", 
-      cultural: "from-pink-50 to-rose-50 border-pink-200",
-      admin: "from-green-50 to-emerald-50 border-green-200"
-    };
-
-    return (
-      <div key={index} className={`bg-gradient-to-r ${colorSchemes[type]} rounded-2xl p-6 shadow-lg border hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}>
-        <div className="flex items-start space-x-4">
-          <div className="text-4xl flex-shrink-0 mt-1">{guest.icon}</div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-800 mb-2">{guest.name}</h3>
-            <p className="text-lg text-indigo-600 font-semibold mb-3">{guest.title}</p>
-            
-            {guest.role && (
-              <div className="bg-white/70 rounded-lg p-3 mb-3">
-                <span className="text-sm font-bold text-gray-600">Role: </span>
-                <span className="text-gray-700">{guest.role}</span>
-              </div>
-            )}
-            
-            {guest.expertise && (
-              <div className="bg-white/70 rounded-lg p-3 mb-3">
-                <span className="text-sm font-bold text-gray-600">Expertise: </span>
-                <span className="text-gray-700">{guest.expertise}</span>
-              </div>
-            )}
-            
-            <div className="bg-white/70 rounded-lg p-3 mb-3">
-              <span className="text-sm font-bold text-gray-600">Contribution: </span>
-              <span className="text-gray-700">{guest.contribution}</span>
+  return (
+    <div className={`${category.bgColor} rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden`}>
+      <div className="p-4 sm:p-6">
+        {/* Mobile Layout - Column */}
+        <div className="flex flex-col items-center text-center sm:hidden">
+          {/* Image Circle */}
+          <div className={`flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br ${category.gradient} p-0.5 mb-4`}>
+            <div className="w-full h-full rounded-full bg-white p-1">
+              <img 
+                src={guest.imageUrl || '/api/placeholder/120/120'} 
+                alt={guest.name}
+                className="w-full h-full rounded-full object-cover"
+              />
             </div>
-            
-            {guest.time && (
-              <div className="inline-block bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium">
-                🕐 {guest.time}
-              </div>
-            )}
-            
-            {guest.ceremony && (
-              <div className="mt-2 inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium ml-2">
-                ⭐ {guest.ceremony}
-              </div>
-            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 w-full">
+            <h3 className="font-bold text-gray-900 text-base leading-tight mb-2">
+              {guest.name}
+            </h3>
+            <p className={`text-sm font-semibold bg-gradient-to-r ${category.gradient} bg-clip-text text-transparent mb-3`}>
+              {guest.title}
+            </p>
+            <p className="text-xs text-gray-600 leading-relaxed mb-3">
+              {guest.description}
+            </p>
           </div>
         </div>
-        
+
+        {/* Desktop Layout - Row */}
+        <div className="hidden sm:flex items-start gap-5">
+          {/* Image Circle */}
+          <div className={`flex-shrink-0 w-28 h-28 rounded-full bg-gradient-to-br ${category.gradient} p-0.5`}>
+            <div className="w-full h-full rounded-full bg-white p-1">
+              <img 
+                src={guest.imageUrl || '/api/placeholder/120/120'} 
+                alt={guest.name}
+                className="w-full h-full rounded-full object-cover"
+              />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-2">
+              {guest.name}
+            </h3>
+            <p className={`text-base font-semibold bg-gradient-to-r ${category.gradient} bg-clip-text text-transparent mb-3`}>
+              {guest.title}
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {guest.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Significance */}
         {guest.significance && (
-          <div className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
-            <p className="text-sm text-gray-700 italic leading-relaxed">
-              <span className="font-semibold text-amber-700">Sacred Significance: </span>
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-xs sm:text-sm text-gray-600 italic leading-relaxed">
+              <span className="font-semibold text-amber-600">Sacred Significance: </span>
               {guest.significance}
             </p>
           </div>
         )}
       </div>
-    );
-  };
-
-  return (
-    <>
-      {/* Day Header */}
-      <div className="text-center mb-12">
-        <div className="flex items-center justify-center mb-8">
-          <div className="h-1 w-20 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full"></div>
-          <span className="mx-6 text-purple-600 text-5xl">🏛️</span>
-          <div className="h-1 w-20 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full"></div>
-        </div>
-        
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-          {guestData.title}
-        </h2>
-        
-        <p className="text-xl text-gray-600 mb-8 italic max-w-4xl mx-auto leading-relaxed">
-          {guestData.subtitle}
-        </p>
-        
-        <div className="bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 rounded-3xl p-8 mb-12 border border-purple-200 shadow-lg">
-          <h3 className="text-2xl font-bold text-purple-700 mb-3">Sacred Assembly Theme</h3>
-          <p className="text-gray-700 text-lg font-medium">{guestData.theme}</p>
-        </div>
-      </div>
-
-      {/* Chief Guests Section */}
-      <div className="mb-16">
-        <h3 className="text-3xl font-bold text-center mb-10 text-gray-800 flex items-center justify-center">
-          <span className="text-purple-600 text-4xl mr-4">👑</span>
-          Chief Spiritual Patrons
-          <span className="text-purple-600 text-4xl ml-4">👑</span>
-        </h3>
-        <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {guestData.chiefGuests.map((guest, index) => renderGuestCard(guest, index, 'chief'))}
-        </div>
-      </div>
-
-      {/* Honored Scholars Section */}
-      <div className="mb-16">
-        <h3 className="text-3xl font-bold text-center mb-10 text-gray-800 flex items-center justify-center">
-          <span className="text-blue-600 text-4xl mr-4">📚</span>
-          Revered Scholars & Ācāryas
-          <span className="text-blue-600 text-4xl ml-4">📚</span>
-        </h3>
-        <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {guestData.honoredScholars.map((guest, index) => renderGuestCard(guest, index, 'scholar'))}
-        </div>
-      </div>
-
-      {/* Cultural Dignitaries Section */}
-      <div className="mb-16">
-        <h3 className="text-3xl font-bold text-center mb-10 text-gray-800 flex items-center justify-center">
-          <span className="text-pink-600 text-4xl mr-4">🎭</span>
-          Cultural Luminaries
-          <span className="text-pink-600 text-4xl ml-4">🎭</span>
-        </h3>
-        <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
-          {guestData.culturalDignitaries.map((guest, index) => renderGuestCard(guest, index, 'cultural'))}
-        </div>
-      </div>
-
-      {/* Administrative Guests Section */}
-      <div className="mb-12">
-        <h3 className="text-3xl font-bold text-center mb-10 text-gray-800 flex items-center justify-center">
-          <span className="text-green-600 text-4xl mr-4">⚖️</span>
-          Administrative Dignitaries
-          <span className="text-green-600 text-4xl ml-4">⚖️</span>
-        </h3>
-        <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
-          {guestData.administrativeGuests.map((guest, index) => renderGuestCard(guest, index, 'admin'))}
-        </div>
-      </div>
-
-      {/* Day Significance */}
-      <div className="bg-gradient-to-r from-gold-50 via-amber-50 to-orange-50 rounded-3xl p-10 shadow-xl border border-gold-200">
-        <div className="text-center">
-          <h4 className="text-2xl font-bold text-amber-800 mb-6 flex items-center justify-center">
-            <span className="text-4xl mr-3">🌟</span>
-            Day One Sacred Significance
-            <span className="text-4xl ml-3">🌟</span>
-          </h4>
-          <p className="text-lg text-gray-700 leading-relaxed max-w-5xl mx-auto">
-            The foundation day brings together the most revered spiritual authorities to establish the sacred atmosphere 
-            and invoke divine blessings for the entire Pañcharātra. These luminous souls carry the wisdom of ages and 
-            the authority to bridge heaven and earth through their presence and blessings.
-          </p>
-        </div>
-      </div>
-    </>
+    </div>
   );
 };
 
-export default GuestsDay1;
+const GuestSection = ({ title, icon, guests, gradient, description }) => {
+  if (!guests || guests.length === 0) return null;
+
+  return (
+    <section className="mb-12 last:mb-0">
+      {/* Section Header */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center mb-4">
+          <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
+          <span className="mx-3 text-xl sm:text-2xl">{icon}</span>
+          <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full"></div>
+        </div>
+        
+        <h2 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">
+          {title}
+        </h2>
+        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+          {description}
+        </p>
+      </div>
+
+      {/* Guests Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {guests.map(guest => (
+          <GuestCard key={guest.id} guest={guest} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+export default function DistinguishedGuests() {
+  const [guests, setGuests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  useEffect(() => {
+    loadGuests();
+  }, []);
+
+  const loadGuests = async () => {
+    setLoading(true);
+    try {
+      const result = await getGuests();
+      if (result.success) {
+        setGuests(result.data);
+      } else {
+        console.error('Error loading guests:', result.error);
+        setGuests([]);
+      }
+    } catch (error) {
+      console.error('Error loading guests:', error);
+      setGuests([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter guests by category
+  const spiritualGuests = guests.filter(guest => guest.category === 'spiritual');
+  const artistGuests = guests.filter(guest => guest.category === 'artist');
+  const specialGuests = guests.filter(guest => guest.category === 'special');
+
+  // Category tabs configuration
+  const categories = [
+    {
+      id: 'all',
+      label: 'All Guests',
+      icon: '👥',
+      show: true
+    },
+    {
+      id: 'spiritual',
+      label: 'Spiritual Gurus',
+      icon: '🕉️',
+      show: spiritualGuests.length > 0
+    },
+    {
+      id: 'artist',
+      label: 'Artists',
+      icon: '🎨',
+      show: artistGuests.length > 0
+    },
+    {
+      id: 'special',
+      label: 'Special Guests',
+      icon: '⭐',
+      show: specialGuests.length > 0
+    }
+  ].filter(cat => cat.show);
+
+  // Get guests for selected category
+  const getFilteredGuests = () => {
+    switch (selectedCategory) {
+      case 'spiritual':
+        return { spiritual: spiritualGuests };
+      case 'artist':
+        return { artist: artistGuests };
+      case 'special':
+        return { special: specialGuests };
+      default:
+        return {
+          spiritual: spiritualGuests,
+          artist: artistGuests,
+          special: specialGuests
+        };
+    }
+  };
+
+  const filteredGuests = getFilteredGuests();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <GuestBanner />
+
+      {/* Honored Presence Banner */}
+      <div className="bg-gradient-to-r from-violet-200 via-white/30 to-purple-200 py-4 md:py-6 px-4 md:px-8 border-b-4 border-purple-300 rounded-xl mx-4 md:mx-10 shadow-lg mt-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-flex flex-col items-center space-y-3 bg-white/90 backdrop-blur-sm rounded-3xl px-4 py-4 md:px-8 md:py-6 shadow-xl border border-amber-200">
+            <div className="flex items-center space-x-2 md:space-x-3">
+              <span className="text-amber-600 text-xl md:text-3xl">🙏</span>
+              <span className="text-gray-800 font-semibold text-base md:text-xl">
+                Revered Spiritual Luminaries & Sacred Dignitaries
+              </span>
+              <span className="text-amber-600 text-xl md:text-3xl">🙏</span>
+            </div>
+            <p className="text-gray-600 text-sm md:text-base max-w-3xl">
+              Blessed by the presence of enlightened souls who illuminate the path of devotion
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Enhanced Main Content */}
+      <div className="max-w-8xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <div className="h-1 w-10 sm:w-16 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
+            <span className="mx-3 sm:mx-4 text-2xl sm:text-4xl">🏛️</span>
+            <div className="h-1 w-10 sm:w-16 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full"></div>
+          </div>
+          
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
+            Sacred Assembly
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+            Honored Guests of the Pañcharātra Foundation Ceremony
+          </p>
+        </div>
+
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`px-4 py-2 rounded-full font-medium transition-all duration-300 text-sm sm:text-base ${
+                selectedCategory === category.id
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:shadow-md'
+              }`}
+            >
+              <span className="mr-2">{category.icon}</span>
+              {category.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Guest Sections */}
+        <div className="space-y-12">
+          {/* Spiritual Gurus Section */}
+          {filteredGuests.spiritual && filteredGuests.spiritual.length > 0 && (
+            <GuestSection
+              title="Spiritual Gurus"
+              icon="🕉️"
+              guests={filteredGuests.spiritual}
+              gradient="from-purple-500 to-pink-500"
+              description="Enlightened souls guiding us on the path of devotion and wisdom"
+            />
+          )}
+
+          {/* Artists Section */}
+          {filteredGuests.artist && filteredGuests.artist.length > 0 && (
+            <GuestSection
+              title="Artists"
+              icon="🎨"
+              guests={filteredGuests.artist}
+              gradient="from-blue-500 to-teal-500"
+              description="Creative visionaries preserving and propagating sacred arts"
+            />
+          )}
+
+          {/* Special Guests Section */}
+          {filteredGuests.special && filteredGuests.special.length > 0 && (
+            <GuestSection
+              title="Special Guests"
+              icon="⭐"
+              guests={filteredGuests.special}
+              gradient="from-amber-500 to-orange-500"
+              description="Distinguished personalities gracing our sacred ceremony"
+            />
+          )}
+        </div>
+
+        {/* Empty State */}
+        {Object.values(filteredGuests).every(section => !section || section.length === 0) && (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">😔</div>
+            <p className="text-gray-600 text-lg">No guests found for the selected category.</p>
+          </div>
+        )}
+
+        {/* Enhanced Devotional Quote */}
+        <div className="text-center pt-12 border-t border-purple-200/30 mt-12">
+          <div className="bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-3xl p-6 md:p-8 backdrop-blur-sm border border-indigo-200/30">
+            <div className="flex items-center justify-center space-x-3 md:space-x-4 text-indigo-600 mb-4 md:mb-6">
+              <span className="text-2xl md:text-3xl">🙏</span>
+              <span className="font-bold text-xl md:text-2xl">
+                अतिथि देवो भवः
+              </span>
+              <span className="text-2xl md:text-3xl">🙏</span>
+            </div>
+            <p className="text-base md:text-lg text-gray-600 mb-4 italic">
+              "The Guest is God" - Honoring Divine Presence in Sacred Visitors
+            </p>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-6 md:w-8 h-0.5 bg-indigo-300 rounded-full"></div>
+              <span className="text-indigo-400 text-lg">⭐</span>
+              <div className="w-6 md:w-8 h-0.5 bg-indigo-300 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

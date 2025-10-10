@@ -2,37 +2,18 @@
 "use client"
 import { useState } from 'react';
 import Day1Schedule from './Dayone';
-import Day2Schedule from './Daytwo';
-import Day3Schedule from './DayThree';
-import Day4Schedule from './DayFour';
-import Day5Schedule from './DayFive';
 import EventBanner from './EventBanner';
 
 export default function JagannathSchedule() {
   const [activeDay, setActiveDay] = useState('day1');
   const [language, setLanguage] = useState('english');
 
-  const dayTabs = [
-    { id: 'day1', label: 'Day 1', number: '१' },
-    { id: 'day2', label: 'Day 2', number: '२' },
-    { id: 'day3', label: 'Day 3', number: '३' },
-    { id: 'day4', label: 'Day 4', number: '४' },
-    { id: 'day5', label: 'Day 5', number: '५' }
-  ];
 
-  const languages = [
-    { id: 'odia', label: 'ଓଡିଆ' },
-    { id: 'hindi', label: 'हिन्दी' },
-    { id: 'english', label: 'English' }
-  ];
 
   const renderDayComponent = () => {
     switch(activeDay) {
       case 'day1': return <Day1Schedule language={language} />;
-      case 'day2': return <Day2Schedule language={language} />;
-      case 'day3': return <Day3Schedule language={language} />;
-      case 'day4': return <Day4Schedule language={language} />;
-      case 'day5': return <Day5Schedule language={language} />;
+      
       default: return <Day1Schedule language={language} />;
     }
   };

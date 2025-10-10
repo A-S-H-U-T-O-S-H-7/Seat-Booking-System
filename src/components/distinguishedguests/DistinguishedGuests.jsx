@@ -1,53 +1,228 @@
-// DistinguishedGuests.jsx - Main Component
 "use client"
-import { useState } from 'react';
-import GuestsDay1 from './GuestDayone';
-import GuestsDay2 from './GuestDaytwo';
-import GuestsDay3 from './GuestDaythree';
-import GuestsDay4 from './GuestDayfour';
-import GuestsDay5 from './GuestDayfive';
+import React, { useState, useEffect } from 'react';
+import { getGuests } from '@/lib/distinguishedGuestsService';
+import { GUEST_CATEGORIES } from '@/lib/guestConstants';
 import GuestBanner from './GuestBanner';
 
+const GuestCard = ({ guest }) => {
+  const category = GUEST_CATEGORIES[guest.category] || GUEST_CATEGORIES.spiritual;
+  const [imgError, setImgError] = useState(false);
+
+  // Generate fallback image URL
+  const getFallbackImage = () => {
+    const name = encodeURIComponent(guest.name || 'Guest');
+    return `https://ui-avatars.com/api/?name=${name}&size=120&background=random&color=fff`;
+  };
+
+  const imageUrl = imgError ? getFallbackImage() : (guest.imageUrl || getFallbackImage());
+
+  return (
+    <div className={`${category.bgColor} rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100`}>
+      <div className="p-4 sm:p-6">
+        {/* Mobile Layout */}
+        <div className="flex flex-col items-center text-center sm:hidden">
+          <div className={`flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br ${category.gradient} p-0.5 mb-4`}>
+            <div className="w-full h-full rounded-full bg-white p-1">
+              <img 
+                src={imageUrl}
+                alt={guest.name}
+                className="w-full h-full rounded-full object-cover"
+                onError={() => setImgError(true)}
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 w-full">
+            <h3 className="font-bold text-gray-900 text-base leading-tight mb-2">
+              {guest.name}
+            </h3>
+            <p className={`text-sm font-semibold bg-gradient-to-r ${category.gradient} bg-clip-text text-transparent mb-3`}>
+              {guest.title}
+            </p>
+            <p className="text-xs text-gray-600 leading-relaxed mb-3">
+              {guest.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden sm:flex items-start gap-5">
+          <div className={`flex-shrink-0 w-28 h-28 rounded-full bg-gradient-to-br ${category.gradient} p-0.5`}>
+            <div className="w-full h-full rounded-full bg-white p-1">
+              <img 
+                src={imageUrl}
+                alt={guest.name}
+                className="w-full h-full rounded-full object-cover"
+                onError={() => setImgError(true)}
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-2">
+              {guest.name}
+            </h3>
+            <p className={`text-base font-semibold bg-gradient-to-r ${category.gradient} bg-clip-text text-transparent mb-3`}>
+              {guest.title}
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {guest.description}
+            </p>
+          </div>
+        </div>
+
+        {guest.significance && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <p className="text-xs sm:text-sm text-gray-600 italic leading-relaxed">
+              <span className="font-semibold text-amber-600">Sacred Significance: </span>
+              {guest.significance}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+const GuestSection = ({ title, icon, guests, gradient, description }) => {
+  if (!guests || guests.length === 0) return null;
+
+  return (
+    <section className="mb-12 last:mb-0">
+      {/* Section Header */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center mb-4">
+          <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
+          <span className="mx-3 text-xl sm:text-2xl">{icon}</span>
+          <div className="h-1 w-8 sm:w-12 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full"></div>
+        </div>
+        
+        <h2 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">
+          {title}
+        </h2>
+        <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto px-4">
+          {description}
+        </p>
+      </div>
+
+      {/* Guests Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {guests.map(guest => (
+          <GuestCard key={guest.id} guest={guest} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
 export default function DistinguishedGuests() {
-  const [activeDay, setActiveDay] = useState('day1');
+  const [guests, setGuests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
-  const dayTabs = [
-    { id: 'day1', label: 'Day 1', number: '१', theme: 'Knowledge' },
-    { id: 'day2', label: 'Day 2', number: '२', theme: 'Glory' },
-    { id: 'day3', label: 'Day 3', number: '३', theme: 'Beauty' },
-    { id: 'day4', label: 'Day 4', number: '४', theme: 'Love' },
-    { id: 'day5', label: 'Day 5', number: '५', theme: 'Unity' }
-  ];
+  useEffect(() => {
+    loadGuests();
+  }, []);
 
-  const renderDayComponent = () => {
-    switch(activeDay) {
-      case 'day1': return <GuestsDay1 />;
-      case 'day2': return <GuestsDay2 />;
-      case 'day3': return <GuestsDay3 />;
-      case 'day4': return <GuestsDay4 />;
-      case 'day5': return <GuestsDay5 />;
-      default: return <GuestsDay1 />;
+  const loadGuests = async () => {
+    setLoading(true);
+    try {
+      const result = await getGuests();
+      if (result.success) {
+        setGuests(result.data);
+      } else {
+        console.error('Error loading guests:', result.error);
+        setGuests([]);
+      }
+    } catch (error) {
+      console.error('Error loading guests:', error);
+      setGuests([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br pt-5 from-indigo-50 via-purple-50 to-pink-50">
-      
+  // Filter guests by category
+  const spiritualGuests = guests.filter(guest => guest.category === 'spiritual');
+  const artistGuests = guests.filter(guest => guest.category === 'artist');
+  const specialGuests = guests.filter(guest => guest.category === 'special');
 
-      <GuestBanner/>
+  // Category tabs configuration
+  const categories = [
+    {
+      id: 'all',
+      label: 'All Guests',
+      icon: '👥',
+      show: true
+    },
+    {
+      id: 'spiritual',
+      label: 'Spiritual Gurus',
+      icon: '🕉️',
+      show: spiritualGuests.length > 0
+    },
+    {
+      id: 'artist',
+      label: 'Artists',
+      icon: '🎨',
+      show: artistGuests.length > 0
+    },
+    {
+      id: 'special',
+      label: 'Special Guests',
+      icon: '⭐',
+      show: specialGuests.length > 0
+    }
+  ].filter(cat => cat.show);
+
+  // Get guests for selected category
+  const getFilteredGuests = () => {
+    switch (selectedCategory) {
+      case 'spiritual':
+        return { spiritual: spiritualGuests };
+      case 'artist':
+        return { artist: artistGuests };
+      case 'special':
+        return { special: specialGuests };
+      default:
+        return {
+          spiritual: spiritualGuests,
+          artist: artistGuests,
+          special: specialGuests
+        };
+    }
+  };
+
+  const filteredGuests = getFilteredGuests();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading sacred guests...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <GuestBanner />
 
       {/* Honored Presence Banner */}
-      <div className="bg-gradient-to-r from-violet-200  via-white/30 to-purple-200 py-2 md:py-4 px-2 md:px-6 border-b-4 border-purple-300 rounded-xl mx-2 md:mx-10 shadow-lg">
+      <div className="bg-gradient-to-r from-violet-200 via-white/30 to-purple-200 py-4 md:py-6 px-4 border-b-4 border-purple-300 rounded-xl mx-4 md:mx-8 lg:mx-16 shadow-lg mt-4">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="inline-flex flex-col items-center space-y-4 bg-white/90 backdrop-blur-sm rounded-3xl px-2 py-2 md:px-8 md:py-6 shadow-xl border border-amber-200">
-            <div className="flex items-center space-x-3">
+          <div className="inline-flex flex-col items-center space-y-3 bg-white/90 backdrop-blur-sm rounded-3xl px-4 py-4 md:px-8 md:py-6 shadow-xl border border-amber-200">
+            <div className="flex items-center justify-center space-x-2 md:space-x-3 flex-wrap">
               <span className="text-amber-600 text-xl md:text-3xl">🙏</span>
-              <span className="text-gray-800 font-semibold md:font-bold text-lg md:text-xl">
+              <span className="text-gray-800 font-semibold text-base md:text-xl text-center">
                 Revered Spiritual Luminaries & Sacred Dignitaries
               </span>
               <span className="text-amber-600 text-xl md:text-3xl">🙏</span>
             </div>
-            <p className="text-gray-600 text-base md:text-lg max-w-3xl">
+            <p className="text-gray-600 text-sm md:text-base max-w-3xl px-2">
               Blessed by the presence of enlightened souls who illuminate the path of devotion
             </p>
           </div>
@@ -55,74 +230,89 @@ export default function DistinguishedGuests() {
       </div>
 
       {/* Enhanced Main Content */}
-      <div className="max-w-8xl mx-auto px-2 md:px-6 py-4 md:py-8">
-        {/* Redesigned Day Tabs - Compact & Responsive (Wrapping) */}
-<div className="flex justify-center mb-8 ">
-  <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-2 shadow-xl border border-purple-200/50 w-full max-w-4xl">
-    <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
-      {dayTabs.map((day) => (
-        <button
-          key={day.id}
-          onClick={() => setActiveDay(day.id)}
-          className={`group px-3 sm:px-4 md:px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-102 flex-shrink-0 ${
-            activeDay === day.id
-              ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg scale-102'
-              : 'text-gray-600 hover:text-indigo-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50'
-          }`}
-        >
-          <div className="flex flex-col items-center space-y-0.5">
-            <div className="flex items-center space-x-1.5">
-              <span className="text-base sm:text-lg font-bold">{day.number}</span>
-              <span className="text-sm sm:text-base">{day.label}</span>
-            </div>
-            <span className={`text-xs font-medium leading-tight text-center ${
-              activeDay === day.id ? 'text-white/80' : 'text-gray-400 group-hover:text-indigo-400'
-            }`}>
-              {day.theme}
-            </span>
-          </div>
-        </button>
-      ))}
-    </div>
-  </div>
-</div>
+      <div className="max-w-8xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        
 
-        {/* Enhanced Content Container */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-purple-200/30 overflow-hidden">
-          {/* Decorative Header */}
-          <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 p-8 border-b border-purple-200/30">
-            <div className="flex items-center justify-center space-x-4">
-              <div className="w-12 h-0.5 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full"></div>
-              <span className="text-purple-600 text-2xl">🌟</span>
-              <span className="text-gray-700 font-bold text-xl">Sacred Presence</span>
-              <span className="text-purple-600 text-2xl">🌟</span>
-              <div className="w-12 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
-            </div>
+        {/* Category Filter Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-8 md:mb-12">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`px-4 py-3 rounded-full font-medium transition-all duration-300 text-sm md:text-base flex items-center ${
+                selectedCategory === category.id
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg transform scale-105'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:shadow-md'
+              }`}
+            >
+              <span className="mr-2">{category.icon}</span>
+              {category.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Guest Sections */}
+        <div className="space-y-12 md:space-y-16">
+          {/* Spiritual Gurus Section */}
+          {filteredGuests.spiritual && filteredGuests.spiritual.length > 0 && (
+            <GuestSection
+              title="Spiritual Gurus"
+              icon="🕉️"
+              guests={filteredGuests.spiritual}
+              gradient="from-purple-500 to-pink-500"
+              description="Enlightened souls guiding us on the path of devotion and wisdom"
+            />
+          )}
+
+          {/* Artists Section */}
+          {filteredGuests.artist && filteredGuests.artist.length > 0 && (
+            <GuestSection
+              title="Artists"
+              icon="🎨"
+              guests={filteredGuests.artist}
+              gradient="from-blue-500 to-teal-500"
+              description="Creative visionaries preserving and propagating sacred arts"
+            />
+          )}
+
+          {/* Special Guests Section */}
+          {filteredGuests.special && filteredGuests.special.length > 0 && (
+            <GuestSection
+              title="Special Guests"
+              icon="⭐"
+              guests={filteredGuests.special}
+              gradient="from-amber-500 to-orange-500"
+              description="Distinguished personalities gracing our sacred ceremony"
+            />
+          )}
+        </div>
+
+        {/* Empty State */}
+        {Object.values(filteredGuests).every(section => !section || section.length === 0) && (
+          <div className="text-center py-12 md:py-16">
+            <div className="text-6xl mb-4">😔</div>
+            <h3 className="text-xl md:text-2xl font-semibold text-gray-700 mb-2">No Guests Found</h3>
+            <p className="text-gray-600 text-lg">No guests found for the selected category.</p>
           </div>
-          
-          {/* Main Content */}
-          <div className="p-8 md:p-12 lg:p-16">
-            {renderDayComponent()}
-            
-            {/* Enhanced Devotional Quote */}
-            <div className="text-center pt-12 border-t border-purple-200/30 mt-16">
-              <div className="bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-3xl p-8 backdrop-blur-sm border border-indigo-200/30">
-                <div className="flex items-center justify-center space-x-4 text-indigo-600 mb-6">
-                  <span className="text-3xl">🙏</span>
-                  <span className="font-sanskrit text-2xl font-bold">
-                    अतिथि देवो भवः
-                  </span>
-                  <span className="text-3xl">🙏</span>
-                </div>
-                <p className="text-lg text-gray-600 mb-4 italic">
-                  "The Guest is God" - Honoring Divine Presence in Sacred Visitors
-                </p>
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-8 h-0.5 bg-indigo-300 rounded-full"></div>
-                  <span className="text-indigo-400 text-lg">⭐</span>
-                  <div className="w-8 h-0.5 bg-indigo-300 rounded-full"></div>
-                </div>
-              </div>
+        )}
+
+        {/* Enhanced Devotional Quote */}
+        <div className="text-center pt-12 md:pt-16 border-t border-purple-200/30 mt-12 md:mt-16">
+          <div className="bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-3xl p-6 md:p-8 backdrop-blur-sm border border-indigo-200/30">
+            <div className="flex items-center justify-center space-x-2 md:space-x-4 text-indigo-600 mb-4 md:mb-6">
+              <span className="text-2xl md:text-3xl">🙏</span>
+              <span className="font-bold text-xl md:text-2xl">
+                अतिथि देवो भवः
+              </span>
+              <span className="text-2xl md:text-3xl">🙏</span>
+            </div>
+            <p className="text-base md:text-lg text-gray-600 mb-4 italic">
+              "The Guest is God" - Honoring Divine Presence in Sacred Visitors
+            </p>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-6 md:w-8 h-0.5 bg-indigo-300 rounded-full"></div>
+              <span className="text-indigo-400 text-lg">⭐</span>
+              <div className="w-6 md:w-8 h-0.5 bg-indigo-300 rounded-full"></div>
             </div>
           </div>
         </div>

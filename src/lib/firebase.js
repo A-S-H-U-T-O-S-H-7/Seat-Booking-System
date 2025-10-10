@@ -1,6 +1,6 @@
 // lib/firebaseConfig.js
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, signInAnonymously } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -13,9 +13,21 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Avoid re-initializing during hot reloads
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Auto-authenticate anonymously for admin access
+export const initializeAuth = async () => {
+  try {
+    if (!auth.currentUser) {
+      await signInAnonymously(auth);
+    }
+    return { success: true, user: auth.currentUser };
+  } catch (error) {
+    console.error('Auth initialization failed:', error);
+    return { success: false, error: error.message };
+  }
+};

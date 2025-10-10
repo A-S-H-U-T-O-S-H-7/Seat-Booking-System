@@ -7,7 +7,8 @@ import {
   UserPlusIcon,
   DocumentTextIcon,
   BanknotesIcon,
-  HeartIcon
+  HeartIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 
 export const navigationItems = [
@@ -82,6 +83,12 @@ export const navigationItems = [
     name: 'User Management',
     icon: UsersIcon,
     permission: 'view_users'
+  },
+  {
+    id: 'distinguished-guests',
+    name: 'Distinguished Guests',
+    icon: StarIcon,
+    permission: null // No permission required - should always show
   },
   {
     id: 'pricing',

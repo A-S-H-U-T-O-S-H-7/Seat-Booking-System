@@ -24,6 +24,7 @@ import ActivityLogs from '@/components/admin/ActivityLogs';
 import CancellationRefundManagement from '@/components/admin/cancellation-refunds/CancellationRefundManagement';
 import DonationManagement from '@/components/admin/donation-management/DonationManagement';
 import SponsorPerformerManagement from '@/components/admin/SponsorPerformerManagement';
+import DistinguishedGuestsManagement from '@/components/admin/DistinguishedGuestsManagement';
 
 import LoadingSpinner from '@/components/admin/dashboard/LoadingSpinner';
 import Sidebar from '@/components/admin/dashboard/Sidebar';
@@ -86,6 +87,8 @@ export default function AdminDashboard() {
         return <CancellationRefundManagement />;
       case 'users':
         return <UserManagement />;
+      case 'distinguished-guests':
+        return <DistinguishedGuestsManagement />;
       case 'pricing':
         return <PriceSettings />;
       case 'system-settings':
