@@ -18,7 +18,7 @@ const GuestCard = ({ guest }) => {
 
   return (
     <div className={`${category.bgColor} rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100`}>
-      <div className="p-4 sm:p-6">
+      <div className="p-2 sm:p-4">
         {/* Mobile Layout */}
         <div className="flex flex-col items-center text-center sm:hidden">
           <div className={`flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br ${category.gradient} p-0.5 mb-4`}>
@@ -107,7 +107,7 @@ const GuestSection = ({ title, icon, guests, gradient, description }) => {
       </div>
 
       {/* Guests Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {guests.map(guest => (
           <GuestCard key={guest.id} guest={guest} />
         ))}
