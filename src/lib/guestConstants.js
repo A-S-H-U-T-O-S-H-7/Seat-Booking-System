@@ -42,6 +42,7 @@ export const DEFAULT_GUEST = {
   imageUrl: '',
   imagePath: '',
   isActive: true,
+  isExpected: false,
   socialLinks: {
     website: '',
     twitter: '',

@@ -102,6 +102,7 @@ const AdminGuests = () => {
       category: guest.category || 'spiritual',
       order: guest.order || 0,
       isActive: guest.isActive !== undefined ? guest.isActive : true,
+      isExpected: guest.isExpected !== undefined ? guest.isExpected : false,
       significance: guest.significance || '',
       imageUrl: guest.imageUrl || '',
       imagePath: guest.imagePath || ''
@@ -222,6 +223,11 @@ const AdminGuests = () => {
                 <span className={`px-2 py-1 rounded-full ${!guest.isActive ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                   {guest.isActive ? 'Active' : 'Inactive'}
                 </span>
+                {guest.isExpected && (
+    <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+      Expected
+    </span>
+                )}
               </div>
             </div>
           </div>
@@ -444,6 +450,20 @@ const AdminGuests = () => {
                       Active (visible on website)
                     </label>
                   </div>
+
+{/* //expected checkbox */}
+                  <div className="flex items-center">
+  <input
+    type="checkbox"
+    id="isExpected"
+    checked={formData.isExpected || false}
+    onChange={(e) => setFormData(prev => ({ ...prev, isExpected: e.target.checked }))}
+    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+  />
+  <label htmlFor="isExpected" className="ml-2 text-sm text-gray-700">
+    Expected
+  </label>
+</div>
 
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-700">

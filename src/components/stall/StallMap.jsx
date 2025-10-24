@@ -166,7 +166,7 @@ const StallMap = () => {
             : 'cursor-pointer hover:scale-105 active:scale-95'}
           focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-opacity-50
         `}
-        title={`Stall ${stall.id} - ${status} ${isSelected ? '(Selected)' : ''}`}
+        // title={`Stall ${stall.id} - ${status} ${isSelected ? '(Selected)' : ''}`}
       >
         {/* Stall Icon */}
         <Store className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
@@ -245,14 +245,9 @@ const StallMap = () => {
             <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-400 rounded flex items-center justify-center">
               <Store className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
             </div>
-            <span className="text-gray-700 font-medium">Reserved</span>
+            <span className="text-gray-700 font-medium">Reserved & Booked</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-600 rounded flex items-center justify-center">
-              <Store className="w-2 h-2 sm:w-3 sm:h-3 text-gray-300" />
-            </div>
-            <span className="text-gray-700 font-medium">Blocked</span>
-          </div>
+          
         </div>
       </div>
 
@@ -287,12 +282,12 @@ const StallMap = () => {
               </div>
               <div className="text-xs sm:text-sm text-gray-600">Booked</div>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg">
+            {/* <div className="bg-gray-50 p-3 rounded-lg">
               <div className="text-lg sm:text-xl font-bold text-gray-700">
                 {allStalls.filter(s => getStallStatus(s.id) === 'blocked').length}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">Blocked</div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

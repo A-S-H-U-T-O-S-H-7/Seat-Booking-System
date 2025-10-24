@@ -70,6 +70,7 @@ export const createDistinguishedGuest = async (guestData) => {
       imageUrl: guestData.imageUrl || DEFAULT_PLACEHOLDER,
       imagePath: guestData.imagePath || '',
       isActive: guestData.isActive !== undefined ? guestData.isActive : true,
+      isExpected: guestData.isExpected !== undefined ? guestData.isExpected : false,
       socialLinks: guestData.socialLinks || {},
       achievements: guestData.achievements || '',
       specialNote: guestData.specialNote || '',
@@ -117,6 +118,12 @@ export const updateDistinguishedGuest = async (id, updateData) => {
     if (updateWithMetadata.description) updateWithMetadata.description = updateWithMetadata.description.trim();
     if (updateWithMetadata.significance) updateWithMetadata.significance = updateWithMetadata.significance.trim();
     if (updateWithMetadata.order !== undefined) updateWithMetadata.order = parseInt(updateWithMetadata.order);
+    if (updateWithMetadata.isActive !== undefined) {
+  updateWithMetadata.isActive = Boolean(updateWithMetadata.isActive);
+}
+if (updateWithMetadata.isExpected !== undefined) {
+  updateWithMetadata.isExpected = Boolean(updateWithMetadata.isExpected); // ADD THIS
+}
 
     await updateDoc(docRef, updateWithMetadata);
     
@@ -164,6 +171,7 @@ export const getAllDistinguishedGuests = async (filters = {}) => {
         imageUrl: data.imageUrl || DEFAULT_PLACEHOLDER,
         order: data.order || 0,
         isActive: data.isActive !== undefined ? data.isActive : true,
+        isExpected: data.isExpected !== undefined ? data.isExpected : false,
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
         socialLinks: data.socialLinks || {},
