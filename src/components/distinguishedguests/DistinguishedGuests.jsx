@@ -73,6 +73,16 @@ const GuestCard = ({ guest }) => {
           </div>
         </div>
 
+        {/* Expected Badge */}
+        {guest.isExpected && (
+          <div className="mt-3">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">
+              <span className="mr-1">⏳</span>
+              Expected Guest
+            </span>
+          </div>
+        )}
+
         {guest.significance && (
           <div className="mt-4 pt-4 border-t border-gray-200">
             <p className="text-xs sm:text-sm text-gray-600 italic leading-relaxed">

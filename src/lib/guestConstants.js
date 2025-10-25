@@ -18,11 +18,11 @@ export const GUEST_CATEGORIES = {
    
   special: {
     label: 'Special Guests',
-    color: 'green',
+    color: 'blue',
     icon: '🌟',
-    gradient: 'from-green-500 to-emerald-600',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-900'
+    gradient: 'from-blue-800 to-indigo-600',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-900'
   }
 };
 

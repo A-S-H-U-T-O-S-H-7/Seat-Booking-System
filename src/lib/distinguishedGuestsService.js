@@ -229,6 +229,7 @@ export const getGuests = async (filters = {}) => {
         category: data.category || 'spiritual',
         imageUrl: data.imageUrl || DEFAULT_PLACEHOLDER,
         order: data.order || 0,
+        isExpected: data.isExpected !== undefined ? data.isExpected : false,
         socialLinks: data.socialLinks || {},
         achievements: data.achievements || '',
         specialNote: data.specialNote || ''
