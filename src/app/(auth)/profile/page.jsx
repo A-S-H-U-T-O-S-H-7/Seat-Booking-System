@@ -189,12 +189,30 @@ const ProfilePage = () => {
 
   const fetchUserStallBookings = async () => {
     try {
-      const stallBookingsQuery = query(
+      // Query by UID first
+      const stallBookingsQueryByUid = query(
         collection(db, 'stallBookings'),
         where('userId', '==', user.uid)
       );
       
-      const snapshot = await getDocs(stallBookingsQuery);
+      // Also query by email (for admin-booked stalls)
+      const stallBookingsQueryByEmail = query(
+        collection(db, 'stallBookings'),
+        where('userId', '==', user.email)
+      );
+      
+      // Fetch both
+      const [snapshotByUid, snapshotByEmail] = await Promise.all([
+        getDocs(stallBookingsQueryByUid),
+        getDocs(stallBookingsQueryByEmail)
+      ]);
+      
+      // Combine and deduplicate results
+      const allDocs = new Map();
+      snapshotByUid.forEach(doc => allDocs.set(doc.id, doc));
+      snapshotByEmail.forEach(doc => allDocs.set(doc.id, doc));
+      
+      const snapshot = { docs: Array.from(allDocs.values()) };
       const stallBookingsData = [];
       
       let stallSettings = null;

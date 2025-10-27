@@ -458,7 +458,7 @@ export default function StallManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Stall Management
@@ -467,6 +467,19 @@ export default function StallManagement() {
             Manage stall availability and blocking
           </p>
         </div>
+        
+        {/* Book Stall Button */}
+        <a
+          href="/admin/stall-bookings"
+          className={`inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl ${
+            isDarkMode 
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white' 
+              : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white'
+          }`}
+        >
+          <Store className="w-5 h-5 mr-2" />
+          Book Stall
+        </a>
       </div>
 
       {/* Controls */}
@@ -640,7 +653,7 @@ export default function StallManagement() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
         </div>
       ) : (
-        <div>
+        <div> 
           {viewMode === 'grid' ? renderGridView() : renderListView()}
         </div>
       )}
