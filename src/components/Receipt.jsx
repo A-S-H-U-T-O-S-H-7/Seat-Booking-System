@@ -7,12 +7,17 @@ const DonationReceipt = ({ booking }) => {
     const orderId = booking?.id || "N/A";
   
   // For name - different booking types store name differently
-  const name = booking?.delegateDetails?.name ||
-               booking?.userDetails?.name || 
+  // Donations use donorDetails.name, delegates use delegateDetails.name
+  const name = booking?.donorDetails?.name ||
+               booking?.delegateDetails?.name ||
                booking?.customerDetails?.name || 
+               booking?.vendorDetails?.name ||
                booking?.vendorDetails?.ownerName || 
+               booking?.userDetails?.name || 
                booking?.name || 
-               booking?.fullName || 
+               booking?.fullName ||
+               booking?.userName ||
+               booking?.displayName ||
                "N/A";
   
   // For PAN
@@ -23,7 +28,8 @@ const DonationReceipt = ({ booking }) => {
               "N/A";
   
   // For address
-  const address = booking?.delegateDetails?.address ||
+  const address = booking?.donorDetails?.address ||
+                  booking?.delegateDetails?.address ||
                   booking?.userDetails?.address || 
                   booking?.customerDetails?.address || 
                   booking?.vendorDetails?.address || 
@@ -31,7 +37,8 @@ const DonationReceipt = ({ booking }) => {
                   "N/A";
   
   // For mobile
-  const mobile = booking?.delegateDetails?.mobile ||
+  const mobile = booking?.donorDetails?.mobile ||
+                 booking?.delegateDetails?.mobile ||
                  booking?.userDetails?.phone || 
                  booking?.customerDetails?.phone || 
                  booking?.userDetails?.mobile || 
@@ -48,7 +55,26 @@ const DonationReceipt = ({ booking }) => {
                  booking?.donationAmount || 
                  "0";
 
-    const date = booking.createdAt ? format(booking.createdAt, 'MMM dd, yyyy \'at\' hh:mm a') : 'Unknown';
+    // Handle date safely - check if createdAt is valid
+    let date = 'Unknown';
+    try {
+      if (booking.createdAt) {
+        let dateObj = booking.createdAt;
+        // Convert Firebase Timestamp to Date if needed
+        if (booking.createdAt.toDate && typeof booking.createdAt.toDate === 'function') {
+          dateObj = booking.createdAt.toDate();
+        } else if (booking.createdAt.seconds) {
+          dateObj = new Date(booking.createdAt.seconds * 1000);
+        }
+        // Format only if valid date
+        if (dateObj instanceof Date && !isNaN(dateObj)) {
+          date = format(dateObj, 'MMM dd, yyyy \'at\' hh:mm a');
+        }
+      }
+    } catch (error) {
+      console.warn('Error formatting date:', error);
+      date = 'Unknown';
+    }
 
 
   const currentDate = new Date().toLocaleDateString('hi-IN', {
@@ -81,7 +107,7 @@ const DonationReceipt = ({ booking }) => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <img 
-                src="logo.png" 
+                src="/logo.png" 
                 alt="Samudayik Vikas Samiti Logo" 
                 className="w-12 h-12 sm:w-16 sm:h-16 object-contain rounded-lg border border-rose-200"
               />
@@ -110,7 +136,7 @@ const DonationReceipt = ({ booking }) => {
             {/* QR Code */}
             <div className="flex-shrink-0">
               <img 
-                src="svs-qr.png" 
+                src="/donationqr.jpg" 
                 alt="Samudayik Vikas Samiti QR Code" 
                 className="w-18 h-18 sm:w-22 sm:h-22 object-contain rounded-lg border border-rose-200"
               />

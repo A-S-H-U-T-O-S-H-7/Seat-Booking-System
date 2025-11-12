@@ -113,5 +113,11 @@ export const navigationItems = [
     name: 'Activity Logs',
     icon: DocumentTextIcon,
     permission: 'view_logs'
+  },
+  {
+    id: 'generate-documents',
+    name: 'Generate Documents',
+    icon: DocumentTextIcon,
+    permission: 'manage_bookings'
   }
 ];

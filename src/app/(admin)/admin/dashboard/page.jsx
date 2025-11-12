@@ -25,6 +25,7 @@ import CancellationRefundManagement from '@/components/admin/cancellation-refund
 import DonationManagement from '@/components/admin/donation-management/DonationManagement';
 import SponsorPerformerManagement from '@/components/admin/SponsorPerformerManagement';
 import DistinguishedGuestsManagement from '@/components/admin/DistinguishedGuestsManagement';
+import GenerateDocumentsUtility from '@/components/admin/GenerateDocumentsUtility';
 
 import LoadingSpinner from '@/components/admin/dashboard/LoadingSpinner';
 import Sidebar from '@/components/admin/dashboard/Sidebar';
@@ -97,6 +98,8 @@ export default function AdminDashboard() {
         return <AdminManagement />;
       case 'logs':
         return <ActivityLogs />;
+      case 'generate-documents':
+        return <GenerateDocumentsUtility />;
       default:
         return <OverviewStats />;
     }

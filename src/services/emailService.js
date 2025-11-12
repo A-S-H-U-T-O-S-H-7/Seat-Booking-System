@@ -1,3 +1,146 @@
+"use client";
+import { NextResponse } from "next/server";
+
+export async function POST(req) {
+    try {
+        const emailData = await req.json();
+
+        // Validate required fields
+        const requiredFields = ['name', 'email', 'order_id'];
+        const missingFields = requiredFields.filter(field => !emailData[field]);
+        
+        if (missingFields.length > 0) {
+            return NextResponse.json({
+                status: false,
+                errors: missingFields.map(field => `${field} is required`),
+                message: 'Missing required fields'
+            });
+        }
+
+        // Prepare form data for the external email API
+        const formData = new FormData();
+        
+        // Add required fields - ensure none are empty strings
+        const name = (emailData.name && emailData.name.trim()) || 'Delegate Member';
+        const email = (emailData.email && emailData.email.trim()) || 'no-email@example.com';
+        const order_id = (emailData.order_id && emailData.order_id.trim()) || 'UNKNOWN';
+        const details = (emailData.details && emailData.details.trim()) || 'Delegate Registration Details';
+        const event_date = (emailData.event_date && emailData.event_date.trim()) || 'November 15, 2025';
+        const booking_type = (emailData.booking_type && emailData.booking_type.trim()) || 'Delegate Registration';
+        
+        // Ensure amount is always a valid string (never empty, null, or undefined)
+        // External API requires non-zero amount, so we use '1' for free registrations
+        let amount = emailData.amount !== undefined && emailData.amount !== null && emailData.amount !== '' 
+            ? emailData.amount.toString() 
+            : '0';
+        
+        // For free registrations (amount = '0'), use 'Free' string
+        // but keep the actual amount for display purposes
+        const displayAmount = amount;
+        // Handle different delegate types
+        if (amount === '0' && emailData.booking_type && emailData.booking_type.includes('Delegate')) {
+            amount = 'Free'; // Use 'Free' for free delegate registrations
+        } else if (amount === '0') {
+            amount = '1'; // For other booking types that require non-zero amount
+        }
+        
+        formData.append("name", name);
+        formData.append("email", email);
+        formData.append("order_id", order_id);
+        formData.append("details", details);
+        formData.append("event_date", event_date);
+        formData.append("booking_type", booking_type);
+        formData.append("amount", amount); // Uses 'Free' for free registrations
+        
+        // Validation check - make sure email is valid
+        
+        if (!email.includes('@') || email === 'no-email@example.com') {
+            throw new Error('Valid email address is required for sending delegate confirmation');
+        }
+        
+        // Add optional fields if they exist
+        if (emailData.mobile) formData.append("mobile", emailData.mobile.toString().trim());
+        if (emailData.address) formData.append("address", emailData.address.trim());
+        if (emailData.pan) formData.append("pan", emailData.pan.trim());
+        formData.append("valid_from", emailData.valid_from || new Date().toISOString().split('T')[0]);
+        formData.append("valid_to", emailData.valid_to || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+
+        // Send to external API using the new general-email.php endpoint
+        
+        // Prepare form data for the new API format
+        const newFormData = new FormData();
+        newFormData.append("name", name);
+        newFormData.append("email", email);
+        newFormData.append("registrationId", order_id);
+        newFormData.append("eventDate", "3-7 Dec, 2025");
+        newFormData.append("purpose", "Delegate Registration");
+        
+        // Add delegate-specific fields
+        console.log('📋 Delegate email data received:', {
+          number_of_person: emailData.number_of_person,
+          registration_type: emailData.registration_type,
+          delegate_type: emailData.delegate_type,
+          duration: emailData.duration
+        });
+        
+        if (emailData.number_of_person) {
+          newFormData.append("numberOfPersons", emailData.number_of_person.toString());
+          newFormData.append("number_of_persons", emailData.number_of_person.toString());
+          newFormData.append("number_of_person", emailData.number_of_person.toString());
+          console.log('✅ Added number_of_person to form data:', emailData.number_of_person);
+        }
+        if (emailData.registration_type) newFormData.append("registrationType", emailData.registration_type);
+        if (emailData.delegate_type) newFormData.append("delegateType", emailData.delegate_type);
+        if (emailData.duration) newFormData.append("duration", emailData.duration);
+        
+        // Call the new external email API from server-side (no CORS issues)
+        const response = await fetch('https://svsamiti.com/havan-booking/general-email.php', {
+            method: 'POST',
+            body: newFormData,
+            headers: {
+                'User-Agent': 'Havan-Booking-System/1.0'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`External API returned ${response.status}: ${response.statusText}`);
+        }
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            return NextResponse.json({
+                status: false,
+                errors: ['Invalid response from email service'],
+                message: 'Email service error',
+                rawResponse: responseText
+            });
+        }
+
+        if (result.status) {
+            return NextResponse.json({
+                status: true,
+                message: result.message || 'Delegate confirmation email sent successfully'
+            });
+        } else {
+            return NextResponse.json({
+                status: false,
+                errors: result.errors || [result.message || 'Email service error'],
+                message: result.message || 'Failed to send email'
+            });
+        }
+
+    } catch (error) {
+        return NextResponse.json({
+            status: false,
+            errors: [error.message || 'Internal server error'],
+            message: 'Failed to send delegate email'
+        });
+    }
+}
 
 export const sendDonationConfirmationEmail = async (donationData) => {
   try {
@@ -83,13 +226,28 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
 const tryDelegateSpecificAPI = async (delegateData) => {
   try {
     // RESTORED WORKING VERSION - Use original delegate-email.php for paid delegates
+    console.log('🔍 tryDelegateSpecificAPI - Received delegateData:', {
+      numberOfPersons: delegateData.eventDetails?.numberOfPersons,
+      delegateType: delegateData.eventDetails?.delegateType,
+      eventDetails: delegateData.eventDetails
+    });
+    
     const formData = new FormData();
     formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
     formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');
     formData.append('participation_type', delegateData.eventDetails?.participationType || delegateData.participation_type || 'Delegate');
     formData.append('registration_type', delegateData.eventDetails?.registrationType || delegateData.registration_type || '');
     formData.append('duration', delegateData.eventDetails?.duration || delegateData.duration || '');
-    formData.append('number_of_person', delegateData.eventDetails?.numberOfPersons || delegateData.number_of_persons || '1');
+    
+    // FIX: Properly extract number of persons from all possible locations
+    const numberOfPersons = delegateData.eventDetails?.numberOfPersons || 
+                           delegateData.delegateDetails?.numberOfPersons || 
+                           delegateData.eventDetails?.number_of_person || 
+                           delegateData.delegateDetails?.number_of_person || 
+                           '1';
+    
+    console.log('✅ numberOfPersons being sent to email:', numberOfPersons);
+    formData.append('number_of_person', numberOfPersons.toString());
     
     // Handle normal delegates (free) vs paid delegates
     const isNormalDelegate = delegateData.eventDetails?.delegateType === 'normal';
@@ -131,7 +289,7 @@ const tryDelegateSpecificAPI = async (delegateData) => {
 };
 
 /**
- * Send delegate email via general booking email API as fal lback
+ * Send delegate email via general booking email API as fallback
  * @param {Object} delegateData - Delegate information
  * @returns {Promise<Object>} - API response
  */
@@ -360,8 +518,7 @@ const prepareHavanEmailData = async (bookingData, baseData) => {
     pan: customerDetails.pan || 'Not provided',
     event_date: formatEventDate(eventDate),
     booking_type: 'Havan Seat Booking',
-    details: `🕉️ Event: Sacred Havan Ceremony\r\n⏰ Shift: ${shiftTimeDisplay}\r\n🪑 Selected Seats: ${seats.length > 0 ? seats.join(', ') : 'Not specified'}\r\n👥 Number of Seats: ${seats.length || 1}`
-.trim()
+    details: `🕉️ Event: Sacred Havan Ceremony\r\n⏰ Shift: ${shiftTimeDisplay}\r\n🪑 Selected Seats: ${seats.length > 0 ? seats.join(', ') : 'Not specified'}\r\n👥 Number of Seats: ${seats.length || 1}`.trim()
   };
 };
 
@@ -383,14 +540,7 @@ const prepareShowEmailData = async (bookingData, baseData) => {
     pan: userDetails.pan || '',
     event_date: formatEventDate(showDate),
     booking_type: 'Cultural Show Reservation',
-    details: `
-
-🎭 Event: Cultural Show & Performance
-⏰ Time: 5:00 PM - 10:00 PM
-🎫 Selected Seats: ${selectedSeats.length > 0 ? selectedSeats.slice(0, 10).join(', ') : 'Not specified'}${selectedSeats.length > 10 ? ` +${selectedSeats.length - 10} more` : ''}
-👥 Number of Seats: ${selectedSeats.length || 1}
-
-    `.trim()
+    details: `🎭 Event: Cultural Show & Performance\r\n⏰ Time: 5:00 PM - 10:00 PM\r\n🎫 Selected Seats: ${selectedSeats.length > 0 ? selectedSeats.slice(0, 10).join(', ') : 'Not specified'}${selectedSeats.length > 10 ? ` +${selectedSeats.length - 10} more` : ''}\r\n👥 Number of Seats: ${selectedSeats.length || 1}`.trim()
   };
 };
 
@@ -443,25 +593,43 @@ const prepareStallEmailData = async (bookingData, baseData) => {
     pan: vendorDetails.pan || '',
     event_date: eventDateDisplay,
     booking_type: 'Vendor Stall Booking',
-    details: `
-
-📅 Event Duration: ${eventDuration}
-🏷️ Stall Numbers: ${stallIds.length > 0 ? stallIds.join(', ') : 'To be assigned'}
-🏢 Business Type: ${vendorDetails.businessType || 'Not specified'}
-👤 Contact Person: ${vendorDetails.ownerName || 'Not specified'}
-📱 Business Contact: ${vendorDetails.phone || 'Not provided'}
-    `.trim()
+    details: `📅 Event Duration: ${eventDuration}\r\n🏷️ Stall Numbers: ${stallIds.length > 0 ? stallIds.join(', ') : 'To be assigned'}\r\n🏢 Business Type: ${vendorDetails.businessType || 'Not specified'}\r\n👤 Contact Person: ${vendorDetails.ownerName || 'Not specified'}\r\n📱 Business Contact: ${vendorDetails.phone || 'Not provided'}`.trim()
   };
 };
 
 /**
- * Prepare email data for Delegate bookings
+ * Prepare email data for Delegate bookings - FIXED NUMBER OF PERSONS ISSUE
  */
 const prepareDelegateEmailData = async (bookingData, baseData) => {
   const delegateDetails = bookingData.delegateDetails || {};
   const eventDetails = bookingData.eventDetails || {};
   const registrationType = eventDetails.registrationType || 'Individual';
   const delegateType = eventDetails.delegateType || 'Standard';
+
+  // DEBUG: Log all possible locations for number of persons
+  console.log('🔍 DEBUG - Searching for number_of_person in:', {
+    eventDetails_numberOfPersons: eventDetails.numberOfPersons,
+    eventDetails_number_of_person: eventDetails.number_of_person,
+    delegateDetails_numberOfPersons: delegateDetails.numberOfPersons,
+    delegateDetails_number_of_person: delegateDetails.number_of_person,
+    bookingData_numberOfPersons: bookingData.numberOfPersons,
+    bookingData_number_of_person: bookingData.number_of_person,
+    fullBookingData: bookingData
+  });
+
+  // FIX: Better extraction with proper fallback chain
+  const numberOfPersons = 
+    eventDetails.numberOfPersons || 
+    eventDetails.number_of_person ||
+    delegateDetails.numberOfPersons || 
+    delegateDetails.number_of_person ||
+    bookingData.numberOfPersons ||
+    bookingData.number_of_person ||
+    (bookingData.eventDetails && bookingData.eventDetails.numberOfPersons) ||
+    (bookingData.delegateDetails && bookingData.delegateDetails.numberOfPersons) ||
+    '1';
+
+  console.log('✅ FINAL number_of_person being used:', numberOfPersons);
 
   // Determine organization name based on registration type
   let organizationName = 'Individual Registration';
@@ -478,8 +646,10 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
     mobile: delegateDetails.mobile || '',
     address: `${delegateDetails.address || ''}, ${delegateDetails.city || ''}, ${delegateDetails.state || ''}, ${delegateDetails.country || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, ''),
     pan: delegateDetails.pan || '',
-    event_date: '2025-11-15', // Delegate event start date (RESTORED WORKING VERSION)
+    event_date: '2025-11-15',
     booking_type: 'Delegate Registration',
+    // FIX: Use the properly extracted numberOfPersons
+    number_of_person: numberOfPersons.toString(),
     details: `
 
 👤 Delegate Name: ${delegateDetails.name || 'Not specified'}
@@ -492,7 +662,7 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
 📦 Package Details:
 • Package Type: ${getDelegateTypeDisplay(delegateType)}
 • Duration: ${eventDetails.duration || 'TBD'} days
-• Number of Persons: ${eventDetails.numberOfPersons || 1}
+• Number of Persons: ${numberOfPersons}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
 📏 Location Details:
@@ -508,8 +678,6 @@ ${delegateDetails.pan ? `• PAN: ${delegateDetails.pan}` : ''}
 ${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : ''}
 
 📋 Registration ID: ${baseData.order_id}
-
-
     `.trim()
   };
 };
@@ -530,63 +698,7 @@ const prepareDonationEmailData = async (bookingData, baseData) => {
     pan: donorDetails.pan || '',
     event_date: new Date().toISOString().split('T')[0],
     booking_type: 'Donation',
-    details: `
-Donation Receipt & Acknowledgment:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🙏 Thank You for Your Generous Contribution!
-
-👤 Donor Name: ${donorDetails.name || 'Anonymous Donor'}
-🌍 Donor Type: ${donationType === 'indian' ? 'Indian Resident' : 'NRI/Foreign National'}
-📧 Email: ${donorDetails.email || 'Not provided'}
-📱 Mobile: ${donorDetails.mobile || 'Not provided'}
-💰 Donation Amount: ₹${baseData.amount}
-
-📍 Address:
-${donorDetails.address || 'Not provided'}
-${donorDetails.city || ''}, ${donorDetails.state || ''} - ${donorDetails.pincode || ''}
-
-🧾 Receipt Details:
-• Receipt Number: ${baseData.order_id}
-• Date of Donation: ${new Date().toLocaleDateString('en-IN')}
-• Payment Method: Online Transfer
-• Transaction Status: Completed ✅
-
-📜 Tax Benefits:
-• This donation is eligible for tax exemption under Section 80G
-• Tax exemption certificate will be issued within 15 working days
-• Please retain this receipt for your tax filing records
-• 50% of donation amount is eligible for tax deduction
-
-How Your Donation Helps:
-━━━━━━━━━━━━━━━━━━━━━━
-✨ Community Development Programs
-✨ Educational Initiatives & Scholarships
-✨ Healthcare Support for Underprivileged
-✨ Spiritual & Cultural Event Organization
-✨ Infrastructure Development Projects
-✨ Emergency Relief & Support Programs
-
-Organization Details:
-━━━━━━━━━━━━━━━━━━━━
-🏛️ Samudayik Vikas Samiti (SVS)
-📍 Registered Office: [Address]
-📞 Contact: +91-XXXXXXXXXX
-📧 Email: donations@svsamiti.com
-🌐 Website: www.svsamiti.com
-🆔 Registration Number: [Reg. No.]
-📜 80G Certificate Number: [80G No.]
-
-📞 For donation queries: accounts@svsamiti.com
-📄 For 80G certificate: tax@svsamiti.com
-
-Your generosity makes a real difference in countless lives. Thank you for being a part of our mission to create positive change in society.
-
-May your kindness be blessed manifold! 🙏✨
-
-With heartfelt gratitude,
-Team Samudayik Vikas Samiti
-    `.trim()
+    details: `Donation Receipt & Acknowledgment:\r\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\r\n\r\n🙏 Thank You for Your Generous Contribution!\r\n\r\n👤 Donor Name: ${donorDetails.name || 'Anonymous Donor'}\r\n🌍 Donor Type: ${donationType === 'indian' ? 'Indian Resident' : 'NRI/Foreign National'}\r\n📧 Email: ${donorDetails.email || 'Not provided'}\r\n📱 Mobile: ${donorDetails.mobile || 'Not provided'}\r\n💰 Donation Amount: ₹${baseData.amount}\r\n\r\n📍 Address:\r\n${donorDetails.address || 'Not provided'}\r\n${donorDetails.city || ''}, ${donorDetails.state || ''} - ${donorDetails.pincode || ''}\r\n\r\n🧾 Receipt Details:\r\n• Receipt Number: ${baseData.order_id}\r\n• Date of Donation: ${new Date().toLocaleDateString('en-IN')}\r\n• Payment Method: Online Transfer\r\n• Transaction Status: Completed ✅\r\n\r\n📜 Tax Benefits:\r\n• This donation is eligible for tax exemption under Section 80G\r\n• Tax exemption certificate will be issued within 15 working days\r\n• Please retain this receipt for your tax filing records\r\n• 50% of donation amount is eligible for tax deduction\r\n\r\nHow Your Donation Helps:\r\n━━━━━━━━━━━━━━━━━━━━━━\r\n✨ Community Development Programs\r\n✨ Educational Initiatives & Scholarships\r\n✨ Healthcare Support for Underprivileged\r\n✨ Spiritual & Cultural Event Organization\r\n✨ Infrastructure Development Projects\r\n✨ Emergency Relief & Support Programs\r\n\r\nOrganization Details:\r\n━━━━━━━━━━━━━━━━━━━━\r\n🏛️ Samudayik Vikas Samiti (SVS)\r\n📍 Registered Office: [Address]\r\n📞 Contact: +91-XXXXXXXXXX\r\n📧 Email: donations@svsamiti.com\r\n🌐 Website: www.svsamiti.com\r\n🆔 Registration Number: [Reg. No.]\r\n📜 80G Certificate Number: [80G No.]\r\n\r\n📞 For donation queries: accounts@svsamiti.com\r\n📄 For 80G certificate: tax@svsamiti.com\r\n\r\nYour generosity makes a real difference in countless lives. Thank you for being a part of our mission to create positive change in society.\r\n\r\nMay your kindness be blessed manifold! 🙏✨\r\n\r\nWith heartfelt gratitude,\r\nTeam Samudayik Vikas Samiti`.trim()
   };
 };
 
@@ -777,14 +889,97 @@ const validateEmailData = (emailData) => {
 };
 
 /**
- * Helper function to create detailed email content for delegate registrations
+ * Send confirmation email for normal delegate package registration
+ * @param {Object} delegateData - Complete delegate registration data
+ * @returns {Promise<Object>} - Email sending result
  */
-const createDelegateEmailDetails = (delegateData) => {
+export const sendNormalDelegateConfirmationEmail = async (delegateData) => {
+  try {
+
+    // Prepare email data specifically for normal delegate package
+    const emailData = prepareNormalDelegateEmailData(delegateData);
+    
+    // Validate email data
+    const validation = validateNormalDelegateEmail(emailData);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        error: 'Email validation failed: ' + validation.errors.join(', '),
+        validationErrors: validation.errors
+      };
+    }
+
+    // Try the dedicated delegate email API first
+    try {
+      const result = await sendViaDedicatedAPI(emailData);
+      if (result.success) {
+        return {
+          success: true,
+          message: 'Normal delegate confirmation email sent successfully',
+          data: result.data,
+          method: result.method || 'dedicated'
+        };
+      }
+      throw new Error(result.error || 'Dedicated API failed');
+    } catch (dedicatedError) {
+      // Only try fallback if dedicated fails
+      try {
+        const fallbackResult = await sendViaGeneralAPI(emailData);
+        if (fallbackResult.success) {
+          return {
+            success: true,
+            message: 'Normal delegate email sent via fallback method',
+            data: fallbackResult.data,
+            method: 'fallback'
+          };
+        }
+        throw new Error(fallbackResult.error || 'Fallback API failed');
+      } catch (fallbackError) {
+        return {
+          success: false,
+          error: `Both email methods failed. Dedicated: ${dedicatedError.message}. Fallback: ${fallbackError.message}`
+        };
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error in sendNormalDelegateConfirmationEmail:', error);
+    return {
+      success: false,
+      error: 'Normal delegate email service error: ' + error.message
+    };
+  }
+};
+
+/**
+ * Prepare email data specifically for normal delegate package - FIXED NUMBER OF PERSONS
+ */
+const prepareNormalDelegateEmailData = (delegateData) => {
   const delegateDetails = delegateData.delegateDetails || {};
   const eventDetails = delegateData.eventDetails || {};
   const registrationType = eventDetails.registrationType || 'Individual';
-  const delegateType = eventDetails.delegateType || 'Standard';
-  
+
+  // DEBUG: Log all possible locations
+  console.log('🔍 NORMAL DELEGATE DEBUG - Searching for number_of_person:', {
+    eventDetails: eventDetails,
+    delegateDetails: delegateDetails,
+    rootData: delegateData
+  });
+
+  // FIX: Better extraction with more locations
+  const numberOfPersons = 
+    eventDetails.numberOfPersons || 
+    eventDetails.number_of_person ||
+    delegateDetails.numberOfPersons || 
+    delegateDetails.number_of_person ||
+    delegateData.numberOfPersons ||
+    delegateData.number_of_person ||
+    (eventDetails && eventDetails.numberOfPersons) ||
+    (delegateDetails && delegateDetails.numberOfPersons) ||
+    '1';
+
+  console.log('✅ NORMAL DELEGATE - number_of_person being used:', numberOfPersons);
+
   // Determine organization name
   let organizationName = 'Individual Registration';
   if (registrationType === 'Company') {
@@ -792,74 +987,227 @@ const createDelegateEmailDetails = (delegateData) => {
   } else if (registrationType === 'Temple') {
     organizationName = eventDetails.templeName || 'Temple Registration';
   }
-  
-  // Format package type display
-  let packageTypeDisplay;
-  let registrationFee;
-  
-  switch(delegateType) {
-    case 'normal':
-      packageTypeDisplay = 'Normal Package (Free Registration)';
-      registrationFee = 'FREE (₹0)';
-      break;
-    case 'withoutAssistance':
-      packageTypeDisplay = 'Without Assistance Package';
-      registrationFee = `₹${delegateData.totalAmount || 0}`;
-      break;
-    case 'withAssistance':
-      packageTypeDisplay = 'With Assistance Package';
-      registrationFee = `₹${delegateData.totalAmount || 0}`;
-      break;
-    default:
-      packageTypeDisplay = delegateType || 'Standard Package';
-      registrationFee = `₹${delegateData.totalAmount || 0}`;
-  }
-  
-  // For normal delegates, use simplified content
-  if (delegateType === 'normal') {
-    return `Registration Successful
-Number of Persons: ${eventDetails.numberOfPersons || 1}`;
-  }
-  
-  // For other delegate types, use detailed content
-  return `
-👤 DELEGATE REGISTRATION DETAILS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Delegate Name: ${delegateDetails.name || 'Not specified'}
-• Registration Type: ${registrationType}
-• Organization: ${organizationName}
-• Email: ${delegateDetails.email || 'Not provided'}
-• Mobile: ${delegateDetails.mobile || 'Not provided'}
-• Registration Fee: ${registrationFee}
 
-📦 Package Details:
-• Package Type: ${packageTypeDisplay}
-• Duration: ${eventDetails.duration || eventDetails.days || 'TBD'} days
-• Number of Persons: ${eventDetails.numberOfPersons || 1}
-${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
+  // Format address properly
+  const formattedAddress = [
+    delegateDetails.address,
+    delegateDetails.city,
+    delegateDetails.state,
+    delegateDetails.country,
+    delegateDetails.pincode
+  ].filter(Boolean).join(', ');
 
-📏 Location Details:
-• Address: ${delegateDetails.address || 'Not provided'}
-• City: ${delegateDetails.city || 'Not provided'}
-• State: ${delegateDetails.state || 'Not provided'}
-• Country: ${delegateDetails.country || 'Not provided'}
-• PIN Code: ${delegateDetails.pincode || 'Not provided'}
-
-🆔 Identity Documents:
-${delegateDetails.aadharno ? `• Aadhar: ${maskAadhar(delegateDetails.aadharno)}` : ''}
-${delegateDetails.pan ? `• PAN: ${delegateDetails.pan}` : ''}
-${delegateDetails.passportno ? `• Passport: ${delegateDetails.passportno}` : ''}
-
-📋 Registration ID: ${delegateData.bookingId || delegateData.order_id || delegateData.id}
-
-🏤 Event: International Śrī Jagannātha Pāñcharātra Havan Ceremony
-📅 Event Date: December 3-7, 2025
-📏 Venue: To be announced
-
-🙏 Thank you for registering! We look forward to your participation in this sacred ceremony.
-  `.trim();
+  return {
+    // Basic information
+    name: delegateDetails.name || 'Valued Delegate',
+    email: delegateDetails.email || '',
+    mobile: delegateDetails.mobile || '',
+    address: formattedAddress || 'Not provided',
+    pan: delegateDetails.pan || 'Not provided',
+    
+    // Registration details
+    order_id: delegateData.bookingId || delegateData.id || '',
+    participation_type: 'Delegate',
+    registration_type: registrationType,
+    delegate_type: 'normal',
+    duration: eventDetails.duration || eventDetails.days || '5',
+    // FIX: Use the properly extracted numberOfPersons
+    number_of_person: numberOfPersons.toString(),
+    
+    // Amount - can be 0 or any value for normal delegates
+    amount: (delegateData.totalAmount || 0).toString(),
+    
+    // Payment details
+    payment_id: delegateData.payment?.paymentId || 'normal_delegate_confirmed',
+    transaction_date: new Date().toISOString().split('T')[0],
+    
+    // Additional details
+    organization_name: organizationName,
+    designation: eventDetails.designation || delegateDetails.designation || '',
+    
+    // Special flags for normal delegate
+    is_normal_delegate: 'true',
+    package_type: 'normal',
+    status: 'confirmed'
+  };
 };
 
-export default {
-  sendBookingConfirmationEmail
+
+
+/**
+ * Send email via dedicated delegate email API
+ * @param {Object} emailData - Prepared email data
+ * @returns {Promise<Object>} - API result
+ */
+const sendViaDedicatedAPI = async (emailData) => {
+  try {
+
+    const response = await fetch('/api/emails/delegate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: emailData.name,
+        email: emailData.email,
+        order_id: emailData.order_id,
+        event_date: '3-7 Dec, 2025',
+        booking_type: 'Delegate Registration',
+        amount: emailData.amount === '0' ? 'Free' : emailData.amount,
+        mobile: emailData.mobile,
+        address: `${emailData.address || 'Not provided'}`,
+        pan: emailData.pan || 'Not provided',
+        valid_from: new Date().toISOString().split('T')[0],
+        valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        number_of_person: emailData.number_of_person,
+        registration_type: emailData.registration_type,
+        delegate_type: emailData.delegate_type,
+        duration: emailData.duration,
+        details: `Registration Successful`
+      })
+    });
+
+    const responseText = await response.text();
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      throw new Error('Invalid JSON response from dedicated delegate API');
+    }
+
+    if (result.status) {
+      return {
+        success: true,
+        message: 'Email sent via dedicated delegate API for normal package',
+        data: result,
+        method: 'dedicated'
+      };
+    } else {
+      throw new Error('Dedicated API error: ' + (result.errors ? result.errors.join(', ') : result.message || 'Unknown error'));
+    }
+
+  } catch (error) {
+    throw error;
+  }
 };
+
+/**
+ * Send email via general booking API as fallback
+ * @param {Object} emailData - Prepared email data
+ * @returns {Promise<Object>} - API result
+ */
+const sendViaGeneralAPI = async (emailData) => {
+  try {
+    // Use the main email service as fallback
+    
+    // Create delegate data structure for the general API
+    const generalDelegateData = {
+      bookingId: emailData.order_id,
+      delegateDetails: {
+        name: emailData.name,
+        email: emailData.email,
+        mobile: emailData.mobile
+      },
+      eventDetails: {
+        participationType: emailData.participation_type,
+        registrationType: emailData.registration_type,
+        duration: emailData.duration,
+        numberOfPersons: emailData.number_of_person,
+        delegateType: emailData.delegate_type
+      },
+      totalAmount: parseFloat(emailData.amount) || 0,
+      payment: {
+        paymentId: emailData.payment_id
+      }
+    };
+
+    const result = await sendDelegateConfirmationEmail(generalDelegateData);
+    
+    if (result.success) {
+      return {
+        success: true,
+        message: 'Email sent via general API for normal delegate',
+        data: result.data,
+        method: 'general_fallback'
+      };
+    } else {
+      throw new Error('General API error: ' + result.error);
+    }
+
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Validate email data for normal delegate registration
+ * @param {Object} emailData - Email data to validate
+ * @returns {Object} - Validation result
+ */
+const validateNormalDelegateEmail = (emailData) => {
+  const errors = [];
+
+  // Required fields validation
+  if (!emailData.name || emailData.name.trim().length < 2) {
+    errors.push('Delegate name is required and must be at least 2 characters');
+  }
+
+  if (!emailData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailData.email)) {
+    errors.push('Valid email address is required');
+  }
+
+  if (!emailData.order_id || emailData.order_id.trim().length === 0) {
+    errors.push('Registration ID (order_id) is required');
+  }
+
+  if (!emailData.registration_type) {
+    errors.push('Registration type is required');
+  }
+
+  // Delegate-specific validations
+  if (!emailData.duration || isNaN(parseInt(emailData.duration))) {
+    errors.push('Valid duration is required');
+  }
+
+  if (!emailData.number_of_person || isNaN(parseInt(emailData.number_of_person))) {
+    errors.push('Valid number of persons is required');
+  }
+
+  // Normal delegate should be confirmed
+  if (emailData.delegate_type !== 'normal') {
+    errors.push('This service is only for normal delegate type');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Enhanced function to handle normal delegate emails specifically
+ * This can be called directly when we know it's a normal delegate registration
+ */
+export const handleNormalDelegateEmail = async (delegateBookingData) => {
+  try {
+
+    // Ensure this is actually a normal delegate
+    if (delegateBookingData.eventDetails?.delegateType !== 'normal') {
+      // Fall back to regular delegate email
+      return await sendDelegateConfirmationEmail(delegateBookingData);
+    }
+
+    // Send normal delegate email (with built-in fallback)
+    const result = await sendNormalDelegateConfirmationEmail(delegateBookingData);
+    
+    return result;
+
+  } catch (error) {
+    console.error('❌ Error in handleNormalDelegateEmail:', error);
+    return {
+      success: false,
+      error: 'Normal delegate email handler error: ' + error.message
+    };
+  }
+}

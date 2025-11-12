@@ -24,7 +24,8 @@ export default function DelegateTable({
   onCancel,
   onApproveCancellation,
   onRejectCancellation,
-  onParticipation
+  onParticipation,
+  onViewDocuments
 }) {
   const formatCurrency = (amount) => {
     if (!amount || isNaN(amount)) {
@@ -403,6 +404,19 @@ export default function DelegateTable({
                     <div className="space-y-2">
                       {/* Documents */}
                       <div className="space-y-1">
+                        {booking.status !== 'cancelled' && (
+                          <button
+                            onClick={() => onViewDocuments && onViewDocuments(booking)}
+                            className={`w-full px-3 py-1.5 text-xs font-medium rounded-lg transition-all text-center ${
+                              isDarkMode 
+                                ? 'bg-blue-900/30 text-blue-300 border border-blue-700 hover:bg-blue-800/40' 
+                                : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                            }`}
+                            title="View Booking Documents"
+                          >
+                            📄 Documents
+                          </button>
+                        )}
                         {delegate.aadharno && (
                           <div className={`text-xs ${isDarkMode ? 'text-blue-300' : 'text-blue-600'} font-mono bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded`}>
                             Aadhar: ****{delegate.aadharno.toString().substring(8)}

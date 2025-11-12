@@ -1,5 +1,3 @@
-// Dedicated Email Service for Normal Delegate Package Registrations
-// This service is specifically designed for handling email notifications for normal delegate registrations
 
 import { sendDelegateConfirmationEmail } from './emailService';
 
@@ -75,6 +73,13 @@ const prepareNormalDelegateEmailData = (delegateData) => {
   const delegateDetails = delegateData.delegateDetails || {};
   const eventDetails = delegateData.eventDetails || {};
   const registrationType = eventDetails.registrationType || 'Individual';
+  
+  console.log('🔍 DEBUG prepareNormalDelegateEmailData - eventDetails:', {
+    numberOfPersons: eventDetails.numberOfPersons,
+    delegateType: eventDetails.delegateType,
+    duration: eventDetails.duration,
+    allEventDetails: eventDetails
+  });
 
   // Determine organization name
   let organizationName = 'Individual Registration';
@@ -107,7 +112,7 @@ const prepareNormalDelegateEmailData = (delegateData) => {
     registration_type: registrationType,
     delegate_type: 'normal',
     duration: eventDetails.duration || eventDetails.days || '5',
-    number_of_person: eventDetails.numberOfPersons || '1',
+    number_of_person: (eventDetails.numberOfPersons || '2').toString(),
     
     // Amount - can be 0 or any value for normal delegates
     amount: (delegateData.totalAmount || 0).toString(),
@@ -152,8 +157,11 @@ const sendViaDedicatedAPI = async (emailData) => {
         pan: emailData.pan || 'Not provided',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        details: `Registration Successful
-Number of Persons: ${emailData.number_of_person}`
+        number_of_person: emailData.number_of_person,
+        registration_type: emailData.registration_type,
+        delegate_type: emailData.delegate_type,
+        duration: emailData.duration,
+        details: `Registration Successful`,
       })
     });
 

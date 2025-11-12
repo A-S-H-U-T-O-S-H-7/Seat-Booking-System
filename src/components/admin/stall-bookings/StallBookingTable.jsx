@@ -8,7 +8,9 @@
     AlertCircle,
     RefreshCw,
     StoreIcon,
-    UserCheck
+    UserCheck,
+    FileText,
+    Ticket
   } from 'lucide-react';
 
   export default function StallBookingTable({
@@ -23,7 +25,8 @@
     onCancel,
     onApproveCancellation,
     onRejectCancellation,
-    onParticipation
+    onParticipation,
+    onViewDocuments
   }) {
     const formatCurrency = (amount) => {
       if (!amount || isNaN(amount)) {
@@ -357,6 +360,11 @@
                 }`}>
                   Status
                 </th>
+                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                }`}>
+                  Documents
+                </th>
                 <th className={`px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-500'
                 }`}>
@@ -463,6 +471,31 @@
                             }
                           </span>
                         </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {booking.status !== 'cancelled' && booking.status !== 'cancellation-requested' && (booking.memberPassUrl || booking.passUrl || booking.pass_url || booking.memberPass || booking.member_pass || booking.receiptUrl || booking.receipt_url) && (
+                        <button
+                          onClick={() => onViewDocuments && onViewDocuments(booking)}
+                          className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 ${
+                            isDarkMode 
+                              ? 'bg-blue-900/30 text-blue-300 border border-blue-700 hover:bg-blue-800/40' 
+                              : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                          }`}
+                          title="View Documents"
+                        >
+                          <Ticket className="w-3 h-3 mr-1" />
+                          Documents
+                        </button>
+                      )}
+                      {(booking.status === 'cancelled' || booking.status === 'cancellation-requested' || !(booking.memberPassUrl || booking.passUrl || booking.pass_url || booking.memberPass || booking.member_pass || booking.receiptUrl || booking.receipt_url)) && (
+                        <span className={`text-xs font-medium ${
+                          isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                        }`}>
+                          No docs
+                        </span>
                       )}
                     </div>
                   </td>

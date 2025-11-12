@@ -19,7 +19,10 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTheme } from '@/context/ThemeContext';
 import DonationDetailsModal from './DonationDetailsModal';
+import DocumentViewerModal from '../DocumentViewerModal';
 import { format, isWithinInterval, subDays, startOfDay } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 
 export default function DonationManagement() {
   const { isDarkMode } = useTheme();
@@ -30,6 +33,10 @@ export default function DonationManagement() {
   const [dateFilter, setDateFilter] = useState('all');
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [documentModal, setDocumentModal] = useState({
+    isOpen: false,
+    donation: null
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
@@ -41,9 +48,6 @@ export default function DonationManagement() {
   const loadDonations = async () => {
     try {
       setLoading(true);
-      const { db } = await import('@/lib/firebase');
-      const { collection, query, orderBy, getDocs } = await import('firebase/firestore');
-      
       const donationsRef = collection(db, 'donations');
       const donationsQuery = query(donationsRef, orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(donationsQuery);
@@ -487,15 +491,33 @@ export default function DonationManagement() {
                       </td>
                       
                       <td className="px-4 py-4 text-center">
-                        <button
-                          onClick={() => handleViewDetails(donation)}
-                          className={`p-2 text-blue-600 hover:text-blue-700 rounded-full transition-colors ${
-                            isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'
-                          }`}
-                          title="View Details"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleViewDetails(donation)}
+                            className={`p-2 text-blue-600 hover:text-blue-700 rounded-full transition-colors ${
+                              isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'
+                            }`}
+                            title="View Details"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                          {donation.status !== 'cancelled' && (
+                            <button
+                              onClick={() => setDocumentModal({
+                                isOpen: true,
+                                donation: donation
+                              })}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                                isDarkMode 
+                                  ? 'bg-blue-900/30 text-blue-300 border border-blue-700 hover:bg-blue-800/40' 
+                                  : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                              }`}
+                              title="View Documents"
+                            >
+                              📄 Documents
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -556,6 +578,14 @@ export default function DonationManagement() {
           onRefresh={loadDonations}
         />
       )}
+
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal
+        isOpen={documentModal.isOpen}
+        onClose={() => setDocumentModal({ isOpen: false, donation: null })}
+        booking={documentModal.donation}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 }

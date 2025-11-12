@@ -74,6 +74,24 @@ export async function POST(req) {
         newFormData.append("eventDate", "3-7 Dec, 2025");
         newFormData.append("purpose", "Delegate Registration");
         
+        // Add delegate-specific fields
+        console.log('📋 Delegate email data received:', {
+          number_of_person: emailData.number_of_person,
+          registration_type: emailData.registration_type,
+          delegate_type: emailData.delegate_type,
+          duration: emailData.duration
+        });
+        
+        if (emailData.number_of_person) {
+          newFormData.append("numberOfPersons", emailData.number_of_person.toString());
+          newFormData.append("number_of_persons", emailData.number_of_person.toString());
+          newFormData.append("number_of_person", emailData.number_of_person.toString());
+          console.log('✅ Added number_of_person to form data:', emailData.number_of_person);
+        }
+        if (emailData.registration_type) newFormData.append("registrationType", emailData.registration_type);
+        if (emailData.delegate_type) newFormData.append("delegateType", emailData.delegate_type);
+        if (emailData.duration) newFormData.append("duration", emailData.duration);
+        
         // Call the new external email API from server-side (no CORS issues)
         const response = await fetch('https://svsamiti.com/havan-booking/general-email.php', {
             method: 'POST',

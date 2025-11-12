@@ -14,6 +14,7 @@ import StallBookingDetailsModal from './StallBookingDetailsModal';
 import StallCancellationModal from './StallCancellationModal';
 import ParticipationModal from '../shared/ParticipationModal';
 import Pagination from './Pagination';
+import DocumentViewerModal from '../DocumentViewerModal';
 
 export default function StallBookingManagement() {
   const { isDarkMode } = useTheme();
@@ -31,6 +32,10 @@ export default function StallBookingManagement() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [showParticipationModal, setShowParticipationModal] = useState(false);
+  const [documentModal, setDocumentModal] = useState({
+    isOpen: false,
+    booking: null
+  });
 
   
   const [isUpdating, setIsUpdating] = useState(false);
@@ -336,6 +341,12 @@ export default function StallBookingManagement() {
     setSelectedBooking(booking);
     setShowParticipationModal(true);
   }}
+  onViewDocuments={(booking) => {
+    setDocumentModal({
+      isOpen: true,
+      booking: booking
+    });
+  }}
 />
 
       {totalBookings > bookingsPerPage && (
@@ -400,6 +411,13 @@ export default function StallBookingManagement() {
           // Refresh bookings to get updated participation status from server (for accuracy)
           fetchBookings();
         }}
+      />
+
+      <DocumentViewerModal
+        isOpen={documentModal.isOpen}
+        onClose={() => setDocumentModal({ isOpen: false, booking: null })}
+        booking={documentModal.booking}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

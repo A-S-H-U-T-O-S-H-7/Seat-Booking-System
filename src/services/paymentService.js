@@ -135,9 +135,17 @@ export async function updateBookingAfterPayment(orderId, paymentData, bookingTyp
           const emailResult = await sendDonationConfirmationEmail(enrichedBookingData);
           console.log('📧 Donation email sent:', emailResult.success ? 'Success' : emailResult.error);
         } else if (bookingType === 'delegate') {
+          // Ensure numberOfPersons is properly set in enrichedBookingData
+          console.log('📋 Delegate booking data before email:', {
+            numberOfPersons: enrichedBookingData.eventDetails?.numberOfPersons,
+            eventDetails: enrichedBookingData.eventDetails
+          });
           const { sendDelegateConfirmationEmail } = await import('@/services/emailService');
           const emailResult = await sendDelegateConfirmationEmail(enrichedBookingData);
           console.log('📧 Delegate email sent:', emailResult.success ? 'Success' : emailResult.error);
+          if (!emailResult.success) {
+            console.error('❌ Email error details:', emailResult.error);
+          }
         } else {
           const { sendBookingConfirmationEmail } = await import('@/services/emailService');
           const emailResult = await sendBookingConfirmationEmail(enrichedBookingData, bookingType);

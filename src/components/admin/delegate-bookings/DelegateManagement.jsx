@@ -13,6 +13,7 @@ import DelegateTable from './DelegateTable';
 import DelegateDetailsModal from './DelegateDetailsModal';
 import DelegateCancellationModal from './DelegateCancellationModal';
 import ParticipationModal from '../shared/ParticipationModal';
+import DocumentViewerModal from '../DocumentViewerModal';
 import Pagination from '../stall-bookings/Pagination';
 
 export default function DelegateManagement() {
@@ -38,6 +39,10 @@ export default function DelegateManagement() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [showParticipationModal, setShowParticipationModal] = useState(false);
+  const [documentModal, setDocumentModal] = useState({
+    isOpen: false,
+    booking: null
+  });
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -383,6 +388,12 @@ export default function DelegateManagement() {
           setSelectedBooking(booking);
           setShowParticipationModal(true);
         }}
+        onViewDocuments={(booking) => {
+          setDocumentModal({
+            isOpen: true,
+            booking: booking
+          });
+        }}
       />
 
       {totalBookings > bookingsPerPage && (
@@ -430,6 +441,13 @@ export default function DelegateManagement() {
           ));
           setShowParticipationModal(false);
         }}
+      />
+
+      <DocumentViewerModal
+        isOpen={documentModal.isOpen}
+        onClose={() => setDocumentModal({ isOpen: false, booking: null })}
+        booking={documentModal.booking}
+        isDarkMode={isDarkMode}
       />
     </div>
   );
