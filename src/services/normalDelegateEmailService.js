@@ -74,12 +74,19 @@ const prepareNormalDelegateEmailData = (delegateData) => {
   const eventDetails = delegateData.eventDetails || {};
   const registrationType = eventDetails.registrationType || 'Individual';
   
-  console.log('🔍 DEBUG prepareNormalDelegateEmailData - eventDetails:', {
-    numberOfPersons: eventDetails.numberOfPersons,
-    delegateType: eventDetails.delegateType,
-    duration: eventDetails.duration,
-    allEventDetails: eventDetails
+  console.log('🔍 [prepareNormalDelegateEmailData] Extracting numberOfPersons:', {
+    'eventDetails.numberOfPersons': eventDetails.numberOfPersons,
+    'delegateDetails.numberOfPersons': delegateDetails.numberOfPersons,
+    'Full eventDetails': eventDetails,
+    'Full delegateDetails': delegateDetails
   });
+  
+  // Extract numberOfPersons with proper priority
+  const numberOfPersons = (eventDetails.numberOfPersons && String(eventDetails.numberOfPersons).trim()) || 
+                          (delegateDetails.numberOfPersons && String(delegateDetails.numberOfPersons).trim()) || 
+                          '1';
+  
+  console.log('✅ [prepareNormalDelegateEmailData] Extracted numberOfPersons:', numberOfPersons);
 
   // Determine organization name
   let organizationName = 'Individual Registration';
@@ -112,7 +119,7 @@ const prepareNormalDelegateEmailData = (delegateData) => {
     registration_type: registrationType,
     delegate_type: 'normal',
     duration: eventDetails.duration || eventDetails.days || '5',
-    number_of_person: (eventDetails.numberOfPersons || '2').toString(),
+    number_of_person: numberOfPersons,
     
     // Amount - can be 0 or any value for normal delegates
     amount: (delegateData.totalAmount || 0).toString(),
@@ -139,7 +146,6 @@ const prepareNormalDelegateEmailData = (delegateData) => {
  */
 const sendViaDedicatedAPI = async (emailData) => {
   try {
-
     const response = await fetch('/api/emails/delegate', {
       method: 'POST',
       headers: {
@@ -157,10 +163,10 @@ const sendViaDedicatedAPI = async (emailData) => {
         pan: emailData.pan || 'Not provided',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        number_of_person: emailData.number_of_person,
         registration_type: emailData.registration_type,
         delegate_type: emailData.delegate_type,
         duration: emailData.duration,
+        number_of_person: emailData.number_of_person,
         details: `Registration Successful`,
       })
     });
@@ -197,8 +203,6 @@ const sendViaDedicatedAPI = async (emailData) => {
  */
 const sendViaGeneralAPI = async (emailData) => {
   try {
-    // Use the main email service as fallback (already imported at top)
-    
     // Create delegate data structure for the general API
     const generalDelegateData = {
       bookingId: emailData.order_id,
@@ -268,10 +272,6 @@ const validateNormalDelegateEmail = (emailData) => {
     errors.push('Valid duration is required');
   }
 
-  if (!emailData.number_of_person || isNaN(parseInt(emailData.number_of_person))) {
-    errors.push('Valid number of persons is required');
-  }
-
   // Normal delegate should be confirmed
   if (emailData.delegate_type !== 'normal') {
     errors.push('This service is only for normal delegate type');
@@ -289,21 +289,13 @@ const validateNormalDelegateEmail = (emailData) => {
  */
 export const handleNormalDelegateEmail = async (delegateBookingData) => {
   try {
-
     // Ensure this is actually a normal delegate
     if (delegateBookingData.eventDetails?.delegateType !== 'normal') {
-      // Fall back to regular delegate email (already imported at top)
       return await sendDelegateConfirmationEmail(delegateBookingData);
     }
 
     // Send normal delegate email (with built-in fallback)
-    const result = await sendNormalDelegateConfirmationEmail(delegateBookingData);
-    
-    if (result.success) {
-      return result;
-    } else {
-      return result;
-    }
+    return await sendNormalDelegateConfirmationEmail(delegateBookingData);
 
   } catch (error) {
     console.error('❌ Error in handleNormalDelegateEmail:', error);

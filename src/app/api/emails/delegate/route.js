@@ -49,9 +49,7 @@ export async function POST(req) {
         formData.append("details", details);
         formData.append("event_date", event_date);
         formData.append("booking_type", booking_type);
-        formData.append("amount", amount); // Uses 'Free' for free registrations
-        
-        // Validation check - make sure email is valid
+        formData.append("amount", amount);
         
         if (!email.includes('@') || email === 'no-email@example.com') {
             throw new Error('Valid email address is required for sending delegate confirmation');
@@ -75,25 +73,31 @@ export async function POST(req) {
         newFormData.append("purpose", "Delegate Registration");
         
         // Add delegate-specific fields
-        console.log('📋 Delegate email data received:', {
-          number_of_person: emailData.number_of_person,
-          registration_type: emailData.registration_type,
-          delegate_type: emailData.delegate_type,
-          duration: emailData.duration
-        });
-        
-        if (emailData.number_of_person) {
-          newFormData.append("numberOfPersons", emailData.number_of_person.toString());
-          newFormData.append("number_of_persons", emailData.number_of_person.toString());
-          newFormData.append("number_of_person", emailData.number_of_person.toString());
-          console.log('✅ Added number_of_person to form data:', emailData.number_of_person);
-        }
         if (emailData.registration_type) newFormData.append("registrationType", emailData.registration_type);
         if (emailData.delegate_type) newFormData.append("delegateType", emailData.delegate_type);
         if (emailData.duration) newFormData.append("duration", emailData.duration);
         
-        // Call the new external email API from server-side (no CORS issues)
-        const response = await fetch('https://svsamiti.com/havan-booking/general-email.php', {
+        // Send numberOfPersons in multiple formats to ensure PHP receives it
+        const numPersons = emailData.number_of_person ? String(emailData.number_of_person) : '';
+        if (numPersons) {
+          newFormData.append("numberOfPersons", numPersons);
+          newFormData.append("number_of_person", numPersons);
+          newFormData.append("number_of_persons", numPersons);
+          newFormData.append("numPersons", numPersons);
+        }
+        
+        // Determine which endpoint to use based on delegate type
+        // Paid delegates (withAssistance, withoutAssistance) use delegate-email.php
+        // Free delegates (normal) use general-email.php
+        const isPaidDelegate = emailData.delegate_type === 'withAssistance' || emailData.delegate_type === 'withoutAssistance';
+        const emailEndpoint = isPaidDelegate 
+            ? 'https://svsamiti.com/havan-booking/delegate-email.php'
+            : 'https://svsamiti.com/havan-booking/general-email.php';
+        
+        console.log(`📧 Sending ${emailData.delegate_type} delegate email to: ${emailEndpoint}`);
+        
+        // Call the appropriate external email API from server-side (no CORS issues)
+        const response = await fetch(emailEndpoint, {
             method: 'POST',
             body: newFormData,
             headers: {

@@ -75,20 +75,6 @@ export async function POST(req) {
         newFormData.append("eventDate", "3-7 Dec, 2025");
         newFormData.append("purpose", "Delegate Registration");
         
-        // Add delegate-specific fields
-        console.log('📋 Delegate email data received:', {
-          number_of_person: emailData.number_of_person,
-          registration_type: emailData.registration_type,
-          delegate_type: emailData.delegate_type,
-          duration: emailData.duration
-        });
-        
-        if (emailData.number_of_person) {
-          newFormData.append("numberOfPersons", emailData.number_of_person.toString());
-          newFormData.append("number_of_persons", emailData.number_of_person.toString());
-          newFormData.append("number_of_person", emailData.number_of_person.toString());
-          console.log('✅ Added number_of_person to form data:', emailData.number_of_person);
-        }
         if (emailData.registration_type) newFormData.append("registrationType", emailData.registration_type);
         if (emailData.delegate_type) newFormData.append("delegateType", emailData.delegate_type);
         if (emailData.duration) newFormData.append("duration", emailData.duration);
@@ -225,29 +211,12 @@ export const sendDelegateConfirmationEmail = async (delegateData) => {
  */
 const tryDelegateSpecificAPI = async (delegateData) => {
   try {
-    // RESTORED WORKING VERSION - Use original delegate-email.php for paid delegates
-    console.log('🔍 tryDelegateSpecificAPI - Received delegateData:', {
-      numberOfPersons: delegateData.eventDetails?.numberOfPersons,
-      delegateType: delegateData.eventDetails?.delegateType,
-      eventDetails: delegateData.eventDetails
-    });
-    
     const formData = new FormData();
     formData.append('name', delegateData.delegateDetails?.name || delegateData.name || '');
     formData.append('email', delegateData.delegateDetails?.email || delegateData.email || '');
     formData.append('participation_type', delegateData.eventDetails?.participationType || delegateData.participation_type || 'Delegate');
     formData.append('registration_type', delegateData.eventDetails?.registrationType || delegateData.registration_type || '');
     formData.append('duration', delegateData.eventDetails?.duration || delegateData.duration || '');
-    
-    // FIX: Properly extract number of persons from all possible locations
-    const numberOfPersons = delegateData.eventDetails?.numberOfPersons || 
-                           delegateData.delegateDetails?.numberOfPersons || 
-                           delegateData.eventDetails?.number_of_person || 
-                           delegateData.delegateDetails?.number_of_person || 
-                           '1';
-    
-    console.log('✅ numberOfPersons being sent to email:', numberOfPersons);
-    formData.append('number_of_person', numberOfPersons.toString());
     
     // Handle normal delegates (free) vs paid delegates
     const isNormalDelegate = delegateData.eventDetails?.delegateType === 'normal';
@@ -598,39 +567,19 @@ const prepareStallEmailData = async (bookingData, baseData) => {
 };
 
 /**
- * Prepare email data for Delegate bookings - FIXED NUMBER OF PERSONS ISSUE
+ * Prepare email data for Delegate bookings - 
  */
 const prepareDelegateEmailData = async (bookingData, baseData) => {
   const delegateDetails = bookingData.delegateDetails || {};
   const eventDetails = bookingData.eventDetails || {};
   const registrationType = eventDetails.registrationType || 'Individual';
   const delegateType = eventDetails.delegateType || 'Standard';
-
-  // DEBUG: Log all possible locations for number of persons
-  console.log('🔍 DEBUG - Searching for number_of_person in:', {
-    eventDetails_numberOfPersons: eventDetails.numberOfPersons,
-    eventDetails_number_of_person: eventDetails.number_of_person,
-    delegateDetails_numberOfPersons: delegateDetails.numberOfPersons,
-    delegateDetails_number_of_person: delegateDetails.number_of_person,
-    bookingData_numberOfPersons: bookingData.numberOfPersons,
-    bookingData_number_of_person: bookingData.number_of_person,
-    fullBookingData: bookingData
-  });
-
-  // FIX: Better extraction with proper fallback chain
-  const numberOfPersons = 
-    eventDetails.numberOfPersons || 
-    eventDetails.number_of_person ||
-    delegateDetails.numberOfPersons || 
-    delegateDetails.number_of_person ||
-    bookingData.numberOfPersons ||
-    bookingData.number_of_person ||
-    (bookingData.eventDetails && bookingData.eventDetails.numberOfPersons) ||
-    (bookingData.delegateDetails && bookingData.delegateDetails.numberOfPersons) ||
-    '1';
-
-  console.log('✅ FINAL number_of_person being used:', numberOfPersons);
-
+  
+  // Extract numberOfPersons with proper priority
+  const numberOfPersons = (eventDetails.numberOfPersons && String(eventDetails.numberOfPersons).trim()) || 
+                          (delegateDetails.numberOfPersons && String(delegateDetails.numberOfPersons).trim()) || 
+                          '1';
+  
   // Determine organization name based on registration type
   let organizationName = 'Individual Registration';
   if (registrationType === 'Company') {
@@ -648,8 +597,7 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
     pan: delegateDetails.pan || '',
     event_date: '2025-11-15',
     booking_type: 'Delegate Registration',
-    // FIX: Use the properly extracted numberOfPersons
-    number_of_person: numberOfPersons.toString(),
+    number_of_person: numberOfPersons,
     details: `
 
 👤 Delegate Name: ${delegateDetails.name || 'Not specified'}
@@ -662,7 +610,7 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
 📦 Package Details:
 • Package Type: ${getDelegateTypeDisplay(delegateType)}
 • Duration: ${eventDetails.duration || 'TBD'} days
-• Number of Persons: ${numberOfPersons}
+
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
 📏 Location Details:
@@ -952,34 +900,18 @@ export const sendNormalDelegateConfirmationEmail = async (delegateData) => {
 };
 
 /**
- * Prepare email data specifically for normal delegate package - FIXED NUMBER OF PERSONS
+ * Prepare email data specifically for normal delegate package - FIXED 
  */
 const prepareNormalDelegateEmailData = (delegateData) => {
   const delegateDetails = delegateData.delegateDetails || {};
   const eventDetails = delegateData.eventDetails || {};
   const registrationType = eventDetails.registrationType || 'Individual';
-
-  // DEBUG: Log all possible locations
-  console.log('🔍 NORMAL DELEGATE DEBUG - Searching for number_of_person:', {
-    eventDetails: eventDetails,
-    delegateDetails: delegateDetails,
-    rootData: delegateData
-  });
-
-  // FIX: Better extraction with more locations
-  const numberOfPersons = 
-    eventDetails.numberOfPersons || 
-    eventDetails.number_of_person ||
-    delegateDetails.numberOfPersons || 
-    delegateDetails.number_of_person ||
-    delegateData.numberOfPersons ||
-    delegateData.number_of_person ||
-    (eventDetails && eventDetails.numberOfPersons) ||
-    (delegateDetails && delegateDetails.numberOfPersons) ||
-    '1';
-
-  console.log('✅ NORMAL DELEGATE - number_of_person being used:', numberOfPersons);
-
+  
+  // Extract numberOfPersons with proper priority
+  const numberOfPersons = (eventDetails.numberOfPersons && String(eventDetails.numberOfPersons).trim()) || 
+                          (delegateDetails.numberOfPersons && String(delegateDetails.numberOfPersons).trim()) || 
+                          '1';
+  
   // Determine organization name
   let organizationName = 'Individual Registration';
   if (registrationType === 'Company') {
@@ -1011,8 +943,7 @@ const prepareNormalDelegateEmailData = (delegateData) => {
     registration_type: registrationType,
     delegate_type: 'normal',
     duration: eventDetails.duration || eventDetails.days || '5',
-    // FIX: Use the properly extracted numberOfPersons
-    number_of_person: numberOfPersons.toString(),
+    number_of_person: numberOfPersons,
     
     // Amount - can be 0 or any value for normal delegates
     amount: (delegateData.totalAmount || 0).toString(),
@@ -1041,7 +972,6 @@ const prepareNormalDelegateEmailData = (delegateData) => {
  */
 const sendViaDedicatedAPI = async (emailData) => {
   try {
-
     const response = await fetch('/api/emails/delegate', {
       method: 'POST',
       headers: {
@@ -1059,10 +989,10 @@ const sendViaDedicatedAPI = async (emailData) => {
         pan: emailData.pan || 'Not provided',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        number_of_person: emailData.number_of_person,
         registration_type: emailData.registration_type,
         delegate_type: emailData.delegate_type,
         duration: emailData.duration,
+        number_of_person: emailData.number_of_person,
         details: `Registration Successful`
       })
     });
@@ -1099,8 +1029,6 @@ const sendViaDedicatedAPI = async (emailData) => {
  */
 const sendViaGeneralAPI = async (emailData) => {
   try {
-    // Use the main email service as fallback
-    
     // Create delegate data structure for the general API
     const generalDelegateData = {
       bookingId: emailData.order_id,
@@ -1170,10 +1098,6 @@ const validateNormalDelegateEmail = (emailData) => {
     errors.push('Valid duration is required');
   }
 
-  if (!emailData.number_of_person || isNaN(parseInt(emailData.number_of_person))) {
-    errors.push('Valid number of persons is required');
-  }
-
   // Normal delegate should be confirmed
   if (emailData.delegate_type !== 'normal') {
     errors.push('This service is only for normal delegate type');
@@ -1191,7 +1115,6 @@ const validateNormalDelegateEmail = (emailData) => {
  */
 export const handleNormalDelegateEmail = async (delegateBookingData) => {
   try {
-
     // Ensure this is actually a normal delegate
     if (delegateBookingData.eventDetails?.delegateType !== 'normal') {
       // Fall back to regular delegate email

@@ -494,7 +494,6 @@ const prepareDelegateEmailData = async (bookingData, baseData) => {
 📦 Package Details:
 • Package Type: ${getDelegateTypeDisplay(delegateType)}
 • Duration: ${eventDetails.duration || 'TBD'} days
-• Number of Persons: ${eventDetails.numberOfPersons || 1}
 ${eventDetails.designation ? `• Designation: ${eventDetails.designation}` : ''}
 
 📍 Location Details:
