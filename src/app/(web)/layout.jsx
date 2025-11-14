@@ -5,7 +5,7 @@ import ImageModal from "@/components/ImageModal";
 import { useRouter } from "next/navigation";
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
-
+import NoticePopup from "@/components/home/NoticePopup";
 
 function layout({ children }) {
     const { user, logout ,loading} = useAuth();
@@ -31,6 +31,8 @@ function layout({ children }) {
         handleLogout={handleLogout} 
         onShowEventLayout={handleShowEventLayout}
       />
+
+      <NoticePopup />
       {children}
       
       <Footer/>
