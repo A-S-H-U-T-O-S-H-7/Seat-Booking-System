@@ -8,15 +8,35 @@ export default function NoticePopup() {
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
-      setAnimate(true);
-    }, 50);
-  }, []);
+    let scrollbarWidth = 0;
+
+    if (open) {
+      // Calculate scrollbar width to prevent layout shift
+      scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
+
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+
+      const timer = setTimeout(() => {
+        setAnimate(true);
+      }, 50);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = "auto";
+        document.body.style.paddingRight = "0px";
+      };
+    } else {
+      document.body.style.overflow = "auto";
+      document.body.style.paddingRight = "0px";
+    }
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-3 overflow-hidden md:overflow-y-auto">
+    <div className="fixed inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-3 overflow-hidden">
       
       <div
         className={`
@@ -34,8 +54,8 @@ export default function NoticePopup() {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-amber-200/30 to-yellow-200/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
         {/* Content */}
-        <div className="relative p-3 md:p-6 overflow-y-auto max-h-[92vh] md:max-h-full">
-          
+        <div className="relative p-3 md:p-6 overflow-y-auto max-h-[92vh]">
+
           {/* Alert Icon */}
           <div className="flex justify-center mb-2 md:mb-3">
             <div className="relative">
@@ -83,7 +103,6 @@ export default function NoticePopup() {
           {/* Raja Parba Section */}
           <div className="relative bg-gradient-to-br from-rose-100 via-pink-100 to-orange-100 rounded-2xl p-3 md:p-6 shadow-xl border border-red-200 mb-3 md:mb-4 overflow-hidden">
 
-            {/* Corner Decorations */}
             <img
               src="/greencorner.png"
               alt="corner"
@@ -146,6 +165,7 @@ export default function NoticePopup() {
                   <Phone className="w-3 h-3" />
                   <span>9971322458</span>
                 </a>
+
                 <a
                   href="mailto:info@svsamiti.com"
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors"
@@ -153,6 +173,7 @@ export default function NoticePopup() {
                   <Mail className="w-3 h-3" />
                   <span>info@svsamiti.com</span>
                 </a>
+
                 <a
                   href="mailto:svsamiti01@gmail.com"
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors"
