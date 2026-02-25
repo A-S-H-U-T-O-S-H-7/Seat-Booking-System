@@ -135,7 +135,7 @@ export default function NoticePopup() {
               </p>
 
               <a
-                href="https://raja-parba.vercel.app"
+                href="https://rajaparba.svsamiti.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 mt-3 bg-gradient-to-r from-pink-600 via-red-600 to-orange-600 text-white px-4 md:px-5 py-2 rounded-full text-sm md:text-base font-semibold shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
