@@ -8,10 +8,12 @@ import EventParticipation from './EventParticipation';
 function HeroSection({ user }) {
   return (
     <>
+                  <HeroContent />
+
       {/* Hero Section */}
+
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         <HeroBackground />
-        <HeroContent />
         
       </section>
 

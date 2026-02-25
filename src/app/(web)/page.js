@@ -4,7 +4,6 @@ import { useAuth } from '@/context/AuthContext';
 import HeroSection from '@/components/home/HeroSection';
 import BookingSection from '@/components/home/BookingSection';
 import DonationBanner from '@/components/home/DonationBanner';
-import SponsorPerformerSection from '@/components/sponsor-perfomer/Sponsor-performer-section';
 
 
 function HomePage() {
