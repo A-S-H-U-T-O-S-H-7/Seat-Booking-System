@@ -32,7 +32,7 @@ function layout({ children }) {
         onShowEventLayout={handleShowEventLayout}
       />
 
-      <NoticePopup />
+      {/* <NoticePopup /> */}
       {children}
       
       <Footer/>
